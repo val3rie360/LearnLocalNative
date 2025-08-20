@@ -10,6 +10,14 @@ module.exports = {
                 "karla-bold": ["Karla-Bold", "sans-serif"],
                 "karla-italic": ["Karla-Italic", "sans-serif"],
             },
+            colors: {
+              logo: '#FFF065',
+              primaryw: '#FFFFFF',
+              primaryb: '#000000',
+              secondary: '#39168C',
+
+
+            }
         },
     },
     plugins: [],

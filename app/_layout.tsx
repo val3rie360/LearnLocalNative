@@ -9,14 +9,17 @@ export default function RootLayout() {
         "Karla-Italic": require("../assets/fonts/Karla-Italic.ttf"),
     });
     if (!fontsLoaded) {
-        return null; // or a loading spinner
+        return null;
     }
-    return (
-        <Stack
-            screenOptions={{
-                headerShown: false, //to hide header on all screens/pages
-            }}
+    return <Stack >
+        <Stack.Screen
+            name="(tabs)"
+            options={{ headerShown: false }}
         />
-    );
+        <Stack.Screen
+            name="opportunity/[id]"
+            options={{ headerShown: false }}
+        />
+        </Stack>
 }
 

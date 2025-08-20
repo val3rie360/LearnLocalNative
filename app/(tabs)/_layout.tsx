@@ -1,0 +1,106 @@
+import React from 'react';
+import { Text, View} from 'react-native';
+import { Tabs } from "expo-router";
+import { Feather, FontAwesome5, AntDesign } from '@expo/vector-icons';
+import { LinearGradient } from "expo-linear-gradient";
+
+const _Layout = () => {
+    return (
+        <Tabs
+            screenOptions={{
+                headerShown: false
+            }}
+        >
+            <Tabs.Screen //-------- HOME
+                name={ "index"}
+                options={{
+                    tabBarIcon: ({ focused }) => (
+                        <Feather name="home" size={26} color={focused ? "#5048A6" : "black"} />
+                    ),
+                    tabBarLabel: ({ focused }) => (
+                        <Text style={{ color: focused ? "#5048A6" : "black", fontSize: 10, fontWeight: "bold" }}>
+                            Home
+                        </Text>
+                    ),
+                }}
+            />
+
+            <Tabs.Screen  //-------- LIBRARY
+                name={ "Library"}
+                options={{
+                    tabBarIcon: ({ focused }) => (
+                        <AntDesign name="book" size={26} color={focused ? "#5048A6" : "black"} />
+                    ),
+                    tabBarLabel: ({ focused }) => (
+                        <Text style={{ color: focused ? "#5048A6" : "black", fontSize: 10, fontWeight: "bold" }}>
+                            Library
+                        </Text>
+                    ),
+                }}
+            />
+
+            <Tabs.Screen //-------- MAP
+                name={"Map"}
+                options={{
+                    tabBarLabel: () => null,
+                    tabBarIcon: ({ focused }) => (
+                        <View
+                            style={{
+                                marginBottom: 20,
+                                width: 66, // bigger than inner
+                                height: 66,
+                                borderRadius: 100,
+                                backgroundColor: "white", // outline color
+                                justifyContent: "center",
+                                alignItems: "center",
+                            }}
+                        >
+                            <LinearGradient
+                                colors={["#836CEC", "#281E8D"]}
+                                style={{
+                                    width: 60,
+                                    height: 60,
+                                    borderRadius: 100,
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                }}
+                            >
+                                <Feather name="map-pin" size={28} color="white" />
+                            </LinearGradient>
+                        </View>
+                    ),
+                }}
+            />
+
+            <Tabs.Screen //-------- CALENDAR
+                name={"Calendar"}
+                options={{
+                    tabBarIcon: ({ focused }) => (
+                        <Feather name="calendar" size={26} color={focused ? "#5048A6" : "black"} />
+                    ),
+                    tabBarLabel: ({ focused }) => (
+                        <Text style={{ color: focused ? "#5048A6" : "black", fontSize: 10, fontWeight: "bold" }}>
+                            Calendar
+                        </Text>
+                    ),
+                }}
+            />
+
+            <Tabs.Screen //-------- PROFILE
+                name={ "Profile"}
+                options={{
+                    tabBarIcon: ({ focused }) => (
+                        <FontAwesome5 name="user-circle" size={26} color={focused ? "#5048A6" : "black"} />
+                    ),
+                    tabBarLabel: ({ focused }) => (
+                        <Text style={{ color: focused ? "#5048A6" : "black", fontSize: 10, fontWeight: "bold" }}>
+                            Profile
+                        </Text>
+                    ),
+                }}
+            />
+        </Tabs>
+    )
+}
+
+export default _Layout;
