@@ -65,7 +65,7 @@ const _Layout = () => {
                                     alignItems: "center",
                                 }}
                             >
-                                <Feather name="map-pin" size={28} color="white" />
+                                <Feather name="map-pin" size={30} color="white" />
                             </LinearGradient>
                         </View>
                     ),

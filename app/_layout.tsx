@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
-import './globals.css';
+import "./globals.css";
 import { useFonts } from "expo-font";
+import { StatusBar } from "react-native";
 
 export default function RootLayout() {
     const [fontsLoaded] = useFonts({
@@ -11,15 +12,14 @@ export default function RootLayout() {
     if (!fontsLoaded) {
         return null;
     }
-    return <Stack >
-        <Stack.Screen
-            name="(tabs)"
-            options={{ headerShown: false }}
-        />
-        <Stack.Screen
-            name="opportunity/[id]"
-            options={{ headerShown: false }}
-        />
-        </Stack>
+    return (
+        <>
+            <StatusBar barStyle="dark-content" backgroundColor="#F6F4FE" />
+            <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="opportunity/[id]" options={{ headerShown: false }} />
+            </Stack>
+        </>
+    );
 }
 
