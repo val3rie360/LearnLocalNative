@@ -5,14 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4985b9ed-050d-45b7-9947-dd68c750133a" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/components/OpportunityCard.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/app.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(tabs)/Calendar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/Calendar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(tabs)/Library.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/Library.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/(tabs)/Profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/Profile.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/(tabs)/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/_layout.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/(tabs)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/_layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nativewind-env.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/nativewind-env.d.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tailwind.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/tailwind.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,6 +29,9 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 3
@@ -55,6 +61,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Rach Kolly\Desktop\learn-local-native\frontend" />
       <recent name="C:\Users\Rach Kolly\Desktop\learn-local-native\app\opportunities" />
       <recent name="C:\Users\Rach Kolly\Desktop\learn-local-native\app\(tabs)" />
     </key>
@@ -85,7 +92,16 @@
       <workItem from="1755745536629" duration="261000" />
       <workItem from="1756386197971" duration="1303000" />
       <workItem from="1756706748791" duration="1029000" />
-      <workItem from="1756708055016" duration="5858000" />
+      <workItem from="1756708055016" duration="19115000" />
+      <workItem from="1757684396849" duration="167000" />
+      <workItem from="1757742843678" duration="9648000" />
+      <workItem from="1757825745018" duration="5160000" />
+      <workItem from="1757831586814" duration="874000" />
+      <workItem from="1757832502863" duration="610000" />
+      <workItem from="1757837892514" duration="338000" />
+      <workItem from="1757847100908" duration="7489000" />
+      <workItem from="1758337259525" duration="77000" />
+      <workItem from="1758337361562" duration="8281000" />
     </task>
     <servers />
   </component>
@@ -97,13 +113,13 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/app/(tabs)/index.tsx</url>
-          <option name="timeStamp" value="1" />
+          <line>37</line>
+          <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/app/(tabs)/index.tsx</url>
-          <line>61</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="2" />
+          <line>102</line>
+          <option name="timeStamp" value="7" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
