@@ -6,7 +6,6 @@ import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signUp } from "../../services/authServices";
 
-
 export default function StudentSignup() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -16,34 +15,45 @@ export default function StudentSignup() {
   const [accepted, setAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState(""); // <-- Add error state
 
   const handleSignUp = async () => {
-     try{
+    setError(""); // Clear previous error
 
-       if (!name || !email || !password || !confirmPassword) {
-        console.error('Please fill in all fields');
-        return;
-      }
-      
-      if (password !== confirmPassword) {
-        console.error('Passwords do not match');
-        return;
-      }
+    // Trim all fields before validation
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
 
-      if (!accepted) {
-        console.error('Please accept the terms and conditions');
-        return;
-      }
-
-      await signUp(email, password, 'student', name);
-      console.log('Student registered successfully');
-      router.replace("/studentPages/(tabs)/Home");
+    if (
+      !trimmedName ||
+      !trimmedEmail ||
+      !trimmedPassword ||
+      !trimmedConfirmPassword
+    ) {
+      setError("Please fill in all fields");
+      return;
     }
-    catch (error) {
-      console.error('Error registering student:', error);
-    } 
+    if (trimmedPassword !== trimmedConfirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    if (!accepted) {
+      setError("Please accept the terms and conditions");
+      return;
+    }
+    try {
+      await signUp(trimmedEmail, trimmedPassword, "student", {
+        name: trimmedName,
+      });
+      router.replace("/studentPages/(tabs)/Home");
+    } catch (error) {
+      setError("Error registering student. Please try again.");
+      console.error("Error registering student:", error);
+    }
   };
-  
+
   return (
     <SafeAreaView className="flex-1 bg-secondary" edges={["top"]}>
       <View className="flex-1 bg-secondary">
@@ -79,6 +89,10 @@ export default function StudentSignup() {
           <Text className="text-[24px] font-karla-bold text-[#4B1EB4] mb-6">
             Sign Up
           </Text>
+          {/* Error Message */}
+          {error ? (
+            <Text className="text-red-500 text-sm mb-4">{error}</Text>
+          ) : null}
           {/* Name */}
           <View className="flex-row items-center bg-white rounded-full px-4 mb-4 h-12 shadow border border-[#e0d7ff]">
             <Feather
@@ -204,7 +218,7 @@ export default function StudentSignup() {
           {/* Register Button */}
           <TouchableOpacity
             className="bg-[#4B1EB4] rounded-full py-3 items-center mb-6 shadow-md"
-             onPress={handleSignUp}
+            onPress={handleSignUp}
           >
             <Text className="text-white text-base font-karla-bold">
               Register

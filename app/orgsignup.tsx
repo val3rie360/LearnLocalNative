@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import * as DocumentPicker from 'expo-document-picker';
-import { DocumentPickerAsset } from 'expo-document-picker';
+import * as DocumentPicker from "expo-document-picker";
+import { DocumentPickerAsset } from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -20,50 +20,63 @@ export default function OrgSignup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
 
-const pickDocument = async () => {
-  try {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'image/*']  // Specify allowed file types
-    });
-    
-    if (!result.canceled) {
-      setFile(result.assets[0]);  // Using setFile instead of setVerificationFile to match your state
-    }
-  } catch (error) {
-    console.error('Error picking document:', error);
-  }
-};
-
-  const handleSignUp = async () => {
-    if (!name || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (!file) {  
-      setError('Please upload a verification document');
-      return;
-    }
-
-    try{
-      const extraData ={
-        name: name,
-        verificationFile: file,
-      };
-
-      await signUp(email, password, 'organization', extraData);
-      console.log('Organization registered successfully');
-     // router.replace("/(tabs)/Home");
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["application/pdf", "image/*"],
+      });
+      if (!result.canceled) {
+        setFile(result.assets[0]);
+      }
     } catch (error) {
-    setError('Error registering organization: ');
-  }
+      console.error("Error picking document:", error);
+    }
   };
 
+  const handleSignUp = async () => {
+    setError(""); // Clear previous error
+
+    // Trim all fields before validation
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
+
+    if (
+      !trimmedName ||
+      !trimmedEmail ||
+      !trimmedPassword ||
+      !trimmedConfirmPassword
+    ) {
+      setError("Please fill in all fields");
+      return;
+    }
+    if (trimmedPassword !== trimmedConfirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    if (!file) {
+      setError("Please upload a verification document");
+      return;
+    }
+    if (!accepted) {
+      setError("Please accept the terms and conditions");
+      return;
+    }
+
+    try {
+      const extraData = {
+        name: trimmedName,
+        verificationFile: file,
+      };
+      await signUp(trimmedEmail, trimmedPassword, "organization", extraData);
+      console.log("Organization registered successfully");
+      // router.replace("/(tabs)/Home");
+    } catch (error) {
+      setError("Error registering organization. Please try again.");
+      console.error("Error registering organization:", error);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#4B1EB4]">
@@ -94,6 +107,10 @@ const pickDocument = async () => {
           <Text className="text-[24px] font-karla-bold text-[#4B1EB4] mb-6">
             Sign Up
           </Text>
+          {/* Error Message */}
+          {error ? (
+            <Text className="text-red-500 text-sm mb-4">{error}</Text>
+          ) : null}
           {/* Name */}
           <View className="flex-row items-center bg-white rounded-full px-4 mb-4 h-12 shadow border border-[#e0d7ff]">
             <Feather
@@ -201,22 +218,24 @@ const pickDocument = async () => {
             </Text>
           </Text>
           {/* Upload File */}
-          <View className="flex-row items-center bg-white rounded-full px-4 mb-4 h-12 shadow border border-[#e0d7ff]">
-            <Feather
-              name="upload"
-              size={18}
-              color="#A1A1AA"
-              style={{ marginRight: 8 }}
-            />
-            <TextInput
-              className="flex-1 text-base font-karla text-[#222]"
-              placeholder="Upload File"
-              placeholderTextColor="#A1A1AA"
-              value={file ? file.name : ''}
-              editable={false}
-              keyboardType="default"
-            />
-          </View>
+          <TouchableOpacity onPress={pickDocument}>
+            <View className="flex-row items-center bg-white rounded-full px-4 mb-4 h-12 shadow border border-[#e0d7ff]">
+              <Feather
+                name="upload"
+                size={18}
+                color="#A1A1AA"
+                style={{ marginRight: 8 }}
+              />
+              <TextInput
+                className="flex-1 text-base font-karla text-[#222]"
+                placeholder="Upload File"
+                placeholderTextColor="#A1A1AA"
+                value={file ? file.name : ""}
+                editable={false}
+                keyboardType="default"
+              />
+            </View>
+          </TouchableOpacity>
           {/* Terms Checkbox */}
           <View className="flex-row items-center mb-6">
             <TouchableOpacity
@@ -243,7 +262,7 @@ const pickDocument = async () => {
           {/* Register Button */}
           <TouchableOpacity
             className="bg-[#4B1EB4] rounded-full py-3 items-center mb-6 shadow-md"
-            onPress={() => router.replace("/studentPages/(tabs)/Home")}
+            onPress={handleSignUp}
           >
             <Text className="text-white text-base font-karla-bold">
               Register
