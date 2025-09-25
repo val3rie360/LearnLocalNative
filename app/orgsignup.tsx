@@ -1,9 +1,12 @@
 import { Feather } from "@expo/vector-icons";
+import * as DocumentPicker from 'expo-document-picker';
+import { DocumentPickerAsset } from 'expo-document-picker';
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { signUp } from "../services/authServices";
 
 export default function OrgSignup() {
   const router = useRouter();
@@ -12,9 +15,55 @@ export default function OrgSignup() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [accepted, setAccepted] = useState(false);
-  const [file, setFile] = useState("");
+  const [file, setFile] = useState<DocumentPickerAsset | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+
+const pickDocument = async () => {
+  try {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'image/*']  // Specify allowed file types
+    });
+    
+    if (!result.canceled) {
+      setFile(result.assets[0]);  // Using setFile instead of setVerificationFile to match your state
+    }
+  } catch (error) {
+    console.error('Error picking document:', error);
+  }
+};
+
+  const handleSignUp = async () => {
+    if (!name || !email || !password || !confirmPassword) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (!file) {  
+      setError('Please upload a verification document');
+      return;
+    }
+
+    try{
+      const extraData ={
+        name: name,
+        verificationFile: file,
+      };
+
+      await signUp(email, password, 'organization', extraData);
+      console.log('Organization registered successfully');
+     // router.replace("/(tabs)/Home");
+    } catch (error) {
+    setError('Error registering organization: ');
+  }
+  };
+
 
   return (
     <SafeAreaView className="flex-1 bg-[#4B1EB4]">
@@ -163,7 +212,7 @@ export default function OrgSignup() {
               className="flex-1 text-base font-karla text-[#222]"
               placeholder="Upload File"
               placeholderTextColor="#A1A1AA"
-              value={file}
+              value={file ? file.name : ''}
               editable={false}
               keyboardType="default"
             />
