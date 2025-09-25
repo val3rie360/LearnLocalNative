@@ -1,9 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router"; // Add this import
+import { useRouter } from "expo-router";
 import React from "react";
 import {
   FlatList,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -29,12 +28,15 @@ const FileCard = ({
   date: string;
   size: string;
 }) => (
-  <View style={styles.card}>
-    <Feather name="file" size={48} color="#6C63FF" style={styles.cardIcon} />
-    <Text style={styles.cardTitle} numberOfLines={1}>
+  <View className="bg-white rounded-2xl p-4 items-center m-2 flex-1 min-w-[140px] max-w-[48%] shadow-md">
+    <Feather name="file" size={48} color="#6C63FF" className="mb-3" />
+    <Text
+      className="text-[15px] font-karla-bold text-[#222] mb-1 text-center"
+      numberOfLines={1}
+    >
       {title}
     </Text>
-    <Text style={styles.cardSubtitle}>
+    <Text className="text-xs text-[#888] text-center font-karla">
       {date} | {size}
     </Text>
   </View>
@@ -43,13 +45,10 @@ const FileCard = ({
 export default function DownloadsPage() {
   const router = useRouter();
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#F6F4FE" }}
-      edges={["top"]}
-    >
-      <View style={styles.container}>
+    <SafeAreaView className="flex-1 bg-[#F6F4FE]" edges={["top"]}>
+      <View className="flex-1 bg-[#F6F4FE] px-5 pt-10">
         {/* Header */}
-        <View style={styles.headerRow}>
+        <View className="flex-col mb-3.5">
           <TouchableOpacity onPress={() => router.back()}>
             <Feather
               name="arrow-left"
@@ -58,34 +57,26 @@ export default function DownloadsPage() {
               style={{ marginTop: 5 }}
             />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Downloads</Text>
+          <Text className="text-[28px] text-[#222] font-karla-bold mt-2">
+            Downloads
+          </Text>
         </View>
-
         {/* Search */}
-        <View style={styles.searchContainer}>
-          <Feather
-            name="search"
-            size={18}
-            color="#000000ff"
-            style={styles.searchIcon}
-          />
+        <View className="flex-row items-center bg-white rounded-3xl px-4 h-11 mb-4.5 border border-[#ECECEC]">
+          <Feather name="search" size={18} color="#000000ff" className="mr-2" />
           <TextInput
-            style={styles.searchInput}
+            className="flex-1 text-[15px] text-[#222] font-karla"
             placeholder="Search for learning materials..."
             placeholderTextColor="#B0B0B0"
           />
         </View>
-        <View
-          style={{
-            height: 1,
-            backgroundColor: "#ECECEC",
-            width: "100%",
-            marginVertical: 8,
-          }}
-        />
+        <View className="h-px bg-[#ECECEC] w-full my-2" />
+
         {/* Section Title */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>Your files</Text>
+        <View className="flex-row items-center justify-between mb-2 mt-2">
+          <Text className="text-[18px] font-karla-bold text-[#222]">
+            Your files
+          </Text>
           <TouchableOpacity>
             <Feather name="settings" size={20} color="#6C63FF" />
           </TouchableOpacity>
@@ -96,12 +87,14 @@ export default function DownloadsPage() {
           data={files}
           keyExtractor={(item) => item.id}
           numColumns={2}
-          contentContainerStyle={styles.filesList}
+          contentContainerStyle={{ paddingBottom: 24 }}
           renderItem={({ item }) => (
             <FileCard title={item.title} date={item.date} size={item.size} />
           )}
           ListFooterComponent={
-            <Text style={styles.footerText}>No more files to show.</Text>
+            <Text className="text-center text-[#888] mt-6 text-[14px] font-karla">
+              No more files to show.
+            </Text>
           }
           showsVerticalScrollIndicator={false}
         />
@@ -109,98 +102,3 @@ export default function DownloadsPage() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F6F4FE",
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 18,
-  },
-  headerTitle: {
-    fontSize: 28,
-    marginLeft: 16,
-    color: "#222",
-    fontFamily: "Karla-Bold",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    height: 44,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: "#ECECEC",
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: "#222",
-    fontFamily: "Karla",
-  },
-  sectionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-    marginTop: 8,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#222",
-    fontFamily: "Karla-Bold",
-  },
-  filesList: {
-    paddingBottom: 24,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    alignItems: "center",
-    margin: 8,
-    flex: 1,
-    minWidth: 140,
-    maxWidth: "48%",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  cardIcon: {
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#222",
-    marginBottom: 4,
-    textAlign: "center",
-    fontFamily: "Karla-Bold",
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    color: "#888",
-    textAlign: "center",
-    fontFamily: "Karla",
-  },
-  footerText: {
-    textAlign: "center",
-    color: "#888",
-    marginTop: 24,
-    fontSize: 14,
-    fontFamily: "Karla",
-  },
-});
