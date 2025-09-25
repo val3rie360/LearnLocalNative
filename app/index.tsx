@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import firebase from "firebase/compat/app";
 import React from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
-import { firebaseConfig } from '../firebaseConfig';
+import { firebaseConfig } from "../firebaseconfig";
 
 // Ensure Firebase is initialized
 if (!firebase.apps.length) {
