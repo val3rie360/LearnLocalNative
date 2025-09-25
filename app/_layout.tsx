@@ -26,7 +26,7 @@ export default function RootLayout() {
       }).start(() => {
         setTimeout(() => {
           setAppReady(true);
-          SplashScreen.hideAsync(); // <-- Move here!
+          SplashScreen.hideAsync();
         }, 2000); // 2 seconds after fade-in
       });
     }
@@ -80,7 +80,6 @@ export default function RootLayout() {
       </Animated.View>
     );
   }
-
   return (
     <>
       <Stack screenOptions={{ headerShown: false }} />

@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { searchBarContainer, searchBarInput } from "../../../tsStyling";
+
 import React from "react";
 import {
   ScrollView,
@@ -54,23 +56,20 @@ const Library = () => {
         <Text className="text-[25px] font-karla-bold text-[#111827] mb-1.5">
           Learning Library
         </Text>
-        <Text className="text-[14px] font-karla text-[#6B7280] mb-4">
+        <Text className="text-[14px] font-karla text-[#6B7280]">
           Find free worksheets, modules, and study packs from trusted local
           organizations.
         </Text>
 
         {/* Search */}
-        <View className="flex-row items-center bg-white rounded-xl px-3 py-2 mb-5 border border-[#E5E7EB]">
-          <Ionicons
-            name="search-outline"
-            size={18}
-            color="#9CA3AF"
-            className="mr-1.5"
-          />
+        <View
+          className={`${searchBarContainer} mb-4 w-[100%] mx-auto border border-[#E5E7EB]`}
+        >
+          <Ionicons name="search-outline" size={20} className="ml-2.5" />
           <TextInput
-            className="flex-1 text-[14px] font-karla text-[#111827]"
-            placeholder="Search for learning materials..."
-            placeholderTextColor="#9CA3AF"
+            className={searchBarInput}
+            placeholder="Search for scholarships, study spaces, etc..."
+            placeholderTextColor="#888"
           />
         </View>
 

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OpportunityCard from "../../../components/OpportunityCard";
+import { searchBarContainer, searchBarInput } from "../../../tsStyling";
 
 // Static data outside component for efficiency
 const DEADLINES = [
@@ -100,10 +101,10 @@ export default function Home() {
             </TouchableOpacity>
           </View>
           {/* Search Bar */}
-          <View className="flex-row items-center bg-white mx-5 mt-[10px] p-0.5 rounded-full">
+          <View className={searchBarContainer}>
             <Ionicons name="search-outline" size={20} className="ml-2.5" />
             <TextInput
-              className="ml-1 flex-1 font-karla text-[13px]"
+              className={searchBarInput}
               placeholder="Search for scholarships, study spaces, etc..."
               placeholderTextColor="#888"
             />

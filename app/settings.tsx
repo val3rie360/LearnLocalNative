@@ -91,7 +91,7 @@ export default function Settings() {
       {/* Version */}
       <View className="flex-1 justify-end items-center pb-4">
         <Text className="font-karla text-[#18181B] text-[13px]">
-          App ver 2.0.1
+          App ver 1.0.1
         </Text>
       </View>
     </SafeAreaView>
