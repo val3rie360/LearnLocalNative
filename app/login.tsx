@@ -4,12 +4,35 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { signIn } from "../services/authServices";
 
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    setError("");
+    
+    if (!email.trim() || !password.trim()) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signIn(email.trim(), password.trim());
+      router.replace("/studentPages/(tabs)/Home");
+    } catch (error) {
+      setError("Invalid email or password. Please try again.");
+      console.error("Login error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-secondary" edges={["top"]}>
@@ -47,6 +70,10 @@ export default function Login() {
           <Text className="text-[22px] font-karla-bold text-secondary mb-4">
             Login
           </Text>
+          {/* Error Message */}
+          {error ? (
+            <Text className="text-red-500 text-sm mb-4">{error}</Text>
+          ) : null}
           {/* Email Input */}
           <View className="flex-row items-center bg-[#F5F3FF] rounded-full px-3.5 mb-4 h-12 shadow-sm border border-[#e0d7ff]">
             <Feather
@@ -108,10 +135,11 @@ export default function Login() {
           {/* Login Button */}
           <TouchableOpacity
             className="bg-secondary rounded-full py-3 items-center mb-4 shadow-md"
-            onPress={() => router.push("/studentPages/(tabs)/Home")}
+            onPress={handleLogin}
+            disabled={loading}
           >
             <Text className="text-primaryw text-[17px] font-karla-bold">
-              Login
+              {loading ? "Logging in..." : "Login"}
             </Text>
           </TouchableOpacity>
           {/* Or Divider */}
@@ -142,7 +170,7 @@ export default function Login() {
           {/* Sign Up */}
           <View className="flex-row justify-center items-center mt-2">
             <Text className="text-secondary font-karla text-[13px]">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
             </Text>
             <TouchableOpacity onPress={() => router.push("/usertype")}>
               <Text className="text-secondary font-karla-bold text-[13px] underline">

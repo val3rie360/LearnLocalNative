@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.learnlocalnative'
+    namespace 'com.learnlocalnative'
     defaultConfig {
-        applicationId 'com.anonymous.learnlocalnative'
+        applicationId 'com.learnlocalnative'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

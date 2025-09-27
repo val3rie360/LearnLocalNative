@@ -1,11 +1,41 @@
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { Animated, Image, Text, View } from "react-native";
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import "./globals.css";
 
 SplashScreen.preventAutoHideAsync();
+
+function RootLayoutNav() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    const currentRoute = segments[0];
+    const inStudentPages = currentRoute === 'studentPages';
+    const isOnProtectedPages = currentRoute === 'studentPages' && segments[1] === '(tabs)';
+
+    // Only redirect if user is trying to access protected student pages without being authenticated
+    if (!user && isOnProtectedPages) {
+      console.log('Redirecting unauthenticated user from protected pages to login');
+      router.replace('/login');
+    }
+    // If user is authenticated and on login/signup pages, redirect to home
+    else if (user && (currentRoute === 'login' || currentRoute === 'studentsignup' || currentRoute === 'orgsignup')) {
+      console.log('Redirecting authenticated user from auth pages to Home');
+      router.replace('/studentPages/(tabs)/Home');
+    }
+  }, [user, loading, segments, router]);
+
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
 
 export default function RootLayout() {
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -30,7 +60,7 @@ export default function RootLayout() {
         }, 2000); // 2 seconds after fade-in
       });
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fadeAnim]);
 
   if (!appReady) {
     return (
@@ -80,9 +110,10 @@ export default function RootLayout() {
       </Animated.View>
     );
   }
+  
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }} />
-    </>
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
   );
 }

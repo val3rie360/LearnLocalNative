@@ -1,11 +1,12 @@
 import {
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
+    createUserWithEmailAndPassword,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signOut,
 } from "firebase/auth";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { auth, storage } from "../firebaseconfig";
+import { createUserProfile } from "./firestoreService";
 
 // Sign up function for user registration
 export const signUp = async (email, password, role, extrData = {}) => {

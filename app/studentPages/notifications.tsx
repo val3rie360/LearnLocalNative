@@ -57,7 +57,7 @@ const notifications = [
     icon: <Feather name="award" size={26} color="#fff" />,
     title: (
       <Text className="font-karla text-primaryb">
-        "Workshop ‘Creative Writing 101’ starts tomorrow at 4 PM."
+        &quot;Workshop &apos;Creative Writing 101&apos; starts tomorrow at 4 PM.&quot;
       </Text>
     ),
     time: "",
