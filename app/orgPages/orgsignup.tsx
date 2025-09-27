@@ -6,11 +6,11 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { signUp } from "../services/authServices";
+import { signUp } from "../../services/authServices";
 import {
   signInWithFacebook,
   signInWithGoogle,
-} from "../services/socialAuthServices";
+} from "../../services/socialAuthServices";
 
 export default function OrgSignup() {
   const router = useRouter();

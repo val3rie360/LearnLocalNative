@@ -93,7 +93,7 @@ export default function UserType() {
             router.replace("/studentPages/studentsignup");
           } else if (selected === "org") {
             console.log("Navigating to org signup");
-            router.replace("/orgsignup");
+            router.replace("/orgPages/orgsignup");
           }
         }}
       >
