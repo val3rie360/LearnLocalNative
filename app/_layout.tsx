@@ -19,18 +19,26 @@ function RootLayoutNav() {
     }
 
     const currentRoute = segments[0];
-    const inStudentPages = currentRoute === 'studentPages';
-    const isOnProtectedPages = currentRoute === 'studentPages' && segments[1] === '(tabs)';
+    const inStudentPages = currentRoute === "studentPages";
+    const isOnProtectedPages =
+      currentRoute === "studentPages" && segments[1] === "(tabs)";
 
     // Only redirect if user is trying to access protected student pages without being authenticated
     if (!user && isOnProtectedPages) {
-      console.log('Redirecting unauthenticated user from protected pages to login');
-      router.replace('/login');
+      console.log(
+        "Redirecting unauthenticated user from protected pages to login"
+      );
+      router.replace("/login");
     }
     // If user is authenticated and on login/signup pages, redirect to home
-    else if (user && (currentRoute === 'login' || currentRoute === 'studentsignup' || currentRoute === 'orgsignup')) {
-      console.log('Redirecting authenticated user from auth pages to Home');
-      router.replace('/studentPages/(tabs)/Home');
+    else if (
+      user &&
+      (currentRoute === "login" ||
+        currentRoute === "studentsignup" ||
+        currentRoute === "orgsignup")
+    ) {
+      console.log("Redirecting authenticated user from auth pages to Home");
+      router.replace("/studentPages/(tabs)/Home");
     }
   }, [user, loading, segments, router]);
 
@@ -110,7 +118,7 @@ export default function RootLayout() {
       </Animated.View>
     );
   }
-  
+
   return (
     <AuthProvider>
       <RootLayoutNav />
