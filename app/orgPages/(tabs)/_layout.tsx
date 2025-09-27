@@ -44,8 +44,8 @@ const _Layout = () => {
         options={{
           tabBarIcon: ({ focused }) => (
             <AntDesign
-              name="book"
-              size={23}
+              name="appstore"
+              size={25}
               color={focused ? "#5048A6" : "black"}
             />
           ),

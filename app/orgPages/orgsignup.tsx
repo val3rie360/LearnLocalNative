@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { signUp } from "../../services/authServices";
 
 export default function OrgSignup() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function OrgSignup() {
     }
   };
 
-  /*const handleSignUp = async () => {
+  const handleSignUp = async () => {
     setError(""); // Clear previous error
 
     // Trim all fields before validation
@@ -75,7 +76,7 @@ export default function OrgSignup() {
       setError("Error registering organization. Please try again.");
       console.error("Error registering organization:", error);
     }
-  };*/
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#4B1EB4]">
@@ -261,8 +262,7 @@ export default function OrgSignup() {
           {/* Register Button */}
           <TouchableOpacity
             className="bg-[#4B1EB4] rounded-full py-3 items-center mb-6 shadow-md"
-            //onPress={handleSignUp}
-            onPress={() => router.replace("/orgPages/(tabs)/OrgHome")}
+            onPress={handleSignUp}
           >
             <Text className="text-white text-base font-karla-bold">
               Register

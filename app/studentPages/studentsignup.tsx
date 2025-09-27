@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { signUp } from "../../services/authServices";
 
 export default function StudentSignup() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function StudentSignup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState(""); // <-- Add error state
 
-  /*const handleSignUp = async () => {
+  const handleSignUp = async () => {
     setError(""); // Clear previous error
 
     // Trim all fields before validation
@@ -51,7 +52,7 @@ export default function StudentSignup() {
       setError("Error registering student. Please try again.");
       console.error("Error registering student:", error);
     }
-  };*/
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-secondary" edges={["top"]}>
@@ -217,8 +218,7 @@ export default function StudentSignup() {
           {/* Register Button */}
           <TouchableOpacity
             className="bg-[#4B1EB4] rounded-full py-3 items-center mb-6 shadow-md"
-            //onPress={handleSignUp}
-            onPress={() => router.replace("/studentPages/(tabs)/Home")}
+            onPress={handleSignUp}
           >
             <Text className="text-white text-base font-karla-bold">
               Register
