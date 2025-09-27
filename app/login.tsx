@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signIn } from "../services/authServices";
+import { signInWithFacebook, signInWithGoogle } from "../services/socialAuthServices";
 
 export default function Login() {
   const router = useRouter();
@@ -29,6 +30,34 @@ export default function Login() {
     } catch (error) {
       setError("Invalid email or password. Please try again.");
       console.error("Login error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+      router.replace("/studentPages/(tabs)/Home");
+    } catch (error) {
+      setError("Google sign-in failed. Please try again.");
+      console.error("Google login error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFacebookLogin = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await signInWithFacebook();
+      router.replace("/studentPages/(tabs)/Home");
+    } catch (error) {
+      setError("Facebook sign-in failed. Please try again.");
+      console.error("Facebook login error:", error);
     } finally {
       setLoading(false);
     }
@@ -152,14 +181,22 @@ export default function Login() {
           </View>
           {/* Social Buttons */}
           <View className="flex-row justify-center mb-4 space-x-4">
-            <TouchableOpacity className="bg-primaryw rounded-xl p-2 shadow mr-4">
+            <TouchableOpacity 
+              className="bg-primaryw rounded-xl p-2 shadow mr-4"
+              onPress={handleFacebookLogin}
+              disabled={loading}
+            >
               <Image
                 source={require("../assets/images/fb.png")}
                 className="w-8 h-8"
                 resizeMode="contain"
               />
             </TouchableOpacity>
-            <TouchableOpacity className="bg-primaryw rounded-xl p-2 shadow">
+            <TouchableOpacity 
+              className="bg-primaryw rounded-xl p-2 shadow"
+              onPress={handleGoogleLogin}
+              disabled={loading}
+            >
               <Image
                 source={require("../assets/images/google.png")}
                 className="w-8 h-8"

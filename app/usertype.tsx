@@ -87,10 +87,13 @@ export default function UserType() {
         }`}
         disabled={!selected}
         onPress={() => {
+          console.log("Continue button pressed, selected:", selected);
           if (selected === "student") {
+            console.log("Navigating to student signup");
             router.replace("/studentPages/studentsignup");
           } else if (selected === "org") {
-            router.replace("/orgPages/orgsignup");
+            console.log("Navigating to org signup");
+            router.replace("/orgsignup");
           }
         }}
       >
