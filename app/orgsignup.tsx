@@ -7,6 +7,7 @@ import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signUp } from "../services/authServices";
+import { signInWithFacebook, signInWithGoogle } from "../services/socialAuthServices";
 
 export default function OrgSignup() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function OrgSignup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const pickDocument = async () => {
     try {
@@ -55,26 +57,65 @@ export default function OrgSignup() {
       setError("Passwords do not match");
       return;
     }
-    if (!file) {
-      setError("Please upload a verification document");
-      return;
-    }
+    // Make file upload optional for now to test registration
+    // if (!file) {
+    //   setError("Please upload a verification document");
+    //   return;
+    // }
     if (!accepted) {
       setError("Please accept the terms and conditions");
       return;
     }
 
+    setLoading(true);
     try {
       const extraData = {
         name: trimmedName,
         verificationFile: file,
       };
+      console.log("Attempting to register organization with email:", trimmedEmail);
       await signUp(trimmedEmail, trimmedPassword, "organization", extraData);
       console.log("Organization registered successfully");
-      // router.replace("/(tabs)/Home");
+      router.replace("/studentPages/(tabs)/Home");
     } catch (error) {
-      setError("Error registering organization. Please try again.");
       console.error("Error registering organization:", error);
+      if (error.code === 'auth/email-already-in-use') {
+        setError("This email is already registered. Please use a different email or try logging in.");
+      } else if (error.code === 'auth/weak-password') {
+        setError("Password is too weak. Please choose a stronger password.");
+      } else {
+        setError(`Registration failed: ${error.message}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+      router.replace("/studentPages/(tabs)/Home");
+    } catch (error) {
+      setError("Google sign-up failed. Please try again.");
+      console.error("Google signup error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFacebookSignUp = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await signInWithFacebook();
+      router.replace("/studentPages/(tabs)/Home");
+    } catch (error) {
+      setError("Facebook sign-up failed. Please try again.");
+      console.error("Facebook signup error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -263,9 +304,10 @@ export default function OrgSignup() {
           <TouchableOpacity
             className="bg-[#4B1EB4] rounded-full py-3 items-center mb-6 shadow-md"
             onPress={handleSignUp}
+            disabled={loading}
           >
             <Text className="text-white text-base font-karla-bold">
-              Register
+              {loading ? "Registering..." : "Register"}
             </Text>
           </TouchableOpacity>
           {/* Or Divider */}
@@ -278,14 +320,22 @@ export default function OrgSignup() {
           </View>
           {/* Social Buttons */}
           <View className="flex-row justify-center mb-4">
-            <TouchableOpacity className="bg-white rounded-xl p-2 shadow mr-4">
+            <TouchableOpacity 
+              className="bg-white rounded-xl p-2 shadow mr-4"
+              onPress={handleFacebookSignUp}
+              disabled={loading}
+            >
               <Image
                 source={require("../assets/images/fb.png")}
                 className="w-8 h-8"
                 resizeMode="contain"
               />
             </TouchableOpacity>
-            <TouchableOpacity className="bg-white rounded-xl p-2 shadow">
+            <TouchableOpacity 
+              className="bg-white rounded-xl p-2 shadow"
+              onPress={handleGoogleSignUp}
+              disabled={loading}
+            >
               <Image
                 source={require("../assets/images/google.png")}
                 className="w-8 h-8"

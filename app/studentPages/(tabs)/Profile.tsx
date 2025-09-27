@@ -1,11 +1,45 @@
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../../contexts/AuthContext";
+import { logOut } from "../../../services/authServices";
 
 const Profile: React.FC = () => {
   const router = useRouter();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+
+  const handleLogout = async () => {
+    Alert.alert(
+      "Log Out",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log Out",
+          style: "destructive",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              await logOut();
+              console.log("User logged out successfully");
+              // The AuthContext will automatically handle the redirect
+            } catch (error) {
+              console.error("Logout error:", error);
+              Alert.alert("Error", "Failed to log out. Please try again.");
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
   return (
     <SafeAreaView className="flex-1 bg-[#F6F4FE]" edges={["top"]}>
       <View className="flex-1 bg-[#F6F4FE] items-center pt-16">
@@ -14,10 +48,10 @@ const Profile: React.FC = () => {
             <FontAwesome name="user-circle-o" size={85} color="#000" />
           </View>
           <Text className="text-[20px] text-black font-karla-bold mb-1">
-            Rach Ramirez
+            {user?.displayName || user?.email?.split('@')[0] || 'User'}
           </Text>
           <Text className="text-[14px] text-[#7D7CFF] font-karla-bold mb-2">
-            @rachramz
+            @{user?.email?.split('@')[0] || 'user'}
           </Text>
           <View className="bg-[#FFB3B3] py-1 px-3 rounded-lg">
             <Text className="text-[14px] text-black font-karla-bold">
@@ -79,7 +113,8 @@ const Profile: React.FC = () => {
 
           <TouchableOpacity
             className="flex-row items-center py-1.5 justify-between"
-            onPress={() => router.replace("../index")}
+            onPress={handleLogout}
+            disabled={loading}
           >
             <View className="flex-row items-center">
               <MaterialIcons
@@ -94,7 +129,7 @@ const Profile: React.FC = () => {
                 }}
               />
               <Text className="text-[16px] font-karla-bold text-[#FF6B6B]">
-                Log Out
+                {loading ? "Logging out..." : "Log Out"}
               </Text>
             </View>
           </TouchableOpacity>
