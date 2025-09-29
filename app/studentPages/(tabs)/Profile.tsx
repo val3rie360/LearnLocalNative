@@ -1,11 +1,10 @@
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../contexts/AuthContext";
 import { logOut } from "../../../services/authServices";
-import { getUserProfile } from "../../../services/firestoreService";
 
 interface ProfileData {
   name?: string;
@@ -19,29 +18,8 @@ interface ProfileData {
 
 const Profile: React.FC = () => {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profileData, profileLoading } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  // Fetch user profile data when component mounts
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (user?.uid) {
-        try {
-          setProfileLoading(true);
-          const profile = await getUserProfile(user.uid);
-          setProfileData(profile);
-        } catch (error) {
-          console.error("Error fetching profile data:", error);
-        } finally {
-          setProfileLoading(false);
-        }
-      }
-    };
-
-    fetchProfileData();
-  }, [user?.uid]);
 
   const handleLogout = async () => {
     Alert.alert("Log Out", "Are you sure you want to log out?", [

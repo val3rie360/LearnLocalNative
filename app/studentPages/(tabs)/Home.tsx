@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { memo, useEffect, useState } from "react";
+import React, { memo } from "react";
 import {
   ScrollView,
   Text,
@@ -12,7 +12,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import OpportunityCard from "../../../components/OpportunityCard";
 import { useAuth } from "../../../contexts/AuthContext";
-import { getUserProfile } from "../../../services/firestoreService";
 import { searchBarContainer, searchBarInput } from "../../../tsStyling";
 
 interface ProfileData {
@@ -90,28 +89,7 @@ const CategoryItem = memo(function CategoryItem({
 
 export default function Home() {
   const router = useRouter();
-  const { user } = useAuth();
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  // Fetch user profile data when component mounts
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (user?.uid) {
-        try {
-          setProfileLoading(true);
-          const profile = await getUserProfile(user.uid);
-          setProfileData(profile);
-        } catch (error) {
-          console.error("Error fetching profile data:", error);
-        } finally {
-          setProfileLoading(false);
-        }
-      }
-    };
-
-    fetchProfileData();
-  }, [user?.uid]);
+  const { user, profileData, profileLoading } = useAuth();
 
   // Get display name with fallbacks
   const getDisplayName = () => {

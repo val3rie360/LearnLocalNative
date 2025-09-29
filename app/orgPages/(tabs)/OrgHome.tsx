@@ -1,19 +1,18 @@
 import {
-    FontAwesome,
-    Ionicons,
-    MaterialCommunityIcons,
+  FontAwesome,
+  Ionicons,
+  MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useAuth } from "../../../contexts/AuthContext";
-import { getUserProfile } from "../../../services/firestoreService";
 
 interface ProfileData {
   name?: string;
@@ -49,28 +48,7 @@ const opportunities = [
 ];
 
 export default function OrgHome() {
-  const { user } = useAuth();
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  // Fetch user profile data when component mounts
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (user?.uid) {
-        try {
-          setProfileLoading(true);
-          const profile = await getUserProfile(user.uid);
-          setProfileData(profile);
-        } catch (error) {
-          console.error("Error fetching profile data:", error);
-        } finally {
-          setProfileLoading(false);
-        }
-      }
-    };
-
-    fetchProfileData();
-  }, [user?.uid]);
+  const { user, profileData, profileLoading } = useAuth();
 
   // Get display name with fallbacks
   const getDisplayName = () => {

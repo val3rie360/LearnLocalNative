@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
-import { getUserProfile, updateUserProfile } from "../services/firestoreService";
+import { updateUserProfile } from "../services/firestoreService";
 
 interface ProfileData {
   name?: string;
@@ -19,36 +19,20 @@ interface ProfileData {
 
 export default function EditAccount() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profileData, profileLoading, refreshProfile } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
 
-  // Fetch user profile data when component mounts
+  // Set form values when profile data changes
   useEffect(() => {
-    const fetchProfileData = async () => {
-      if (user?.uid) {
-        try {
-          setProfileLoading(true);
-          const profile = await getUserProfile(user.uid);
-          setProfileData(profile);
-          // Set form values from profile data
-          setName(profile?.name || user?.displayName || "");
-          setEmail(profile?.email || user?.email || "");
-        } catch (error) {
-          console.error("Error fetching profile data:", error);
-        } finally {
-          setProfileLoading(false);
-        }
-      }
-    };
-
-    fetchProfileData();
-  }, [user?.uid]);
+    if (profileData) {
+      setName(profileData?.name || user?.displayName || "");
+      setEmail(profileData?.email || user?.email || "");
+    }
+  }, [profileData, user]);
 
   const handleSaveChanges = async () => {
     if (!user?.uid) {
@@ -81,6 +65,9 @@ export default function EditAccount() {
       };
 
       await updateUserProfile(user.uid, updatedProfileData);
+
+      // Refresh profile data to update all components
+      await refreshProfile();
 
       Alert.alert("Success", "Profile updated successfully", [
         { text: "OK", onPress: () => router.back() }

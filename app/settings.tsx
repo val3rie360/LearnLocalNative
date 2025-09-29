@@ -1,10 +1,9 @@
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Switch, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext";
-import { getUserProfile } from "../services/firestoreService";
 
 interface ProfileData {
   name?: string;
@@ -19,29 +18,8 @@ interface ProfileData {
 export default function Settings() {
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
   const router = useRouter();
-  const { user } = useAuth();
-
-  // Fetch user profile data when component mounts
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      if (user?.uid) {
-        try {
-          setProfileLoading(true);
-          const profile = await getUserProfile(user.uid);
-          setProfileData(profile);
-        } catch (error) {
-          console.error("Error fetching profile data:", error);
-        } finally {
-          setProfileLoading(false);
-        }
-      }
-    };
-
-    fetchProfileData();
-  }, [user?.uid]);
+  const { user, profileData, profileLoading } = useAuth();
 
   // Get display name with fallbacks
   const getDisplayName = () => {
