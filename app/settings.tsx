@@ -15,7 +15,7 @@ export default function Settings() {
       <TouchableOpacity
         className="mt-14 mb-2 w-8"
         hitSlop={10}
-        onPress={() => router.replace("/studentPages/(tabs)/Profile")}
+        onPress={() => router.back()}
       >
         <Ionicons name="arrow-back" size={24} color="#222" />
       </TouchableOpacity>

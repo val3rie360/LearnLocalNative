@@ -82,7 +82,7 @@ export default function OrgSignup() {
       );
       await signUp(trimmedEmail, trimmedPassword, "organization", extraData);
       console.log("Organization registered successfully");
-      router.replace("/studentPages/(tabs)/Home");
+      router.replace("/orgPages/(tabs)/OrgHome");
     } catch (error) {
       console.error("Error registering organization:", error);
       if (error.code === "auth/email-already-in-use") {
@@ -104,7 +104,7 @@ export default function OrgSignup() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      router.replace("/studentPages/(tabs)/Home");
+      router.replace("/orgPages/(tabs)/OrgHome");
     } catch (error) {
       setError("Google sign-up failed. Please try again.");
       console.error("Google signup error:", error);
@@ -118,7 +118,7 @@ export default function OrgSignup() {
     setLoading(true);
     try {
       await signInWithFacebook();
-      router.replace("/studentPages/(tabs)/Home");
+      router.replace("/orgPages/(tabs)/OrgHome");
     } catch (error) {
       setError("Facebook sign-up failed. Please try again.");
       console.error("Facebook signup error:", error);

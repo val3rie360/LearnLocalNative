@@ -59,3 +59,12 @@ export const notifTime = "text-[13px] font-karla text-[#6B7280]";
 export const notifDivider = "border-t border-[#e0e0e0] mb-4";
 export const notifEndText =
   "text-center text-[14px] font-karla text-[#6B7280] mt-4 mb-8";
+
+export const cardButton =
+  "bg-white rounded-xl py-8 px-4 items-center w-44 border-4";
+export const cardButtonSelected = "border-yellow-400";
+export const cardButtonUnselected = "border-transparent";
+export const continueButton =
+  "bg-white rounded-full py-3 px-12 self-center mt-1 mb-4";
+export const continueButtonText =
+  "text-violet-800 text-lg text-center font-karla-bold";

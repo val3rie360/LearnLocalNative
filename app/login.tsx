@@ -5,7 +5,10 @@ import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signIn } from "../services/authServices";
-import { signInWithFacebook, signInWithGoogle } from "../services/socialAuthServices";
+import {
+  signInWithFacebook,
+  signInWithGoogle,
+} from "../services/socialAuthServices";
 
 export default function Login() {
   const router = useRouter();
@@ -17,7 +20,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     setError("");
-    
+
     if (!email.trim() || !password.trim()) {
       setError("Please fill in all fields");
       return;
@@ -181,7 +184,7 @@ export default function Login() {
           </View>
           {/* Social Buttons */}
           <View className="flex-row justify-center mb-4 space-x-4">
-            <TouchableOpacity 
+            <TouchableOpacity
               className="bg-primaryw rounded-xl p-2 shadow mr-4"
               onPress={handleFacebookLogin}
               disabled={loading}
@@ -192,7 +195,7 @@ export default function Login() {
                 resizeMode="contain"
               />
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               className="bg-primaryw rounded-xl p-2 shadow"
               onPress={handleGoogleLogin}
               disabled={loading}
