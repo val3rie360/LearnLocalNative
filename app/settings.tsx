@@ -1,13 +1,59 @@
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Switch, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../contexts/AuthContext";
+import { getUserProfile } from "../services/firestoreService";
+
+interface ProfileData {
+  name?: string;
+  email?: string;
+  role?: 'student' | 'organization';
+  createdAt?: {
+    seconds: number;
+  };
+  verificationFileUrl?: string;
+}
 
 export default function Settings() {
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const router = useRouter();
+  const { user } = useAuth();
+
+  // Fetch user profile data when component mounts
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (user?.uid) {
+        try {
+          setProfileLoading(true);
+          const profile = await getUserProfile(user.uid);
+          setProfileData(profile);
+        } catch (error) {
+          console.error("Error fetching profile data:", error);
+        } finally {
+          setProfileLoading(false);
+        }
+      }
+    };
+
+    fetchProfileData();
+  }, [user?.uid]);
+
+  // Get display name with fallbacks
+  const getDisplayName = () => {
+    if (profileLoading) return "Loading...";
+    return profileData?.name || user?.displayName || user?.email?.split("@")[0] || "User";
+  };
+
+  // Get display email
+  const getDisplayEmail = () => {
+    if (profileLoading) return "Loading...";
+    return profileData?.email || user?.email || "No email";
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#F6F4FE] px-5">
@@ -35,10 +81,13 @@ export default function Settings() {
         </View>
         <View className="flex-1">
           <Text className="font-karla-bold text-[15px] text-[#18181B]">
-            Rach Ramirez
+            {getDisplayName()}
           </Text>
           <Text className="font-karla text-[13px] text-[#6B7280]">
-            Edit personal details
+            {getDisplayEmail()}
+          </Text>
+          <Text className="font-karla text-[12px] text-[#6B7280] mt-1">
+            {profileData?.role === 'organization' ? 'Organization' : 'Student'} • Tap to edit
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={22} color="#18181B" />

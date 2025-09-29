@@ -21,3 +21,14 @@ export const getUserProfile = async (userId) => {
     throw error;
   }
 };
+
+// Function to update user profile data
+export const updateUserProfile = async (userId, profileData) => {
+  try {
+    await setDoc(doc(db, "profiles", userId), profileData, { merge: true });
+    console.log("Profile updated successfully");
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    throw error;
+  }
+};
