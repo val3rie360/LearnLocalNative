@@ -2,7 +2,6 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
-
 export default function UserType() {
   const [selected, setSelected] = useState<"student" | "org" | null>(null);
   const router = useRouter();

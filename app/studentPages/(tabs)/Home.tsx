@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { memo } from "react";
+import React, { memo, useEffect, useState } from "react";
 import {
   ScrollView,
   Text,
@@ -11,7 +11,19 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OpportunityCard from "../../../components/OpportunityCard";
+import { useAuth } from "../../../contexts/AuthContext";
+import { getUserProfile } from "../../../services/firestoreService";
 import { searchBarContainer, searchBarInput } from "../../../tsStyling";
+
+interface ProfileData {
+  name?: string;
+  email?: string;
+  role?: 'student' | 'organization';
+  createdAt?: {
+    seconds: number;
+  };
+  verificationFileUrl?: string;
+}
 
 // Static data outside component for efficiency
 const DEADLINES = [
@@ -78,6 +90,35 @@ const CategoryItem = memo(function CategoryItem({
 
 export default function Home() {
   const router = useRouter();
+  const { user } = useAuth();
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // Fetch user profile data when component mounts
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (user?.uid) {
+        try {
+          setProfileLoading(true);
+          const profile = await getUserProfile(user.uid);
+          setProfileData(profile);
+        } catch (error) {
+          console.error("Error fetching profile data:", error);
+        } finally {
+          setProfileLoading(false);
+        }
+      }
+    };
+
+    fetchProfileData();
+  }, [user?.uid]);
+
+  // Get display name with fallbacks
+  const getDisplayName = () => {
+    if (profileLoading) return "there";
+    return profileData?.name || user?.displayName || user?.email?.split("@")[0] || "there";
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-[#4B1EB4]" edges={["top"]}>
       <ScrollView className="bg-[#E0E3FF] flex-1">
@@ -86,10 +127,10 @@ export default function Home() {
           <View className="px-6 pt-6 flex-row justify-between items-center">
             <View>
               <Text className="text-[26px] text-white font-karla">
-                Hi, <Text className="font-karla-bold">Rach!</Text>
+                Hi, <Text className="font-karla-bold">{getDisplayName()}!</Text>
               </Text>
               <Text className="text-[14px] text-[#EAEAEA] font-karla">
-                Discover what’s new today.
+                Discover what's new today.
               </Text>
             </View>
             <TouchableOpacity onPress={() => router.push("../notifications")}>
