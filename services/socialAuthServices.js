@@ -21,6 +21,11 @@ const FACEBOOK_REDIRECT_URI = AuthSession.makeRedirectUri({
 // Google Sign In
 export const signInWithGoogle = async () => {
   try {
+    // Check if credentials are configured
+    if (GOOGLE_CLIENT_ID === 'YOUR_ACTUAL_GOOGLE_CLIENT_ID_HERE') {
+      throw new Error('Google OAuth credentials not configured. Please set up Google OAuth in the Firebase Console and update the credentials in socialAuthServices.js');
+    }
+
     const request = new AuthSession.AuthRequest({
       clientId: GOOGLE_CLIENT_ID,
       scopes: ['openid', 'profile', 'email'],
@@ -75,6 +80,11 @@ export const signInWithGoogle = async () => {
 // Facebook Sign In
 export const signInWithFacebook = async () => {
   try {
+    // Check if credentials are configured
+    if (FACEBOOK_APP_ID === 'YOUR_ACTUAL_FACEBOOK_APP_ID_HERE') {
+      throw new Error('Facebook OAuth credentials not configured. Please set up Facebook OAuth in the Firebase Console and update the credentials in socialAuthServices.js');
+    }
+
     const request = new AuthSession.AuthRequest({
       clientId: FACEBOOK_APP_ID,
       scopes: ['public_profile', 'email'],
