@@ -1,10 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "../contexts/AuthContext";
 import { signIn } from "../services/authServices";
 import {
   signInWithFacebook,
@@ -13,34 +12,14 @@ import {
 
 export default function Login() {
   const router = useRouter();
-  const { profileData, profileLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Function to redirect based on user role
-  const redirectBasedOnRole = () => {
-    if (profileLoading) {
-      // Wait for profile data to load
-      return;
-    }
-    
-    const homeRoute = profileData?.role === 'organization' 
-      ? "/orgPages/(tabs)/OrgHome" 
-      : "/studentPages/(tabs)/Home";
-    
-    console.log(`Redirecting ${profileData?.role || 'student'} user to ${homeRoute}`);
-    router.replace(homeRoute);
-  };
-
-  // Handle redirection when profile data is loaded
-  useEffect(() => {
-    if (!profileLoading && profileData) {
-      redirectBasedOnRole();
-    }
-  }, [profileData, profileLoading]);
+  // Note: Redirection is now handled by the global routing logic in _layout.tsx
+  // This ensures consistent role-based routing across the entire app
 
   const handleLogin = async () => {
     setError("");
@@ -192,10 +171,10 @@ export default function Login() {
           <TouchableOpacity
             className="bg-secondary rounded-full py-3 items-center mb-4 shadow-md"
             onPress={handleLogin}
-            disabled={loading || profileLoading}
+            disabled={loading}
           >
             <Text className="text-primaryw text-[17px] font-karla-bold">
-              {loading ? "Logging in..." : profileLoading ? "Loading profile..." : "Login"}
+              {loading ? "Logging in..." : "Login"}
             </Text>
           </TouchableOpacity>
           {/* Or Divider */}
@@ -211,7 +190,7 @@ export default function Login() {
             <TouchableOpacity
               className="bg-primaryw rounded-xl p-2 shadow mr-4"
               onPress={handleFacebookLogin}
-              disabled={loading || profileLoading}
+              disabled={loading}
             >
               <Image
                 source={require("../assets/images/fb.png")}
@@ -222,7 +201,7 @@ export default function Login() {
             <TouchableOpacity
               className="bg-primaryw rounded-xl p-2 shadow"
               onPress={handleGoogleLogin}
-              disabled={loading || profileLoading}
+              disabled={loading}
             >
               <Image
                 source={require("../assets/images/google.png")}
