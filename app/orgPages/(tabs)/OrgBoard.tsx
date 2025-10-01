@@ -1,4 +1,4 @@
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { Entypo, FontAwesome, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -108,8 +108,8 @@ export default function OrgBoard() {
                       {post.tag}
                     </Text>
                   </View>
-                  <FontAwesome
-                    name="heart"
+                  <Entypo
+                    name="arrow-up"
                     size={14}
                     color="#A1A1AA"
                     style={{ marginRight: 3 }}
