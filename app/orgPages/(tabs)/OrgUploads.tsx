@@ -94,7 +94,7 @@ export default function OrgUploads() {
               <FileCard title={item.title} date={item.date} size={item.size} />
             )}
             ListFooterComponent={
-              <Text className="text-center text-[#888] mt-6 text-[14px] font-karla">
+              <Text className="text-center text-primaryw mt-6 text-[14px] font-karla">
                 No more files to show.
               </Text>
             }

@@ -1,6 +1,7 @@
 import {
   Feather,
   FontAwesome6,
+  Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -87,6 +88,9 @@ const OrgCreate = () => {
         <MaterialCommunityIcons name="bookshelf" size={24} color="#3C4251" />
       );
     }
+    if (category === "Study Spot") {
+      return <Ionicons name="location" size={24} color="#3C4251" />;
+    }
     if (category === "Workshop / Seminar") {
       return (
         <FontAwesome6
@@ -112,11 +116,8 @@ const OrgCreate = () => {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <View className="flex-1 px-6 pt-10">
             {/* Header */}
-            <View className="flex-row items-center mb-6">
-              <TouchableOpacity>
-                <Feather name="arrow-left" size={22} color="#18181B" />
-              </TouchableOpacity>
-              <Text className="flex-1 text-center text-xl font-karla-bold text-[#18181B] mr-8">
+            <View className="flex-row items-center mb-6 justify-center">
+              <Text className="text-center text-xl font-karla-bold text-[#18181B]">
                 New Opportunity
               </Text>
             </View>
