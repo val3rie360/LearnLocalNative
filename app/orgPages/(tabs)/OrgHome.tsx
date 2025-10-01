@@ -100,7 +100,7 @@ export default function OrgHome() {
               className="bg-white rounded-full w-24 h-24 items-center justify-center border-4 border-[#ECEAFF] shadow"
               style={{ elevation: 0 }}
             >
-              <Ionicons name="people" size={56} color="#7D7CFF" />
+              <FontAwesome name="users" size={56} color="#7D7CFF" />
             </View>
             <View className="flex-row items-center mt-2">
               {/* Verified checkmark on the left of the name */}
@@ -140,25 +140,12 @@ export default function OrgHome() {
                     }}
                   />
                 </View>
-                <View className="flex-1">
-                  <View
-                    style={{
-                      backgroundColor: "#E3E3E3",
-                      borderRadius: 25,
-                      paddingHorizontal: 8,
-                      paddingVertical: 1,
-                    }}
-                  >
-                    <TextInput
-                      placeholder="Opportunity Title"
-                      placeholderTextColor="#9B9B9B"
-                      style={{
-                        fontFamily: "Karla",
-                        fontSize: 13,
-                        color: "#18181B",
-                      }}
-                    />
-                  </View>
+                <View className="flex-row flex-1 items-center bg-[#F7F7F8] rounded-3xl px-4 h-11 mb-4.5 border border-[#ECECEC]">
+                  <TextInput
+                    className="flex-1 text-[15px] text-[#222] font-karla"
+                    placeholder="Opportunity Title"
+                    placeholderTextColor="#B0B0B0"
+                  />
                 </View>
               </View>
               {/* Categories Row */}

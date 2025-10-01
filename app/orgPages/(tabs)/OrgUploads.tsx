@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -45,52 +46,62 @@ const FileCard = ({
 export default function OrgUploads() {
   const router = useRouter();
   return (
-    <SafeAreaView className="flex-1 bg-[#F6F4FE]" edges={["top"]}>
-      <View className="flex-1 bg-[#F6F4FE] px-5 pt-8">
-        {/* Header */}
-        <View className="flex-col mb-3.5">
-          <Text className="text-[28px] text-[#222] font-karla-bold mt-2">
-            My Uploads
-          </Text>
-        </View>
-        {/* Search */}
-        <View className="flex-row items-center bg-white rounded-3xl px-4 h-11 mb-4.5 border border-[#ECECEC]">
-          <Feather name="search" size={18} color="#000000ff" className="mr-2" />
-          <TextInput
-            className="flex-1 text-[15px] text-[#222] font-karla"
-            placeholder="Search for learning materials..."
-            placeholderTextColor="#B0B0B0"
+    <SafeAreaView className="flex-1 bg-[#ECEAFF]" edges={["top"]}>
+      <LinearGradient colors={["#ECEAFF", "#4b1eb4c8"]} style={{ flex: 1 }}>
+        <View className="flex-1 px-5 pt-8">
+          {/* Header */}
+          <View className="flex-col mb-3.5">
+            <Text className="text-[28px] text-[#222] font-karla-bold mt-2">
+              My Uploads
+            </Text>
+            <Text className="text-[15px] text-primaryb mt-1 font-karla">
+              Manage your uploaded files here.
+            </Text>
+          </View>
+          {/* Search */}
+          <View className="flex-row items-center bg-white rounded-3xl px-4 h-11 mb-4.5 border border-[#ECECEC]">
+            <Feather
+              name="search"
+              size={18}
+              color="#000000ff"
+              className="mr-2"
+            />
+            <TextInput
+              className="flex-1 text-[15px] text-[#222] font-karla"
+              placeholder="Search for learning materials..."
+              placeholderTextColor="#B0B0B0"
+            />
+          </View>
+          <View className="h-px bg-[#ECECEC] w-full my-2" />
+
+          {/* Section Title */}
+          <View className="flex-row items-center justify-between mb-2 mt-2">
+            <Text className="text-[18px] font-karla-bold text-[#222]">
+              Your files
+            </Text>
+            <TouchableOpacity>
+              <Feather name="settings" size={20} color="#6C63FF" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Files Grid */}
+          <FlatList
+            data={files}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            contentContainerStyle={{ paddingBottom: 24 }}
+            renderItem={({ item }) => (
+              <FileCard title={item.title} date={item.date} size={item.size} />
+            )}
+            ListFooterComponent={
+              <Text className="text-center text-[#888] mt-6 text-[14px] font-karla">
+                No more files to show.
+              </Text>
+            }
+            showsVerticalScrollIndicator={false}
           />
         </View>
-        <View className="h-px bg-[#ECECEC] w-full my-2" />
-
-        {/* Section Title */}
-        <View className="flex-row items-center justify-between mb-2 mt-2">
-          <Text className="text-[18px] font-karla-bold text-[#222]">
-            Your files
-          </Text>
-          <TouchableOpacity>
-            <Feather name="settings" size={20} color="#6C63FF" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Files Grid */}
-        <FlatList
-          data={files}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={{ paddingBottom: 24 }}
-          renderItem={({ item }) => (
-            <FileCard title={item.title} date={item.date} size={item.size} />
-          )}
-          ListFooterComponent={
-            <Text className="text-center text-[#888] mt-6 text-[14px] font-karla">
-              No more files to show.
-            </Text>
-          }
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
