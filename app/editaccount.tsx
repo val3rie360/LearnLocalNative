@@ -1,5 +1,5 @@
 import { Feather, FontAwesome, MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient"; // <-- Add this import
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { updateEmail, updatePassword, updateProfile } from "firebase/auth";
 import React, { useEffect, useState } from "react";
@@ -85,10 +85,10 @@ export default function EditAccount() {
   const isOrg = profileData?.role === "organization";
 
   const EditAccountContent = () => (
-    <SafeAreaView className="flex-1 px-6 pt-10">
+    <SafeAreaView className="flex-1 px-6 pt-1">
       {/* Back Arrow */}
       <TouchableOpacity
-        className="absolute left-6 top-10"
+        className="absolute left-4 top-20"
         onPress={() => router.back()}
         hitSlop={10}
       >

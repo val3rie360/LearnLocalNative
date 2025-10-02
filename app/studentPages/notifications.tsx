@@ -57,7 +57,8 @@ const notifications = [
     icon: <Feather name="award" size={26} color="#fff" />,
     title: (
       <Text className="font-karla text-primaryb">
-        &quot;Workshop &apos;Creative Writing 101&apos; starts tomorrow at 4 PM.&quot;
+        &quot;Workshop &apos;Creative Writing 101&apos; starts tomorrow at 4
+        PM.&quot;
       </Text>
     ),
     time: "",
@@ -79,7 +80,7 @@ export default function Notifications() {
       <SafeAreaView className="flex-1 px-5 pt-10">
         {/* Back Arrow */}
         <TouchableOpacity
-          className="absolute left-5 top-10"
+          className="absolute left-5 top-15"
           onPress={() => router.back()}
           hitSlop={10}
         >

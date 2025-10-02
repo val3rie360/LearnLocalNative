@@ -176,7 +176,62 @@ const OrgCreate = () => {
             )}
 
             {/* Fields for Study Spot */}
-            {category === "Study Spot" ? (
+            {category === "Competition / Event" ? (
+              <>
+                {/* Title */}
+                <Text className="text-sm text-[#18181B] font-karla-bold mb-1">
+                  Title
+                </Text>
+                <TextInput
+                  className="bg-white rounded-full px-5 h-11 text-base text-[#18181B] font-karla mb-3 border border-[#E5E0FF] shadow"
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="Enter title"
+                  placeholderTextColor="#aaa"
+                />
+
+                {/* Date of Event */}
+                <Text className="text-sm text-[#18181B] font-karla-bold mb-1">
+                  Date of Event
+                </Text>
+                <TextInput
+                  className="bg-white rounded-full px-5 h-11 text-base text-[#18181B] font-karla mb-3 border border-[#E5E0FF] shadow"
+                  value={dateMilestones}
+                  onChangeText={setDateMilestones}
+                  placeholder="Enter date"
+                  placeholderTextColor="#aaa"
+                />
+
+                {/* Prize Amount */}
+                <Text className="text-sm text-[#18181B] font-karla-bold mb-1">
+                  Prize Amount
+                </Text>
+                <View className="flex-row items-center bg-white rounded-full mb-3 px-3 h-11 border border-[#E5E0FF] shadow">
+                  <TextInput
+                    className="flex-1 text-base text-[#18181B] font-karla"
+                    value={amount}
+                    onChangeText={setAmount}
+                    placeholder="Enter amount"
+                    placeholderTextColor="#aaa"
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                {/* Eligibility Details */}
+                <Text className="text-sm text-[#18181B] font-karla-bold mb-1">
+                  Eligibility Details
+                </Text>
+                <TextInput
+                  className="bg-white rounded-xl px-5 text-base text-[#18181B] font-karla mb-6 min-h-[80px] border border-[#E5E0FF] shadow text-top"
+                  value={eligibility}
+                  onChangeText={setEligibility}
+                  placeholder="Enter details"
+                  placeholderTextColor="#aaa"
+                  multiline
+                  numberOfLines={5}
+                />
+              </>
+            ) : category === "Study Spot" ? (
               <>
                 {/* Study Spot Name */}
                 <Text className="text-sm text-[#18181B] font-karla-bold mb-1">
@@ -378,7 +433,7 @@ const OrgCreate = () => {
                   />
                   <TouchableOpacity>
                     <Feather
-                      name="plus-circle"
+                      name="upload"
                       size={20}
                       color="#7D7CFF"
                       className="ml-2"
@@ -476,7 +531,7 @@ const OrgCreate = () => {
                   numberOfLines={20}
                 />
               </>
-            ) : category === "Competition / Event" ? (
+            ) : category === "Workshop / Seminar" ? (
               <>
                 {/* Title */}
                 <Text className="text-sm text-[#18181B] font-karla-bold mb-1">

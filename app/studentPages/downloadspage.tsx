@@ -46,7 +46,7 @@ export default function DownloadsPage() {
   const router = useRouter();
   return (
     <SafeAreaView className="flex-1 bg-[#F6F4FE]" edges={["top"]}>
-      <View className="flex-1 bg-[#F6F4FE] px-5 pt-10">
+      <View className="flex-1 bg-[#F6F4FE] px-5 pt-5">
         {/* Header */}
         <View className="flex-col mb-3.5">
           <TouchableOpacity onPress={() => router.back()}>

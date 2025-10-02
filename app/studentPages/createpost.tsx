@@ -25,7 +25,7 @@ export default function CreatePost() {
     <SafeAreaView className="flex-1 bg-[#E6E4FA]">
       <View className="flex-1 px-5 pt-2">
         {/* Header */}
-        <View className="flex-row items-center justify-between mb-4">
+        <View className="flex-row items-center justify-between mt-8 mb-4">
           <TouchableOpacity
             className="w-8"
             hitSlop={10}
