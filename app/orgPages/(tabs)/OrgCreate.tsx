@@ -234,8 +234,8 @@ const OrgCreate = () => {
       return;
     }
 
-    if (category === "Study Spot" && !location) {
-      Alert.alert('Error', 'Please select a location for study spot');
+    if ((category === "Study Spot" || category === "Workshop / Seminar") && !location) {
+      Alert.alert('Error', `Please select a location for ${category.toLowerCase()}`);
       return;
     }
 
@@ -345,20 +345,23 @@ const OrgCreate = () => {
 
         {/* Title */}
         <Text className="text-sm text-black font-semibold mb-1">
-          {category === "Study Spot" ? "Name of Location *" : "Title *"}
+          {category === "Study Spot" ? "Name of Location *" : 
+           category === "Workshop / Seminar" ? "Workshop/Seminar Title *" : "Title *"}
         </Text>
         <TextInput
           className="bg-white rounded-xl px-3 h-11 text-base text-black mb-3"
           value={title}
           onChangeText={setTitle}
-          placeholder={category === "Study Spot" ? "Enter location name" : "Enter title"}
+          placeholder={category === "Study Spot" ? "Enter location name" : 
+                     category === "Workshop / Seminar" ? "Enter workshop/seminar title" : "Enter title"}
           placeholderTextColor="#aaa"
         />
 
         {/* Description */}
         <Text className="text-sm text-black font-semibold mb-1">
           {category === "Resources" ? "Resource Description *" : 
-           category === "Study Spot" ? "Location Details *" : "Description *"}
+           category === "Study Spot" ? "Location Details *" : 
+           category === "Workshop / Seminar" ? "Workshop/Seminar Description *" : "Description *"}
         </Text>
         <TextInput
           className="bg-white rounded-xl px-3 pt-3 text-base text-black mb-3 min-h-[80px] text-top"
@@ -367,6 +370,7 @@ const OrgCreate = () => {
           placeholder={
             category === "Resources" ? "Enter resource description" : 
             category === "Study Spot" ? "Enter location details" : 
+            category === "Workshop / Seminar" ? "Enter workshop/seminar description" :
             "Enter opportunity description"
           }
           placeholderTextColor="#aaa"
@@ -374,8 +378,8 @@ const OrgCreate = () => {
           numberOfLines={4}
         />
 
-        {/* Date Milestones - Only show for non-resource and non-study spot categories */}
-        {category !== "Resources" && category !== "Study Spot" && (
+        {/* Date Milestones - Only show for scholarship and competition categories */}
+        {category !== "Resources" && category !== "Study Spot" && category !== "Workshop / Seminar" && (
           <>
             <Text className="text-sm text-black font-semibold mb-1">
               Date Milestones
@@ -395,8 +399,8 @@ const OrgCreate = () => {
           </>
         )}
 
-        {/* Available Times - Only show for Study Spot category */}
-        {category === "Study Spot" && (
+        {/* Available Times - Show for Study Spot and Workshop / Seminar categories */}
+        {(category === "Study Spot" || category === "Workshop / Seminar") && (
           <>
             <Text className="text-sm text-black font-semibold mb-1">
               Available Times
@@ -434,8 +438,8 @@ const OrgCreate = () => {
           </>
         )}
 
-        {/* Amount - Only show for non-resource and non-study spot categories */}
-        {category !== "Resources" && category !== "Study Spot" && (
+        {/* Amount - Only show for scholarship and competition categories */}
+        {category !== "Resources" && category !== "Study Spot" && category !== "Workshop / Seminar" && (
           <>
             <Text className="text-sm text-black font-semibold mb-1">Amount</Text>
             <TextInput
@@ -449,8 +453,8 @@ const OrgCreate = () => {
           </>
         )}
 
-        {/* Location Picker - Only show for Study Spot category */}
-        {category === "Study Spot" && (
+        {/* Location Picker - Show for Study Spot and Workshop / Seminar categories */}
+        {(category === "Study Spot" || category === "Workshop / Seminar") && (
           <>
             <Text className="text-sm text-black font-semibold mb-1">Location *</Text>
             <TouchableOpacity
