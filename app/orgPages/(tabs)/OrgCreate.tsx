@@ -107,17 +107,8 @@ const OrgCreate = () => {
   const [showWorkshopStartsPicker, setShowWorkshopStartsPicker] = useState(false);
   const [showWorkshopEndsPicker, setShowWorkshopEndsPicker] = useState(false);
   const [repeats, setRepeats] = useState(false);
-  const [repeatFrequency, setRepeatFrequency] = useState("Weekly");
-  const [showRepeatDropdown, setShowRepeatDropdown] = useState(false);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [showDaySelector, setShowDaySelector] = useState(false);
-
-  const repeatFrequencyOptions = [
-    "Daily",
-    "Weekly", 
-    "Bi-weekly",
-    "Monthly"
-  ];
 
   const daysOfWeek = [
     { key: "Monday", label: "Mon" },
@@ -323,9 +314,7 @@ const OrgCreate = () => {
     }
 
     // Validate day selection for repeating workshops
-    if (category === "Workshop / Seminar" && repeats && 
-        (repeatFrequency === "Weekly" || repeatFrequency === "Bi-weekly") && 
-        selectedDays.length === 0) {
+    if (category === "Workshop / Seminar" && repeats && selectedDays.length === 0) {
       Alert.alert('Error', 'Please select at least one day for repeating workshops');
       return;
     }
@@ -535,7 +524,6 @@ const OrgCreate = () => {
             <Text className="text-sm text-black font-semibold mb-1">
               Workshop Schedule
             </Text>
-            {console.log('Rendering Workshop/Seminar section, repeats:', repeats)}
             <View className="flex-row space-x-3 mb-3">
               <View className="flex-1">
                 <Text className="text-xs text-gray-600 mb-1">Starts at</Text>
@@ -587,90 +575,46 @@ const OrgCreate = () => {
               </View>
               
               {repeats && (
-                <>
-                  <View className="flex-row items-center bg-white rounded-xl px-3 h-11 border border-gray-200 mb-2">
-                    <Text className="text-sm text-gray-600 mr-2">Every:</Text>
-                    <TouchableOpacity
-                      className="flex-1 flex-row items-center justify-between"
-                      onPress={() => setShowRepeatDropdown(!showRepeatDropdown)}
-                    >
-                      <Text className="text-base text-black">{repeatFrequency}</Text>
-                      <Text className="text-lg text-gray-400">▼</Text>
-                    </TouchableOpacity>
-                  </View>
+                <View className="bg-white rounded-xl px-3 py-3 border border-gray-200">
+                  <Text className="text-sm text-gray-600 mb-2">Repeat on days:</Text>
+                  <TouchableOpacity
+                    className="flex-row items-center justify-between py-2"
+                    onPress={() => setShowDaySelector(!showDaySelector)}
+                  >
+                    <Text className="text-base text-black">{getSelectedDaysText()}</Text>
+                    <Text className="text-lg text-gray-400">{showDaySelector ? "▲" : "▼"}</Text>
+                  </TouchableOpacity>
                   
-                  {/* Day Selection - Only show for Weekly and Bi-weekly */}
-                  {(repeatFrequency === "Weekly" || repeatFrequency === "Bi-weekly") && (
-                    <View className="bg-white rounded-xl px-3 py-3 border border-gray-200">
-                      <Text className="text-sm text-gray-600 mb-2">On days:</Text>
-                      <TouchableOpacity
-                        className="flex-row items-center justify-between py-2"
-                        onPress={() => setShowDaySelector(!showDaySelector)}
-                      >
-                        <Text className="text-base text-black">{getSelectedDaysText()}</Text>
-                        <Text className="text-lg text-gray-400">{showDaySelector ? "▲" : "▼"}</Text>
-                      </TouchableOpacity>
-                      
-                      {showDaySelector && (
-                        <View className="mt-2">
-                          <View className="flex-row flex-wrap gap-2">
-                            {daysOfWeek.map((day) => (
-                              <TouchableOpacity
-                                key={day.key}
-                                className={`px-3 py-2 rounded-full border ${
-                                  selectedDays.includes(day.key)
-                                    ? 'bg-[#a084e8] border-[#a084e8]'
-                                    : 'bg-gray-100 border-gray-300'
-                                }`}
-                                onPress={() => toggleDaySelection(day.key)}
-                              >
-                                <Text
-                                  className={`text-sm font-karla ${
-                                    selectedDays.includes(day.key)
-                                      ? 'text-white'
-                                      : 'text-gray-700'
-                                  }`}
-                                >
-                                  {day.label}
-                                </Text>
-                              </TouchableOpacity>
-                            ))}
-                          </View>
-                        </View>
-                      )}
+                  {showDaySelector && (
+                    <View className="mt-2">
+                      <View className="flex-row flex-wrap gap-2">
+                        {daysOfWeek.map((day) => (
+                          <TouchableOpacity
+                            key={day.key}
+                            className={`px-3 py-2 rounded-full border ${
+                              selectedDays.includes(day.key)
+                                ? 'bg-[#a084e8] border-[#a084e8]'
+                                : 'bg-gray-100 border-gray-300'
+                            }`}
+                            onPress={() => toggleDaySelection(day.key)}
+                          >
+                            <Text
+                              className={`text-sm font-karla ${
+                                selectedDays.includes(day.key)
+                                  ? 'text-white'
+                                  : 'text-gray-700'
+                              }`}
+                            >
+                              {day.label}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     </View>
                   )}
-                </>
-              )}
-              
-              {/* Debug indicator */}
-              <Text className="text-xs text-gray-500 mt-1">
-                Debug: repeats={repeats ? 'true' : 'false'}, frequency={repeatFrequency}, days={selectedDays.length}
-              </Text>
-              
-              {/* Repeat Frequency Dropdown */}
-              {showRepeatDropdown && (
-                <View className="bg-white rounded-xl shadow border border-gray-200 mt-1 px-3 py-2">
-                  {repeatFrequencyOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option}
-                      className="py-2"
-                      onPress={() => {
-                        setRepeatFrequency(option);
-                        setShowRepeatDropdown(false);
-                      }}
-                    >
-                      <Text
-                        className={`text-base font-karla ${
-                          repeatFrequency === option ? "text-[#a084e8] font-karla-bold" : "text-[#18181B]"
-                        }`}
-                      >
-                        {option}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
                 </View>
               )}
+              
             </View>
           </>
         )}
