@@ -109,12 +109,24 @@ const OrgCreate = () => {
   const [repeats, setRepeats] = useState(false);
   const [repeatFrequency, setRepeatFrequency] = useState("Weekly");
   const [showRepeatDropdown, setShowRepeatDropdown] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [showDaySelector, setShowDaySelector] = useState(false);
 
   const repeatFrequencyOptions = [
     "Daily",
     "Weekly", 
     "Bi-weekly",
     "Monthly"
+  ];
+
+  const daysOfWeek = [
+    { key: "Monday", label: "Mon" },
+    { key: "Tuesday", label: "Tue" },
+    { key: "Wednesday", label: "Wed" },
+    { key: "Thursday", label: "Thu" },
+    { key: "Friday", label: "Fri" },
+    { key: "Saturday", label: "Sat" },
+    { key: "Sunday", label: "Sun" }
   ];
 
   const categoriesWithIcons = [
@@ -211,6 +223,22 @@ const OrgCreate = () => {
     setShowWorkshopEndsPicker(false);
   };
 
+  // Day selection handlers
+  const toggleDaySelection = (day: string) => {
+    setSelectedDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
+  };
+
+  const getSelectedDaysText = () => {
+    if (selectedDays.length === 0) return "Select days";
+    if (selectedDays.length === 7) return "Every day";
+    if (selectedDays.length === 1) return selectedDays[0];
+    return `${selectedDays.length} days selected`;
+  };
+
   const getCurrentLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -291,6 +319,14 @@ const OrgCreate = () => {
 
     if ((category === "Study Spot" || category === "Workshop / Seminar") && !location) {
       Alert.alert('Error', `Please select a location for ${category.toLowerCase()}`);
+      return;
+    }
+
+    // Validate day selection for repeating workshops
+    if (category === "Workshop / Seminar" && repeats && 
+        (repeatFrequency === "Weekly" || repeatFrequency === "Bi-weekly") && 
+        selectedDays.length === 0) {
+      Alert.alert('Error', 'Please select at least one day for repeating workshops');
       return;
     }
 
@@ -551,21 +587,65 @@ const OrgCreate = () => {
               </View>
               
               {repeats && (
-                <View className="flex-row items-center bg-white rounded-xl px-3 h-11 border border-gray-200">
-                  <Text className="text-sm text-gray-600 mr-2">Every:</Text>
-                  <TouchableOpacity
-                    className="flex-1 flex-row items-center justify-between"
-                    onPress={() => setShowRepeatDropdown(!showRepeatDropdown)}
-                  >
-                    <Text className="text-base text-black">{repeatFrequency}</Text>
-                    <Text className="text-lg text-gray-400">▼</Text>
-                  </TouchableOpacity>
-                </View>
+                <>
+                  <View className="flex-row items-center bg-white rounded-xl px-3 h-11 border border-gray-200 mb-2">
+                    <Text className="text-sm text-gray-600 mr-2">Every:</Text>
+                    <TouchableOpacity
+                      className="flex-1 flex-row items-center justify-between"
+                      onPress={() => setShowRepeatDropdown(!showRepeatDropdown)}
+                    >
+                      <Text className="text-base text-black">{repeatFrequency}</Text>
+                      <Text className="text-lg text-gray-400">▼</Text>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  {/* Day Selection - Only show for Weekly and Bi-weekly */}
+                  {(repeatFrequency === "Weekly" || repeatFrequency === "Bi-weekly") && (
+                    <View className="bg-white rounded-xl px-3 py-3 border border-gray-200">
+                      <Text className="text-sm text-gray-600 mb-2">On days:</Text>
+                      <TouchableOpacity
+                        className="flex-row items-center justify-between py-2"
+                        onPress={() => setShowDaySelector(!showDaySelector)}
+                      >
+                        <Text className="text-base text-black">{getSelectedDaysText()}</Text>
+                        <Text className="text-lg text-gray-400">{showDaySelector ? "▲" : "▼"}</Text>
+                      </TouchableOpacity>
+                      
+                      {showDaySelector && (
+                        <View className="mt-2">
+                          <View className="flex-row flex-wrap gap-2">
+                            {daysOfWeek.map((day) => (
+                              <TouchableOpacity
+                                key={day.key}
+                                className={`px-3 py-2 rounded-full border ${
+                                  selectedDays.includes(day.key)
+                                    ? 'bg-[#a084e8] border-[#a084e8]'
+                                    : 'bg-gray-100 border-gray-300'
+                                }`}
+                                onPress={() => toggleDaySelection(day.key)}
+                              >
+                                <Text
+                                  className={`text-sm font-karla ${
+                                    selectedDays.includes(day.key)
+                                      ? 'text-white'
+                                      : 'text-gray-700'
+                                  }`}
+                                >
+                                  {day.label}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                  )}
+                </>
               )}
               
               {/* Debug indicator */}
               <Text className="text-xs text-gray-500 mt-1">
-                Debug: repeats={repeats ? 'true' : 'false'}, showDropdown={showRepeatDropdown ? 'true' : 'false'}
+                Debug: repeats={repeats ? 'true' : 'false'}, frequency={repeatFrequency}, days={selectedDays.length}
               </Text>
               
               {/* Repeat Frequency Dropdown */}
