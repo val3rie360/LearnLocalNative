@@ -98,6 +98,24 @@ const OrgCreate = () => {
     "10:00 PM",
   ];
   const [studySpotDetails, setStudySpotDetails] = useState("");
+  
+  // Workshop/Seminar specific fields
+  const [workshopStarts, setWorkshopStarts] = useState("");
+  const [workshopEnds, setWorkshopEnds] = useState("");
+  const [workshopStartsDate, setWorkshopStartsDate] = useState(new Date());
+  const [workshopEndsDate, setWorkshopEndsDate] = useState(new Date());
+  const [showWorkshopStartsPicker, setShowWorkshopStartsPicker] = useState(false);
+  const [showWorkshopEndsPicker, setShowWorkshopEndsPicker] = useState(false);
+  const [repeats, setRepeats] = useState(false);
+  const [repeatFrequency, setRepeatFrequency] = useState("Weekly");
+  const [showRepeatDropdown, setShowRepeatDropdown] = useState(false);
+
+  const repeatFrequencyOptions = [
+    "Daily",
+    "Weekly", 
+    "Bi-weekly",
+    "Monthly"
+  ];
 
   const categoriesWithIcons = [
     { id: 1, name: "Scholarship / Grant", icon: "🎓" },
@@ -154,6 +172,43 @@ const OrgCreate = () => {
   const confirmCloseTime = () => {
     setCloseTime(formatTime(closeTimeDate));
     setShowCloseTimePicker(false);
+  };
+
+  // Workshop time handlers
+  const handleWorkshopStartsChange = (event: any, selectedDate?: Date) => {
+    console.log('Workshop starts change:', event.type, selectedDate);
+    
+    if (Platform.OS === 'android') {
+      setShowWorkshopStartsPicker(false);
+    }
+    
+    if (selectedDate) {
+      setWorkshopStartsDate(selectedDate);
+      setWorkshopStarts(formatTime(selectedDate));
+    }
+  };
+
+  const handleWorkshopEndsChange = (event: any, selectedDate?: Date) => {
+    console.log('Workshop ends change:', event.type, selectedDate);
+    
+    if (Platform.OS === 'android') {
+      setShowWorkshopEndsPicker(false);
+    }
+    
+    if (selectedDate) {
+      setWorkshopEndsDate(selectedDate);
+      setWorkshopEnds(formatTime(selectedDate));
+    }
+  };
+
+  const confirmWorkshopStarts = () => {
+    setWorkshopStarts(formatTime(workshopStartsDate));
+    setShowWorkshopStartsPicker(false);
+  };
+
+  const confirmWorkshopEnds = () => {
+    setWorkshopEnds(formatTime(workshopEndsDate));
+    setShowWorkshopEndsPicker(false);
   };
 
   const getCurrentLocation = async () => {
@@ -399,8 +454,8 @@ const OrgCreate = () => {
           </>
         )}
 
-        {/* Available Times - Show for Study Spot and Workshop / Seminar categories */}
-        {(category === "Study Spot" || category === "Workshop / Seminar") && (
+        {/* Available Times - Show for Study Spot category */}
+        {category === "Study Spot" && (
           <>
             <Text className="text-sm text-black font-semibold mb-1">
               Available Times
@@ -434,6 +489,101 @@ const OrgCreate = () => {
                   </Text>
                 </TouchableOpacity>
               </View>
+            </View>
+          </>
+        )}
+
+        {/* Workshop/Seminar Schedule - Show for Workshop / Seminar category */}
+        {category === "Workshop / Seminar" && (
+          <>
+            <Text className="text-sm text-black font-semibold mb-1">
+              Workshop Schedule
+            </Text>
+            <View className="flex-row space-x-3 mb-3">
+              <View className="flex-1">
+                <Text className="text-xs text-gray-600 mb-1">Starts at</Text>
+                <TouchableOpacity
+                  className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
+                  onPress={() => {
+                    console.log('Opening workshop starts picker');
+                    setShowWorkshopStartsPicker(true);
+                  }}
+                >
+                  <Text className={`text-base ${workshopStarts ? 'text-black' : 'text-gray-500'}`}>
+                    {workshopStarts || "Select start time"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs text-gray-600 mb-1">Ends at</Text>
+                <TouchableOpacity
+                  className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
+                  onPress={() => {
+                    console.log('Opening workshop ends picker');
+                    setShowWorkshopEndsPicker(true);
+                  }}
+                >
+                  <Text className={`text-base ${workshopEnds ? 'text-black' : 'text-gray-500'}`}>
+                    {workshopEnds || "Select end time"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Repeat Option */}
+            <View className="mb-3">
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-sm text-black font-semibold">Repeats</Text>
+                <TouchableOpacity
+                  className={`w-12 h-6 rounded-full border-2 ${
+                    repeats ? 'bg-[#a084e8] border-[#a084e8]' : 'bg-gray-200 border-gray-300'
+                  }`}
+                  onPress={() => setRepeats(!repeats)}
+                >
+                  <View
+                    className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                      repeats ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </TouchableOpacity>
+              </View>
+              
+              {repeats && (
+                <View className="flex-row items-center bg-white rounded-xl px-3 h-11 border border-gray-200">
+                  <Text className="text-sm text-gray-600 mr-2">Every:</Text>
+                  <TouchableOpacity
+                    className="flex-1 flex-row items-center justify-between"
+                    onPress={() => setShowRepeatDropdown(!showRepeatDropdown)}
+                  >
+                    <Text className="text-base text-black">{repeatFrequency}</Text>
+                    <Text className="text-lg text-gray-400">▼</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              
+              {/* Repeat Frequency Dropdown */}
+              {showRepeatDropdown && (
+                <View className="bg-white rounded-xl shadow border border-gray-200 mt-1 px-3 py-2 absolute left-0 right-0 z-10">
+                  {repeatFrequencyOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option}
+                      className="py-2"
+                      onPress={() => {
+                        setRepeatFrequency(option);
+                        setShowRepeatDropdown(false);
+                      }}
+                    >
+                      <Text
+                        className={`text-base font-karla ${
+                          repeatFrequency === option ? "text-[#a084e8] font-karla-bold" : "text-[#18181B]"
+                        }`}
+                      >
+                        {option}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           </>
         )}
@@ -658,6 +808,126 @@ const OrgCreate = () => {
               is24Hour={false}
               display="default"
               onChange={handleCloseTimeChange}
+              textColor="#333333"
+              accentColor="#a084e8"
+            />
+          )}
+        </>
+      )}
+
+      {/* Workshop Starts Time Picker */}
+      {showWorkshopStartsPicker && (
+        <>
+          {Platform.OS === 'ios' ? (
+            <Modal
+              visible={showWorkshopStartsPicker}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowWorkshopStartsPicker(false)}
+            >
+              <View className="flex-1 bg-black/50 justify-end">
+                <View className="bg-white rounded-t-3xl p-6">
+                  <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
+                    Select Workshop Start Time
+                  </Text>
+                  <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
+                    <DateTimePicker
+                      value={workshopStartsDate}
+                      mode="time"
+                      is24Hour={false}
+                      display="spinner"
+                      onChange={handleWorkshopStartsChange}
+                      style={{ 
+                        backgroundColor: 'transparent'
+                      }}
+                      textColor="#333333"
+                      accentColor="#a084e8"
+                    />
+                  </View>
+                  <View className="flex-row space-x-3 mt-4">
+                    <TouchableOpacity
+                      className="flex-1 bg-gray-200 rounded-xl py-3"
+                      onPress={() => setShowWorkshopStartsPicker(false)}
+                    >
+                      <Text className="text-center text-base text-gray-600">Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="flex-1 bg-[#a084e8] rounded-xl py-3"
+                      onPress={confirmWorkshopStarts}
+                    >
+                      <Text className="text-center text-base text-white font-bold">Confirm</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          ) : (
+            <DateTimePicker
+              value={workshopStartsDate}
+              mode="time"
+              is24Hour={false}
+              display="default"
+              onChange={handleWorkshopStartsChange}
+              textColor="#333333"
+              accentColor="#a084e8"
+            />
+          )}
+        </>
+      )}
+
+      {/* Workshop Ends Time Picker */}
+      {showWorkshopEndsPicker && (
+        <>
+          {Platform.OS === 'ios' ? (
+            <Modal
+              visible={showWorkshopEndsPicker}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowWorkshopEndsPicker(false)}
+            >
+              <View className="flex-1 bg-black/50 justify-end">
+                <View className="bg-white rounded-t-3xl p-6">
+                  <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
+                    Select Workshop End Time
+                  </Text>
+                  <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
+                    <DateTimePicker
+                      value={workshopEndsDate}
+                      mode="time"
+                      is24Hour={false}
+                      display="spinner"
+                      onChange={handleWorkshopEndsChange}
+                      style={{ 
+                        backgroundColor: 'transparent'
+                      }}
+                      textColor="#333333"
+                      accentColor="#a084e8"
+                    />
+                  </View>
+                  <View className="flex-row space-x-3 mt-4">
+                    <TouchableOpacity
+                      className="flex-1 bg-gray-200 rounded-xl py-3"
+                      onPress={() => setShowWorkshopEndsPicker(false)}
+                    >
+                      <Text className="text-center text-base text-gray-600">Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="flex-1 bg-[#a084e8] rounded-xl py-3"
+                      onPress={confirmWorkshopEnds}
+                    >
+                      <Text className="text-center text-base text-white font-bold">Confirm</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          ) : (
+            <DateTimePicker
+              value={workshopEndsDate}
+              mode="time"
+              is24Hour={false}
+              display="default"
+              onChange={handleWorkshopEndsChange}
               textColor="#333333"
               accentColor="#a084e8"
             />
