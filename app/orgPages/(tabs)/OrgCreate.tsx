@@ -519,7 +519,7 @@ const OrgCreate = () => {
             <Text className="text-lg font-bold text-black mb-4 text-center">
               Select Category
             </Text>
-            {categories.map((cat) => (
+            {categoriesWithIcons.map((cat) => (
               <TouchableOpacity
                 key={cat.id}
                 className="flex-row items-center py-4 border-b border-gray-200"
@@ -746,7 +746,9 @@ const OrgCreate = () => {
           </View>
         </Modal>
       )}
-    </ScrollView>
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
