@@ -210,16 +210,16 @@ const OrgCreate = () => {
   const handleFileUpload = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
+        type: 'application/pdf',
         copyToCacheDirectory: true,
       });
       
       if (!result.canceled) {
         setUploadedFile(result.assets[0]);
-        Alert.alert('Success', 'File uploaded successfully!');
+        Alert.alert('Success', 'PDF file uploaded successfully!');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to upload file');
+      Alert.alert('Error', 'Failed to upload PDF file');
     }
   };
 
@@ -229,8 +229,8 @@ const OrgCreate = () => {
       return;
     }
 
-    if (category === "Upload Resource" && !uploadedFile) {
-      Alert.alert('Error', 'Please upload a file for resource category');
+    if (category === "Resources" && !uploadedFile) {
+      Alert.alert('Error', 'Please upload a PDF file for resources category');
       return;
     }
 
@@ -357,7 +357,7 @@ const OrgCreate = () => {
 
         {/* Description */}
         <Text className="text-sm text-black font-semibold mb-1">
-          {category === "Upload Resource" ? "Resource Description *" : 
+          {category === "Resources" ? "Resource Description *" : 
            category === "Study Spot" ? "Location Details *" : "Description *"}
         </Text>
         <TextInput
@@ -365,7 +365,7 @@ const OrgCreate = () => {
           value={description}
           onChangeText={setDescription}
           placeholder={
-            category === "Upload Resource" ? "Enter resource description" : 
+            category === "Resources" ? "Enter resource description" : 
             category === "Study Spot" ? "Enter location details" : 
             "Enter opportunity description"
           }
@@ -374,8 +374,8 @@ const OrgCreate = () => {
           numberOfLines={4}
         />
 
-        {/* Date Milestones - Only show for non-upload resource and non-study spot categories */}
-        {category !== "Upload Resource" && category !== "Study Spot" && (
+        {/* Date Milestones - Only show for non-resource and non-study spot categories */}
+        {category !== "Resources" && category !== "Study Spot" && (
           <>
             <Text className="text-sm text-black font-semibold mb-1">
               Date Milestones
@@ -434,8 +434,8 @@ const OrgCreate = () => {
           </>
         )}
 
-        {/* Amount - Only show for non-upload resource and non-study spot categories */}
-        {category !== "Upload Resource" && category !== "Study Spot" && (
+        {/* Amount - Only show for non-resource and non-study spot categories */}
+        {category !== "Resources" && category !== "Study Spot" && (
           <>
             <Text className="text-sm text-black font-semibold mb-1">Amount</Text>
             <TextInput
@@ -475,23 +475,23 @@ const OrgCreate = () => {
         
 
 
-        {/* File Upload Section - Only show for Upload Resource category */}
-        {category === "Upload Resource" && (
+        {/* File Upload Section - Only show for Resources category */}
+        {category === "Resources" && (
           <>
             <Text className="text-sm text-black font-semibold mb-1">
-              Upload Resource *
+              Upload PDF Resource *
             </Text>
             <TouchableOpacity 
               className="bg-white rounded-xl px-3 py-3 mb-3 border-2 border-dashed border-gray-300"
               onPress={handleFileUpload}
             >
               <View className="items-center">
-                <Text className="text-2xl mb-2">📁</Text>
+                <Text className="text-2xl mb-2">📄</Text>
                 <Text className="text-base text-gray-600">
-                  {uploadedFile ? uploadedFile.name || "File uploaded" : "Tap to upload file"}
+                  {uploadedFile ? uploadedFile.name || "PDF uploaded" : "Tap to upload PDF"}
                 </Text>
                 <Text className="text-sm text-gray-400 mt-1">
-                  PDF, DOC, DOCX, TXT, etc.
+                  PDF files only
                 </Text>
               </View>
             </TouchableOpacity>
