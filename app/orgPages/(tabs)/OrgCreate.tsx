@@ -499,6 +499,7 @@ const OrgCreate = () => {
             <Text className="text-sm text-black font-semibold mb-1">
               Workshop Schedule
             </Text>
+            {console.log('Rendering Workshop/Seminar section, repeats:', repeats)}
             <View className="flex-row space-x-3 mb-3">
               <View className="flex-1">
                 <Text className="text-xs text-gray-600 mb-1">Starts at</Text>
@@ -531,7 +532,7 @@ const OrgCreate = () => {
             </View>
 
             {/* Repeat Option */}
-            <View className="mb-3">
+            <View className="mb-3 bg-gray-50 p-3 rounded-xl">
               <View className="flex-row items-center justify-between mb-2">
                 <Text className="text-sm text-black font-semibold">Repeats</Text>
                 <TouchableOpacity
@@ -541,9 +542,10 @@ const OrgCreate = () => {
                   onPress={() => setRepeats(!repeats)}
                 >
                   <View
-                    className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                      repeats ? 'translate-x-6' : 'translate-x-0'
-                    }`}
+                    className="w-5 h-5 rounded-full bg-white"
+                    style={{
+                      transform: [{ translateX: repeats ? 24 : 0 }],
+                    }}
                   />
                 </TouchableOpacity>
               </View>
@@ -561,9 +563,14 @@ const OrgCreate = () => {
                 </View>
               )}
               
+              {/* Debug indicator */}
+              <Text className="text-xs text-gray-500 mt-1">
+                Debug: repeats={repeats ? 'true' : 'false'}, showDropdown={showRepeatDropdown ? 'true' : 'false'}
+              </Text>
+              
               {/* Repeat Frequency Dropdown */}
               {showRepeatDropdown && (
-                <View className="bg-white rounded-xl shadow border border-gray-200 mt-1 px-3 py-2 absolute left-0 right-0 z-10">
+                <View className="bg-white rounded-xl shadow border border-gray-200 mt-1 px-3 py-2">
                   {repeatFrequencyOptions.map((option) => (
                     <TouchableOpacity
                       key={option}
