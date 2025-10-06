@@ -1,13 +1,13 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
-import * as DocumentPicker from 'expo-document-picker';
-import * as Location from 'expo-location';
 import {
   Feather,
   FontAwesome6,
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as DocumentPicker from 'expo-document-picker';
 import { LinearGradient } from "expo-linear-gradient";
+import * as Location from 'expo-location';
 import React, { useState } from "react";
 import {
   Alert,
