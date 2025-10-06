@@ -1,4 +1,5 @@
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Switch, Text, TouchableOpacity, View } from "react-native";
@@ -8,7 +9,7 @@ import { useAuth } from "../contexts/AuthContext";
 interface ProfileData {
   name?: string;
   email?: string;
-  role?: 'student' | 'organization';
+  role?: "student" | "organization";
   createdAt?: {
     seconds: number;
   };
@@ -24,7 +25,12 @@ export default function Settings() {
   // Get display name with fallbacks
   const getDisplayName = () => {
     if (profileLoading) return "Loading...";
-    return profileData?.name || user?.displayName || user?.email?.split("@")[0] || "User";
+    return (
+      profileData?.name ||
+      user?.displayName ||
+      user?.email?.split("@")[0] ||
+      "User"
+    );
   };
 
   // Get display email
@@ -33,11 +39,14 @@ export default function Settings() {
     return profileData?.email || user?.email || "No email";
   };
 
-  return (
-    <SafeAreaView className="flex-1 bg-[#F6F4FE] px-5">
+  // Determine avatar icon based on role
+  const isOrg = profileData?.role === "organization";
+
+  const SettingsContent = () => (
+    <SafeAreaView className="flex-1 px-5">
       {/* Back Arrow */}
       <TouchableOpacity
-        className="mt-14 mb-2 w-8"
+        className="mt-9 mb-2 w-8"
         hitSlop={10}
         onPress={() => router.back()}
       >
@@ -55,7 +64,11 @@ export default function Settings() {
         onPress={() => router.push("/editaccount")}
       >
         <View className="bg-[#F6F4FE] rounded-full w-12 h-12 items-center justify-center mr-3">
-          <FontAwesome name="user-circle-o" size={36} color="#18181B" />
+          {isOrg ? (
+            <FontAwesome name="users" size={36} color="#7D7CFF" />
+          ) : (
+            <FontAwesome name="user-circle-o" size={36} color="#18181B" />
+          )}
         </View>
         <View className="flex-1">
           <Text className="font-karla-bold text-[15px] text-[#18181B]">
@@ -65,7 +78,8 @@ export default function Settings() {
             {getDisplayEmail()}
           </Text>
           <Text className="font-karla text-[12px] text-[#6B7280] mt-1">
-            {profileData?.role === 'organization' ? 'Organization' : 'Student'} • Tap to edit
+            {profileData?.role === "organization" ? "Organization" : "Student"}{" "}
+            • Tap to edit
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={22} color="#18181B" />
@@ -122,5 +136,15 @@ export default function Settings() {
         </Text>
       </View>
     </SafeAreaView>
+  );
+
+  return isOrg ? (
+    <LinearGradient colors={["#ECEAFF", "#4b1eb4c8"]} style={{ flex: 1 }}>
+      <SettingsContent />
+    </LinearGradient>
+  ) : (
+    <View style={{ flex: 1, backgroundColor: "#F6F4FE" }}>
+      <SettingsContent />
+    </View>
   );
 }

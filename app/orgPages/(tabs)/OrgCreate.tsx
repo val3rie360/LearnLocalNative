@@ -1,11 +1,19 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Location from 'expo-location';
+import {
+  Feather,
+  FontAwesome6,
+  Ionicons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
   Alert,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -13,9 +21,32 @@ import {
   View,
 } from "react-native";
 import MapView, { Marker } from 'react-native-maps';
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const categories = [
+  "Scholarship / Grant",
+  "Competition / Event",
+  "Workshop / Seminar",
+  "Resources",
+  "Study Spot",
+];
 
 const OrgCreate = () => {
+  const [file, setFile] = useState("");
+  const [level, setLevel] = useState("");
+  const [showLevelDropdown, setShowLevelDropdown] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
+
+  const levelOptions = [
+    "Undergraduate",
+    "Postgraduate",
+    "High School",
+    "Other",
+  ];
+  const subjectOptions = ["Math", "Science", "Arts", "Business", "Other"];
   const [category, setCategory] = useState("Scholarship / Grant");
+  const [showDropdown, setShowDropdown] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dateMilestones, setDateMilestones] = useState("");
@@ -37,8 +68,38 @@ const OrgCreate = () => {
     longitudeDelta: 0.0421,
   });
   const [showMapModal, setShowMapModal] = useState(false);
+  // Study Spot fields
+  const [studySpotName, setStudySpotName] = useState("");
+  const [studySpotLocation, setStudySpotLocation] = useState("");
+  const [availabilityType, setAvailabilityType] = useState("Weekdays");
+  const [showAvailabilityDropdown, setShowAvailabilityDropdown] =
+    useState(false);
+  const [availabilityStartHour, setAvailabilityStartHour] = useState("");
+  const [availabilityEndHour, setAvailabilityEndHour] = useState("");
+  const [showTimeDropdown, setShowTimeDropdown] = useState(false);
+  const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
+  const hourOptions = [
+    "6:00 AM",
+    "7:00 AM",
+    "8:00 AM",
+    "9:00 AM",
+    "10:00 AM",
+    "11:00 AM",
+    "12:00 PM",
+    "1:00 PM",
+    "2:00 PM",
+    "3:00 PM",
+    "4:00 PM",
+    "5:00 PM",
+    "6:00 PM",
+    "7:00 PM",
+    "8:00 PM",
+    "9:00 PM",
+    "10:00 PM",
+  ];
+  const [studySpotDetails, setStudySpotDetails] = useState("");
 
-  const categories = [
+  const categoriesWithIcons = [
     { id: 1, name: "Scholarship / Grant", icon: "🎓" },
     { id: 2, name: "Workshop", icon: "🔧" },
     { id: 3, name: "Competition", icon: "🏆" },
@@ -139,7 +200,6 @@ const OrgCreate = () => {
     setLocation(newLocation);
   };
 
-
   const confirmLocation = () => {
     if (location) {
       setShowMapModal(false);
@@ -183,31 +243,104 @@ const OrgCreate = () => {
     Alert.alert('Success', 'Opportunity posted successfully!');
   };
 
-  return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View className="flex-1 bg-[#e5d4fa] px-6 pt-10">
-        {/* Header */}
-        <View className="flex-row items-center mb-6">
-          <TouchableOpacity>
-            <Text className="text-2xl text-black mr-2">←</Text>
-          </TouchableOpacity>
-          <Text className="flex-1 text-center text-lg font-bold text-black mr-8">
-            New Opportunity
-          </Text>
-        </View>
+  // Icon for category
+  const getCategoryIcon = () => {
+    if (category === "Competition / Event") {
+      return (
+        <FontAwesome6 name="award" size={22} color="#3C4251" className="mr-2" />
+      );
+    }
+    if (category === "Resources") {
+      return (
+        <MaterialCommunityIcons name="bookshelf" size={24} color="#3C4251" />
+      );
+    }
+    if (category === "Study Spot") {
+      return <Ionicons name="location" size={24} color="#3C4251" />;
+    }
+    if (category === "Workshop / Seminar") {
+      return (
+        <FontAwesome6
+          name="chalkboard-user"
+          size={22}
+          color="#3C4251"
+          className="mr-2"
+        />
+      );
+    }
+    return (
+      <FontAwesome6 name="scroll" size={22} color="#3C4251" className="mr-2" />
+    );
+  };
 
-        {/* Category */}
-        <Text className="text-sm text-black font-semibold mb-1">Category *</Text>
-        <TouchableOpacity 
-          className="flex-row items-center bg-white rounded-xl mb-3 px-3 h-11"
-          onPress={() => setShowCategoryModal(true)}
-        >
-          <Text className="text-lg mr-2">
-            {categories.find(cat => cat.name === category)?.icon || "📄"}
-          </Text>
-          <Text className="flex-1 text-base text-black">{category}</Text>
-          <Text className="text-lg text-gray-400 ml-2">⌄</Text>
-        </TouchableOpacity>
+  return (
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: "#ECEAFF" }}
+      edges={["top"]}
+    >
+      <LinearGradient colors={["#ECEAFF", "#4b1eb4c8"]} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <View className="flex-1 px-6 pt-10">
+            {/* Header */}
+            <View className="flex-row items-center mb-6 justify-center">
+              <Text className="text-center text-xl font-karla-bold text-[#18181B]">
+                New Opportunity
+              </Text>
+            </View>
+            <View className="h-px bg-[#E5E0FF] mb-6" />
+
+            {/* Category */}
+            <Text className="text-sm text-[#18181B] font-karla-bold mb-1">
+              Category
+            </Text>
+            <View
+              className="flex-row items-center bg-white rounded-full mb-3 px-3 h-11 border border-[#E5E0FF] shadow"
+              style={{ elevation: 4 }}
+            >
+              {getCategoryIcon()}
+              <TouchableOpacity
+                className="flex-1"
+                activeOpacity={0.8}
+                onPress={() => setShowDropdown(!showDropdown)}
+                style={{ justifyContent: "center" }}
+              >
+                <Text className="text-base text-[#6B7280] font-karla px-2">
+                  {category}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowDropdown(!showDropdown)}
+                className="ml-2"
+                activeOpacity={0.8}
+              >
+                <Feather name="chevron-down" size={20} color="#4B1EB4" />
+              </TouchableOpacity>
+            </View>
+            {/* Dropdown */}
+            {showDropdown && (
+              <View
+                className="bg-white rounded-xl shadow border border-[#E5E0FF] mb-3 px-3 py-2 absolute left-6 right-6 z-10"
+                style={{ top: 160 }}
+              >
+                {categories.map((cat) => (
+                  <Pressable
+                    key={cat}
+                    className="py-2"
+                    onPress={() => {
+                      setCategory(cat);
+                      setShowDropdown(false);
+                    }}
+                  >
+                    <Text
+                      className={`text-base font-karla ${category === cat ? "text-[#4B1EB4] font-karla-bold" : "text-[#18181B]"}`}
+                    >
+                      {cat}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
         
 
         {/* Title */}

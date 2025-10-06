@@ -1,4 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { Calendar as RNCalendar } from "react-native-calendars";
@@ -6,7 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const deadlines = [
   {
-    date: "SEPT 28",
+    date: "AUG 28",
     title: "STEM Future Leaders Scholarship 2025",
     tag: "Scholarships",
     tagColor: "bg-[#D1FAFF]",
@@ -14,7 +15,7 @@ const deadlines = [
     viewColor: "text-[#6C63FF]",
   },
   {
-    date: "SEPT 29",
+    date: "AUG 29",
     title: "Dumaguete City Scholars Program",
     tag: "Scholarships",
     tagColor: "bg-[#D1FAFF]",
@@ -22,7 +23,7 @@ const deadlines = [
     viewColor: "text-[#6C63FF]",
   },
   {
-    date: "SEPT 30",
+    date: "AUG 30",
     title: "National Robotics Challenge 2025",
     tag: "Events",
     tagColor: "bg-[#FECACA]",
@@ -32,14 +33,15 @@ const deadlines = [
 ];
 
 const initialMarkedDates: Record<string, any> = {
-  "2025-09-28": { marked: true, dotColor: "#6C63FF" },
-  "2025-09-29": { marked: true, dotColor: "#F4B740" },
-  "2025-09-30": { marked: true, dotColor: "#ff0a0aff" },
+  "2025-08-28": { marked: true, dotColor: "#6C63FF" },
+  "2025-08-29": { marked: true, dotColor: "#F4B740" },
+  "2025-08-30": { marked: true, dotColor: "#ff0a0aff" },
 };
 
 const SELECTED_COLOR = "#4B1EB4";
 
 const Calendar = () => {
+  const router = useRouter();
   const today = new Date();
   const todayString = today.toISOString().slice(0, 10);
   const [selectedDate, setSelectedDate] = useState(todayString);
@@ -112,7 +114,10 @@ const Calendar = () => {
                       {item.tag}
                     </Text>
                   </View>
-                  <TouchableOpacity className="ml-3">
+                  <TouchableOpacity
+                    className="ml-3"
+                    onPress={() => router.push("/studentPages/opportunity")}
+                  >
                     <Text
                       className={`font-karla-bold text-[14px] ${item.viewColor}`}
                     >

@@ -47,7 +47,7 @@ export const center = "items-center justify-center";
 
 //Searchbar
 export const searchBarContainer =
-  "flex-row items-center bg-white mx-5 mt-[10px] p-0.5 rounded-full";
+  "flex-row items-center bg-white mt-[10px] p-0.5 rounded-full";
 export const searchBarInput = "ml-1 flex-1 font-karla text-[13px]";
 
 // Notifications

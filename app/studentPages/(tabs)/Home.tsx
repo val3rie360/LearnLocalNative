@@ -17,7 +17,7 @@ import { searchBarContainer, searchBarInput } from "../../../tsStyling";
 interface ProfileData {
   name?: string;
   email?: string;
-  role?: 'student' | 'organization';
+  role?: "student" | "organization";
   createdAt?: {
     seconds: number;
   };
@@ -26,9 +26,9 @@ interface ProfileData {
 
 // Static data outside component for efficiency
 const DEADLINES = [
-  { date: "SEPT 28", title: "STEM Future Leaders Scholarship 2025" },
-  { date: "SEPT 29", title: "National Robotics Challenge 2025" },
-  { date: "SEPT 30", title: "Dumaguete Scholarships Program" },
+  { date: "AUG 28", title: "STEM Future Leaders Scholarship 2025" },
+  { date: "AUG 29", title: "National Robotics Challenge 2025" },
+  { date: "AUG 30", title: "Dumaguete Scholarships Program" },
 ];
 
 const CATEGORIES = [
@@ -48,7 +48,7 @@ const OPPORTUNITIES = [
   {
     title: "STEM Future Leaders Scholarship 2025",
     postedBy: "STEM Alliance PH",
-    deadline: "October 21, 2025",
+    deadline: "August 28, 2025",
     amount: "₱50,000",
     eligibility: "Grade 12 STEM strand students in the Philippines",
     description:
@@ -94,7 +94,12 @@ export default function Home() {
   // Get display name with fallbacks
   const getDisplayName = () => {
     if (profileLoading) return "there";
-    return profileData?.name || user?.displayName || user?.email?.split("@")[0] || "there";
+    return (
+      profileData?.name ||
+      user?.displayName ||
+      user?.email?.split("@")[0] ||
+      "there"
+    );
   };
 
   return (
@@ -107,7 +112,7 @@ export default function Home() {
               <Text className="text-[26px] text-white font-karla">
                 Hi, <Text className="font-karla-bold">{getDisplayName()}!</Text>
               </Text>
-              <Text className="text-[14px] text-[#EAEAEA] font-karla">
+              <Text className="text-[14px] mb-4 text-[#EAEAEA] font-karla">
                 Discover what's new today.
               </Text>
             </View>
@@ -120,8 +125,13 @@ export default function Home() {
             </TouchableOpacity>
           </View>
           {/* Search Bar */}
-          <View className={searchBarContainer}>
-            <Ionicons name="search-outline" size={20} className="ml-2.5" />
+          <View className={`mx-5 ${searchBarContainer}`}>
+            <Ionicons
+              name="search-outline"
+              size={28}
+              color="#18181B"
+              className="ml-4"
+            />
             <TextInput
               className={searchBarInput}
               placeholder="Search for scholarships, study spaces, etc..."

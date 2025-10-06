@@ -53,10 +53,10 @@ const Library = () => {
       <StatusBar style="dark" />
       <ScrollView className="flex-1 bg-[#F6F4FE] px-5 pt-5">
         {/* Header */}
-        <Text className="text-[25px] font-karla-bold text-[#111827] mb-1.5">
+        <Text className="text-[25px] font-karla-bold text-[#111827] mb-2">
           Learning Library
         </Text>
-        <Text className="text-[14px] font-karla text-[#6B7280]">
+        <Text className="text-[14px] font-karla text-[#6B7280] mb-4">
           Find free worksheets, modules, and study packs from trusted local
           organizations.
         </Text>
@@ -72,6 +72,7 @@ const Library = () => {
             placeholderTextColor="#888"
           />
         </View>
+        <View className="h-[1px] bg-[#E5E0FF] mt-1 mb-4" />
 
         {/* Downloaded Section */}
         <View className="flex-row justify-between items-center mb-2.5">
@@ -116,27 +117,46 @@ const Library = () => {
         {downloaded.map((item) => (
           <View
             key={item.id}
-            className="flex-row items-center bg-white rounded-xl p-3 mb-3 shadow-sm"
-            style={{ elevation: 2 }}
+            className="bg-white rounded-xl p-3 mb-3 shadow-sm"
+            style={{ elevation: 2, position: "relative" }}
           >
+            {/* Info icon in upper right */}
             <View
-              className="w-[50px] h-[50px] rounded-lg mr-3"
-              style={{ backgroundColor: item.color }}
-            />
-            <View className="flex-1">
-              <Text className="text-[15px] font-karla-bold text-[#111827] mb-1">
-                {item.title}
-              </Text>
-              <View className="flex-row flex-wrap mb-1">
-                {item.category.map((cat, idx) => (
-                  <CategoryTag key={idx} label={cat} />
-                ))}
-              </View>
-              <Text className="text-[12px] font-karla text-[#6B7280]">
-                {item.date} | {item.size}
-              </Text>
+              style={{ position: "absolute", top: 12, right: 12, zIndex: 1 }}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={20}
+                color="#4B1EB4"
+              />
             </View>
-            <Ionicons name="download-outline" size={20} color="#4B1EB4" />
+            <View className="flex-row items-center">
+              <View
+                className="w-[50px] h-[50px] rounded-lg mr-3"
+                style={{ backgroundColor: item.color }}
+              />
+              <View className="flex-1">
+                <Text className="text-[15px] font-karla-bold text-[#111827] mb-1">
+                  {item.title}
+                </Text>
+                <View className="flex-row flex-wrap mb-1">
+                  {item.category.map((cat, idx) => (
+                    <CategoryTag key={idx} label={cat} />
+                  ))}
+                </View>
+                <View className="flex-row items-center">
+                  <Text className="text-[12px] font-karla text-[#6B7280]">
+                    {item.date} | {item.size}
+                  </Text>
+                  <Ionicons
+                    name="download-outline"
+                    size={20}
+                    color="#4B1EB4"
+                    className="ml-2"
+                  />
+                </View>
+              </View>
+            </View>
           </View>
         ))}
       </ScrollView>

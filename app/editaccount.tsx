@@ -1,4 +1,5 @@
 import { Feather, FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { updateEmail, updatePassword, updateProfile } from "firebase/auth";
 import React, { useEffect, useState } from "react";
@@ -10,7 +11,7 @@ import { updateUserProfile } from "../services/firestoreService";
 interface ProfileData {
   name?: string;
   email?: string;
-  role?: 'student' | 'organization';
+  role?: "student" | "organization";
   createdAt?: {
     seconds: number;
   };
@@ -70,7 +71,7 @@ export default function EditAccount() {
       await refreshProfile();
 
       Alert.alert("Success", "Profile updated successfully", [
-        { text: "OK", onPress: () => router.back() }
+        { text: "OK", onPress: () => router.back() },
       ]);
     } catch (error: any) {
       console.error("Error updating profile:", error);
@@ -80,11 +81,14 @@ export default function EditAccount() {
     }
   };
 
-  return (
-    <SafeAreaView className="flex-1 bg-[#F6F4FE] px-6 pt-10">
+  // Determine avatar icon based on role
+  const isOrg = profileData?.role === "organization";
+
+  const EditAccountContent = () => (
+    <SafeAreaView className="flex-1 px-6 pt-1">
       {/* Back Arrow */}
       <TouchableOpacity
-        className="absolute left-6 top-10"
+        className="absolute left-4 top-20"
         onPress={() => router.back()}
         hitSlop={10}
       >
@@ -99,7 +103,16 @@ export default function EditAccount() {
       {/* Profile Image */}
       <View className="items-center mb-8">
         <View className="relative">
-          <FontAwesome name="user-circle-o" size={90} color="#18181B" />
+          {isOrg ? (
+            <View
+              className="bg-white rounded-full w-24 h-24 items-center justify-center border-4 border-[#ECEAFF] shadow"
+              style={{ elevation: 0 }}
+            >
+              <FontAwesome name="users" size={56} color="#7D7CFF" />
+            </View>
+          ) : (
+            <FontAwesome name="user-circle-o" size={90} color="#18181B" />
+          )}
           <TouchableOpacity
             className="absolute bottom-2 -right-3 bg-white rounded-full p-1 shadow border border-[#e0d7ff]"
             style={{ elevation: 2 }}
@@ -190,9 +203,9 @@ export default function EditAccount() {
       </View>
 
       {/* Save Button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         className={`rounded-full py-4 items-center shadow mt-2 ${
-          loading ? 'bg-gray-400' : 'bg-[#4B1EB4] active:opacity-90'
+          loading ? "bg-gray-400" : "bg-[#4B1EB4] active:opacity-90"
         }`}
         onPress={handleSaveChanges}
         disabled={loading || profileLoading}
@@ -202,5 +215,15 @@ export default function EditAccount() {
         </Text>
       </TouchableOpacity>
     </SafeAreaView>
+  );
+
+  return isOrg ? (
+    <LinearGradient colors={["#ECEAFF", "#4b1eb4c8"]} style={{ flex: 1 }}>
+      <EditAccountContent />
+    </LinearGradient>
+  ) : (
+    <View style={{ flex: 1, backgroundColor: "#F6F4FE" }}>
+      <EditAccountContent />
+    </View>
   );
 }

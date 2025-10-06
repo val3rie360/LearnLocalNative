@@ -47,7 +47,7 @@ export default function CommunityPage() {
       <View className="flex-1 px-5">
         {/* Back Arrow */}
         <TouchableOpacity
-          className="mt-2 mb-2 w-8"
+          className="mt-5 mb-2 w-8"
           hitSlop={10}
           onPress={() => router.replace("/studentPages/(tabs)/Profile")}
         >
