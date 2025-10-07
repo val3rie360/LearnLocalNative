@@ -1,8 +1,10 @@
-// Headings
-export const heading = "font-karla-bold text-[26px] text-[#18181B]";
-export const subheading = "font-karla text-[13px] text-[#6B7280]";
-export const sectionTitle = "font-karla-bold text-[20px] text-[#4B1EB4] mb-3";
-export const label = "font-karla-bold text-[15px] text-[#18181B] mb-1";
+// text
+export const titlelg = "font-karla-bold text-[22px]"; //bold large title
+export const titlereglg = "font-karla text-[22px]"; //regular large title
+export const textw = "font-karla text-[14px] text-primaryw"; //regular text white
+export const textb = "font-karla text-[14px] text-primaryb"; //regular text black
+export const buttontxt = "font-karla-bold text-[16px]"; //button text
+export const textu = "font-karla-bold underline text-[14px]"; //bold underlined text
 
 // Cards
 export const card = "bg-white rounded-2xl p-4 shadow mb-4";
