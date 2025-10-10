@@ -74,7 +74,7 @@ export default function Login() {
       <View className="flex-1 bg-[#E5E0FF]">
         {/* Top Purple Section */}
         <View className="bg-secondary pt-32 pb-8 pl-6">
-          <Text className="text-primaryw text-[33px] font-karla-bold mb-0">
+          <Text className="text-white text-[33px] font-karla-bold mb-0">
             Welcome Back!
           </Text>
           <Text className="text-[#E0D7FF] text-[15px] font-karla mb-10 text-left">
@@ -82,7 +82,7 @@ export default function Login() {
           </Text>
         </View>
 
-        {/* primaryw Card Section */}
+        {/* white Card Section */}
         <LinearGradient
           colors={["#fff", "#e5e0ff"]}
           start={{ x: 0.5, y: 0 }}
@@ -173,7 +173,7 @@ export default function Login() {
             onPress={handleLogin}
             disabled={loading}
           >
-            <Text className="text-primaryw text-[17px] font-karla-bold">
+            <Text className="text-white text-[17px] font-karla-bold">
               {loading ? "Logging in..." : "Login"}
             </Text>
           </TouchableOpacity>
@@ -188,7 +188,7 @@ export default function Login() {
           {/* Social Buttons */}
           <View className="flex-row justify-center mb-4 space-x-4">
             <TouchableOpacity
-              className="bg-primaryw rounded-xl p-2 shadow mr-4"
+              className="bg-white rounded-xl p-2 shadow mr-4"
               onPress={handleFacebookLogin}
               disabled={loading}
             >
@@ -199,7 +199,7 @@ export default function Login() {
               />
             </TouchableOpacity>
             <TouchableOpacity
-              className="bg-primaryw rounded-xl p-2 shadow"
+              className="bg-white rounded-xl p-2 shadow"
               onPress={handleGoogleLogin}
               disabled={loading}
             >

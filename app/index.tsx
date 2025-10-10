@@ -1,14 +1,13 @@
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
-import * as styles from "../tsStyling";
+import { buttontxt, textu, textw, titlelg, titlereglg } from "../tsStyling";
 
 export default function GetStarted() {
   const router = useRouter();
-  const { titlelg, titlereglg, textw, buttontxt, textu } = styles;
 
   return (
-    <View className="flex-1 bg-[#4B2ACF] items-center justify-center px-6">
+    <View className="flex-1 bg-secondary items-center justify-center px-6">
       <View className="flex-row items-center">
         <Image
           source={require("../assets/images/learl.png")}
@@ -23,11 +22,9 @@ export default function GetStarted() {
         resizeMode="contain"
       />
 
-      <Text className={`${titlereglg} text-primaryw mb-3`}>
-        Your all-in-one
-      </Text>
+      <Text className={`${titlereglg} text-white mb-3`}>Your all-in-one</Text>
       <Text
-        className={`${titlereglg} text-primaryw text-center mt-[-15px] mb-3 leading-8`}
+        className={`${titlereglg} text-white text-center mt-[-15px] mb-3 leading-8`}
       >
         <Text className={`${titlelg} text-[#FFE600]`}>
           educational opportunity{"\n"} finder

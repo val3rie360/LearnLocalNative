@@ -51,7 +51,7 @@ export default function OrgBoard() {
           <Text className="font-karla-bold text-[28px] text-[#18181B] mb-1.5">
             Community Board
           </Text>
-          <Text className="text-primaryb text-[15px] mb-4 font-karla leading-[20px]">
+          <Text className="text-black text-[15px] mb-4 font-karla leading-[20px]">
             See what students are asking for, and gain insight through upvotes
             on posts that highlight the most requested resources and programs.
           </Text>

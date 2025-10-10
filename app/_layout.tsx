@@ -7,8 +7,6 @@ import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { getUserProfile } from "../services/firestoreService";
 import "./globals.css";
 
-SplashScreen.preventAutoHideAsync();
-
 function RootLayoutNav() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -23,10 +21,10 @@ function RootLayoutNav() {
         try {
           setRoleLoading(true);
           const profile = await getUserProfile(user.uid);
-          setUserRole(profile?.role || 'student');
+          setUserRole(profile?.role || "student");
         } catch (error) {
           console.error("Error fetching user role:", error);
-          setUserRole('student'); // Default to student if error
+          setUserRole("student"); // Default to student if error
         } finally {
           setRoleLoading(false);
         }
@@ -45,31 +43,41 @@ function RootLayoutNav() {
     }
 
     const currentRoute = segments[0];
-    const isOnProtectedStudentPages = currentRoute === "studentPages" && segments[1] === "(tabs)";
-    const isOnProtectedOrgPages = currentRoute === "orgPages" && segments[1] === "(tabs)";
-    const isOnAuthPages = currentRoute === "login" || 
+    const isOnProtectedStudentPages =
+      currentRoute === "studentPages" && segments[1] === "(tabs)";
+    const isOnProtectedOrgPages =
+      currentRoute === "orgPages" && segments[1] === "(tabs)";
+    const isOnAuthPages =
+      currentRoute === "login" ||
       (currentRoute === "studentPages" && segments[1] === "studentsignup") ||
       (currentRoute === "orgPages" && segments[1] === "orgsignup");
 
     // Redirect unauthenticated users from protected pages to login
     if (!user && (isOnProtectedStudentPages || isOnProtectedOrgPages)) {
-      console.log("Redirecting unauthenticated user from protected pages to login");
+      console.log(
+        "Redirecting unauthenticated user from protected pages to login"
+      );
       router.replace("/login");
     }
     // Redirect authenticated users from auth pages to appropriate home based on role
     else if (user && isOnAuthPages) {
-      const homeRoute = userRole === 'organization' 
-        ? "/orgPages/(tabs)/OrgHome" 
-        : "/studentPages/(tabs)/Home";
-      console.log(`Redirecting authenticated ${userRole} user from auth pages to ${homeRoute}`);
+      const homeRoute =
+        userRole === "organization"
+          ? "/orgPages/(tabs)/OrgHome"
+          : "/studentPages/(tabs)/Home";
+      console.log(
+        `Redirecting authenticated ${userRole} user from auth pages to ${homeRoute}`
+      );
       router.replace(homeRoute);
     }
     // Redirect users to correct pages based on their role
     else if (user && userRole) {
-      if (userRole === 'organization' && isOnProtectedStudentPages) {
-        console.log("Redirecting organization user from student pages to org pages");
+      if (userRole === "organization" && isOnProtectedStudentPages) {
+        console.log(
+          "Redirecting organization user from student pages to org pages"
+        );
         router.replace("/orgPages/(tabs)/OrgHome");
-      } else if (userRole === 'student' && isOnProtectedOrgPages) {
+      } else if (userRole === "student" && isOnProtectedOrgPages) {
         console.log("Redirecting student user from org pages to student pages");
         router.replace("/studentPages/(tabs)/Home");
       }
@@ -78,6 +86,8 @@ function RootLayoutNav() {
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }
+
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fadeAnim] = useState(new Animated.Value(0));

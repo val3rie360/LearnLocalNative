@@ -52,12 +52,12 @@ const OrgProfile: React.FC = () => {
       <LinearGradient colors={["#ECEAFF", "#4b1eb4c8"]} style={{ flex: 1 }}>
         <View className="flex-1 bg-transparent items-center pt-16">
           <View className="items-center mb-8">
-            <View className="bg-primaryw rounded-full p-3 mb-2">
+            <View className="bg-white rounded-full p-3 mb-2">
               <FontAwesome name="users" size={78} color="#7D7CFF" />
             </View>
 
             {/* Display Name */}
-            <Text className="text-[20px] text-primaryw font-karla-bold mb-1">
+            <Text className="text-[20px] text-white font-karla-bold mb-1">
               {profileLoading
                 ? "Loading..."
                 : profileData?.name ||
@@ -172,7 +172,7 @@ const OrgProfile: React.FC = () => {
                     marginRight: 12,
                   }}
                 />
-                <Text className="text-[16px] font-karla-bold text-primaryw">
+                <Text className="text-[16px] font-karla-bold text-white">
                   {loading ? "Logging out..." : "Log Out"}
                 </Text>
               </View>

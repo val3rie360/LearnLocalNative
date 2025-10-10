@@ -220,7 +220,7 @@ export default function OrgHome() {
                 <View className="flex-1">
                   <View className="flex-row items-center">
                     <Text
-                      className="font-karla-bold text-primaryb text-s ml-2"
+                      className="font-karla-bold text-black text-s ml-2"
                       style={{ fontFamily: "Karla-Bold" }}
                     >
                       {getDisplayName()}

@@ -11,10 +11,10 @@ const notifications = [
     icon: <FontAwesome5 name="chalkboard-teacher" size={26} color="#fff" />,
     title: (
       <>
-        <Text className="font-karla-bold text-primaryb">
+        <Text className="font-karla-bold text-black">
           New workshop available:
         </Text>
-        <Text className="font-karla text-primaryb">
+        <Text className="font-karla text-black">
           {" "}
           Robotics for Beginners starts Aug 25.
         </Text>
@@ -29,8 +29,8 @@ const notifications = [
     icon: <Feather name="alert-circle" size={26} color="#fff" />,
     title: (
       <>
-        <Text className="font-karla-bold text-primaryb">Reminder:</Text>
-        <Text className="font-karla text-primaryb">
+        <Text className="font-karla-bold text-black">Reminder:</Text>
+        <Text className="font-karla text-black">
           {" "}
           Submit your scholarship application before August 20.
         </Text>
@@ -44,7 +44,7 @@ const notifications = [
     id: 3,
     icon: <Feather name="users" size={26} color="#fff" />,
     title: (
-      <Text className="font-karla text-primaryb">
+      <Text className="font-karla text-black">
         Free career counselling event in your area this weekend.
       </Text>
     ),
@@ -56,7 +56,7 @@ const notifications = [
     id: 4,
     icon: <Feather name="award" size={26} color="#fff" />,
     title: (
-      <Text className="font-karla text-primaryb">
+      <Text className="font-karla text-black">
         &quot;Workshop &apos;Creative Writing 101&apos; starts tomorrow at 4
         PM.&quot;
       </Text>
@@ -77,12 +77,12 @@ export default function Notifications() {
       end={{ x: 0.5, y: 1 }}
       className="flex-1"
     >
-      <SafeAreaView className="flex-1 px-5 pt-10">
+      <SafeAreaView className="flex-1 px-5 pt-6">
         {/* Back Arrow */}
         <TouchableOpacity
-          className="absolute left-5 top-15"
+          className="mb-5"
           onPress={() => router.back()}
-          hitSlop={10}
+          hitSlop={24}
         >
           <Feather name="arrow-left" size={22} color="#18181B" />
         </TouchableOpacity>

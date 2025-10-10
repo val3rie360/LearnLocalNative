@@ -15,7 +15,7 @@ const _Layout = () => {
         },
       }}
     >
-      <Tabs.Screen //-------- HOME
+      <Tabs.Screen
         name={"Home"}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -27,11 +27,7 @@ const _Layout = () => {
           ),
           tabBarLabel: ({ focused }) => (
             <Text
-              style={{
-                color: focused ? "#5048A6" : "black",
-                fontSize: 10,
-                fontWeight: "bold",
-              }}
+              className={`text-[10px] font-bold ${focused ? "text-[#5048A6]" : "text-black"}`}
             >
               Home
             </Text>
@@ -39,7 +35,7 @@ const _Layout = () => {
         }}
       />
 
-      <Tabs.Screen //-------- LIBRARY
+      <Tabs.Screen
         name={"Library"}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -51,11 +47,7 @@ const _Layout = () => {
           ),
           tabBarLabel: ({ focused }) => (
             <Text
-              style={{
-                color: focused ? "#5048A6" : "black",
-                fontSize: 10,
-                fontWeight: "bold",
-              }}
+              className={`text-[10px] font-bold ${focused ? "text-[#5048A6]" : "text-black"}`}
             >
               Library
             </Text>
@@ -63,24 +55,12 @@ const _Layout = () => {
         }}
       />
 
-      <Tabs.Screen //-------- MAP
+      <Tabs.Screen
         name={"Map"}
         options={{
           tabBarLabel: () => null,
           tabBarIcon: ({ focused }) => (
-            <View
-              style={{
-                marginBottom: 20,
-                width: 66, // bigger than inner
-                height: 66,
-                borderRadius: 100,
-                backgroundColor: "white", // outline color
-                justifyContent: "center",
-                borderWidth: 2, // thickness of outline
-                borderColor: "white", // outline color
-                alignItems: "center",
-              }}
-            >
+            <View className="mb-5 w-[66px] h-[66px] rounded-full bg-white justify-center items-center border-2 border-white">
               <LinearGradient
                 colors={["#836CEC", "#281E8D"]}
                 style={{
@@ -98,7 +78,7 @@ const _Layout = () => {
         }}
       />
 
-      <Tabs.Screen //-------- CALENDAR
+      <Tabs.Screen
         name={"Calendar"}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -110,11 +90,7 @@ const _Layout = () => {
           ),
           tabBarLabel: ({ focused }) => (
             <Text
-              style={{
-                color: focused ? "#5048A6" : "black",
-                fontSize: 10,
-                fontWeight: "bold",
-              }}
+              className={`text-[10px] font-bold ${focused ? "text-[#5048A6]" : "text-black"}`}
             >
               Calendar
             </Text>
@@ -122,7 +98,7 @@ const _Layout = () => {
         }}
       />
 
-      <Tabs.Screen //-------- PROFILE
+      <Tabs.Screen
         name={"Profile"}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -134,11 +110,7 @@ const _Layout = () => {
           ),
           tabBarLabel: ({ focused }) => (
             <Text
-              style={{
-                color: focused ? "#5048A6" : "black",
-                fontSize: 10,
-                fontWeight: "bold",
-              }}
+              className={`text-[10px] font-bold ${focused ? "text-[#5048A6]" : "text-black"}`}
             >
               Profile
             </Text>

@@ -13,9 +13,10 @@ module.exports = {
       },
       colors: {
         logo: "#FFF065",
-        primaryw: "#FFFFFF",
-        primaryb: "#000000",
         secondary: "#4B1EB4",
+        primaryg: "#A1A1AA",
+      },
+      borderColor: {
         primaryg: "#A1A1AA",
       },
     },

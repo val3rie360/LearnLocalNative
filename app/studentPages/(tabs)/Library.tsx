@@ -1,16 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { searchBarContainer, searchBarInput } from "../../../tsStyling";
+import { SearchBar } from "../../../components/Common";
 
 import React from "react";
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const downloaded = [
@@ -61,17 +55,7 @@ const Library = () => {
           organizations.
         </Text>
 
-        {/* Search */}
-        <View
-          className={`${searchBarContainer} mb-4 w-[100%] mx-auto border border-[#E5E7EB]`}
-        >
-          <Ionicons name="search-outline" size={20} className="ml-2.5" />
-          <TextInput
-            className={searchBarInput}
-            placeholder="Search for scholarships, study spaces, etc..."
-            placeholderTextColor="#888"
-          />
-        </View>
+        <SearchBar />
         <View className="h-[1px] bg-[#E5E0FF] mt-1 mb-4" />
 
         {/* Downloaded Section */}

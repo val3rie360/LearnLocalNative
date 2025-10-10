@@ -54,7 +54,7 @@ export default function OrgUploads() {
             <Text className="text-[28px] text-[#222] font-karla-bold mt-2">
               My Uploads
             </Text>
-            <Text className="text-[15px] text-primaryb mt-1 font-karla">
+            <Text className="text-[15px] text-black mt-1 font-karla">
               Manage your uploaded files here.
             </Text>
           </View>
@@ -94,7 +94,7 @@ export default function OrgUploads() {
               <FileCard title={item.title} date={item.date} size={item.size} />
             )}
             ListFooterComponent={
-              <Text className="text-center text-primaryw mt-6 text-[14px] font-karla">
+              <Text className="text-center text-white mt-6 text-[14px] font-karla">
                 No more files to show.
               </Text>
             }

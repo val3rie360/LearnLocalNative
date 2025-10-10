@@ -1,18 +1,13 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { memo } from "react";
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import CategoriesGrid from "../../../components/CategoriesGrid";
+import { SearchBar } from "../../../components/Common";
 import OpportunityCard from "../../../components/OpportunityCard";
 import { useAuth } from "../../../contexts/AuthContext";
-import { searchBarContainer, searchBarInput } from "../../../tsStyling";
 
 interface ProfileData {
   name?: string;
@@ -57,36 +52,6 @@ const OPPORTUNITIES = [
   },
 ];
 
-type CategoryItemProps = {
-  icon: string;
-  family?: string;
-  bg: string;
-  label: string;
-};
-
-const CategoryItem = memo(function CategoryItem({
-  icon,
-  family = "Ionicons",
-  bg,
-  label,
-}: CategoryItemProps) {
-  const IconComponent =
-    family === "MaterialCommunityIcons" ? MaterialCommunityIcons : Ionicons;
-  return (
-    <View className="items-center">
-      <View
-        className="w-[63px] h-[63px] rounded-lg justify-center items-center shadow-sm"
-        style={{ backgroundColor: bg }}
-      >
-        <IconComponent name={icon as any} size={25} color="#fff" />
-      </View>
-      <Text className="mt-2.5 text-[13px] font-karla-bold text-black text-center">
-        {label}
-      </Text>
-    </View>
-  );
-});
-
 export default function Home() {
   const router = useRouter();
   const { user, profileData, profileLoading } = useAuth();
@@ -106,8 +71,8 @@ export default function Home() {
     <SafeAreaView className="flex-1 bg-[#4B1EB4]" edges={["top"]}>
       <ScrollView className="bg-[#E0E3FF] flex-1">
         {/* Header */}
-        <View className="bg-[#4B1EB4] rounded-b-2xl pb-[100px]">
-          <View className="px-6 pt-6 flex-row justify-between items-center">
+        <View className="bg-[#4B1EB4] rounded-b-2xl pb-[100px] px-5">
+          <View className=" pt-5 flex-row justify-between items-center">
             <View>
               <Text className="text-[26px] text-white font-karla">
                 Hi, <Text className="font-karla-bold">{getDisplayName()}!</Text>
@@ -124,20 +89,7 @@ export default function Home() {
               />
             </TouchableOpacity>
           </View>
-          {/* Search Bar */}
-          <View className={`mx-5 ${searchBarContainer}`}>
-            <Ionicons
-              name="search-outline"
-              size={28}
-              color="#18181B"
-              className="ml-4"
-            />
-            <TextInput
-              className={searchBarInput}
-              placeholder="Search for scholarships, study spaces, etc..."
-              placeholderTextColor="#888"
-            />
-          </View>
+          <SearchBar />
         </View>
 
         {/* Upcoming Deadlines */}
@@ -181,11 +133,7 @@ export default function Home() {
         </View>
 
         {/* Categories */}
-        <View className="flex-row justify-around my-5 px-4">
-          {CATEGORIES.map((c) => (
-            <CategoryItem key={c.label} {...c} />
-          ))}
-        </View>
+        <CategoriesGrid categories={CATEGORIES} />
 
         {/* Opportunities */}
         <LinearGradient

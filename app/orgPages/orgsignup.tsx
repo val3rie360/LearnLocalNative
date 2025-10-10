@@ -132,7 +132,7 @@ export default function OrgSignup() {
       <View className="flex-1 bg-secondary">
         {/* Top Section */}
         <View className="pt-5 pb-4 px-6 bg-[#4B1EB4]">
-          <Text className="text-primaryw text-[33px] font-karla-bold mb-1">
+          <Text className="text-white text-[33px] font-karla-bold mb-1">
             Hello!
           </Text>
           <Text className="text-[#E0D7FF] text-base font-karla">
