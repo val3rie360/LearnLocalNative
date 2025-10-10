@@ -49,7 +49,11 @@ const OrgCreate = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [dateMilestones, setDateMilestones] = useState("");
+  const [dateMilestones, setDateMilestones] = useState<Array<{name: string, date: string}>>([]);
+  const [newMilestoneName, setNewMilestoneName] = useState("");
+  const [newMilestoneDate, setNewMilestoneDate] = useState("");
+  const [newMilestoneDateObj, setNewMilestoneDateObj] = useState(new Date());
+  const [showMilestoneDatePicker, setShowMilestoneDatePicker] = useState(false);
   const [openTime, setOpenTime] = useState("");
   const [closeTime, setCloseTime] = useState("");
   const [openTimeDate, setOpenTimeDate] = useState(new Date());
@@ -230,6 +234,50 @@ const OrgCreate = () => {
     return `${selectedDays.length} days selected`;
   };
 
+  // Date milestone functions
+  const addMilestone = () => {
+    if (newMilestoneName.trim() && newMilestoneDate.trim()) {
+      setDateMilestones(prev => [...prev, {
+        name: newMilestoneName.trim(),
+        date: newMilestoneDate.trim()
+      }]);
+      setNewMilestoneName("");
+      setNewMilestoneDate("");
+      setNewMilestoneDateObj(new Date());
+    }
+  };
+
+  const removeMilestone = (index: number) => {
+    setDateMilestones(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Date picker handlers for milestones
+  const handleMilestoneDateChange = (event: any, selectedDate?: Date) => {
+    console.log('Milestone date change:', event.type, selectedDate);
+    
+    if (Platform.OS === 'android') {
+      setShowMilestoneDatePicker(false);
+    }
+    
+    if (selectedDate) {
+      setNewMilestoneDateObj(selectedDate);
+      setNewMilestoneDate(selectedDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }));
+    }
+  };
+
+  const confirmMilestoneDate = () => {
+    setNewMilestoneDate(newMilestoneDateObj.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }));
+    setShowMilestoneDatePicker(false);
+  };
+
   const getCurrentLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -319,7 +367,17 @@ const OrgCreate = () => {
       return;
     }
 
+    // Validate that all milestone fields are filled if any are added
+    if (newMilestoneName.trim() || newMilestoneDate.trim()) {
+      if (!newMilestoneName.trim() || !newMilestoneDate.trim()) {
+        Alert.alert('Error', 'Please complete the milestone form or clear the fields');
+        return;
+      }
+    }
+
     // Here you would typically save the opportunity to your backend
+    // The dateMilestones array now contains objects with name and date properties
+    console.log('Date milestones:', dateMilestones);
     Alert.alert('Success', 'Opportunity posted successfully!');
   };
 
@@ -464,16 +522,53 @@ const OrgCreate = () => {
             <Text className="text-sm text-black font-semibold mb-1">
               Date Milestones
             </Text>
-            <View className="flex-row items-center bg-white rounded-xl mb-3 px-3 h-11">
-              <TextInput
-                className="flex-1 text-base text-black"
-                value={dateMilestones}
-                onChangeText={setDateMilestones}
-                placeholder="Add date"
-                placeholderTextColor="#aaa"
-              />
-              <TouchableOpacity>
-                <Text className="text-xl text-gray-400 ml-2">＋</Text>
+            
+            {/* Display existing milestones */}
+            {dateMilestones.map((milestone, index) => (
+              <View key={index} className="bg-white rounded-xl mb-2 px-3 py-2 flex-row items-center justify-between">
+                <View className="flex-1">
+                  <Text className="text-sm font-karla-bold text-[#4B1EB4]">{milestone.name}</Text>
+                  <Text className="text-xs text-gray-600">{milestone.date}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => removeMilestone(index)}
+                  className="ml-2 p-1"
+                >
+                  <Text className="text-red-500 text-lg">×</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            
+            {/* Add new milestone form */}
+            <View className="bg-white rounded-xl mb-3 p-3">
+              <View className="flex-row space-x-2 mb-2">
+                <TextInput
+                  className="flex-1 bg-gray-50 rounded-lg px-3 h-10 text-base text-black"
+                  value={newMilestoneName}
+                  onChangeText={setNewMilestoneName}
+                  placeholder="Milestone name (e.g., Application Deadline)"
+                  placeholderTextColor="#aaa"
+                />
+                <TouchableOpacity
+                  className="flex-1 bg-gray-50 rounded-lg px-3 h-10 justify-center border border-gray-200"
+                  onPress={() => {
+                    console.log('Opening milestone date picker');
+                    setShowMilestoneDatePicker(true);
+                  }}
+                >
+                  <Text className={`text-base ${newMilestoneDate ? 'text-black' : 'text-gray-500'}`}>
+                    {newMilestoneDate || "Select date"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={addMilestone}
+                className="bg-[#a084e8] rounded-lg py-2 items-center"
+                disabled={!newMilestoneName.trim() || !newMilestoneDate.trim()}
+              >
+                <Text className="text-white text-sm font-karla-bold">
+                  Add Milestone
+                </Text>
               </TouchableOpacity>
             </View>
           </>
@@ -1050,6 +1145,64 @@ const OrgCreate = () => {
             </View>
           </View>
         </Modal>
+      )}
+
+      {/* Milestone Date Picker Modal */}
+      {showMilestoneDatePicker && (
+        <>
+          {Platform.OS === 'ios' ? (
+            <Modal
+              visible={showMilestoneDatePicker}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowMilestoneDatePicker(false)}
+            >
+              <View className="flex-1 bg-black/50 justify-end">
+                <View className="bg-white rounded-t-3xl p-6">
+                  <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
+                    Select Milestone Date
+                  </Text>
+                  <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
+                    <DateTimePicker
+                      value={newMilestoneDateObj}
+                      mode="date"
+                      display="spinner"
+                      onChange={handleMilestoneDateChange}
+                      style={{ 
+                        backgroundColor: 'transparent'
+                      }}
+                      textColor="#333333"
+                      accentColor="#a084e8"
+                    />
+                  </View>
+                  <View className="flex-row space-x-3 mt-4">
+                    <TouchableOpacity
+                      className="flex-1 bg-gray-200 rounded-xl py-3"
+                      onPress={() => setShowMilestoneDatePicker(false)}
+                    >
+                      <Text className="text-center text-base text-gray-600">Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="flex-1 bg-[#a084e8] rounded-xl py-3"
+                      onPress={confirmMilestoneDate}
+                    >
+                      <Text className="text-center text-base text-white font-bold">Confirm</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          ) : (
+            <DateTimePicker
+              value={newMilestoneDateObj}
+              mode="date"
+              display="default"
+              onChange={handleMilestoneDateChange}
+              textColor="#333333"
+              accentColor="#a084e8"
+            />
+          )}
+        </>
       )}
         </ScrollView>
       </LinearGradient>

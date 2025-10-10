@@ -14,9 +14,12 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/learl.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#4B2ACF"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "statusBarColor": "#3D0DBD",
+      "navigationBarColor": "#3D0DBD",
+      "statusBarStyle": "light"
     },
     "web": {
       "bundler": "metro",
@@ -31,7 +34,7 @@
           "image": "./assets/images/learl.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#3D0DBD"
         }
       ]
     ],

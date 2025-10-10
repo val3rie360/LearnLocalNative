@@ -1,6 +1,13 @@
 <resources>
-  <color name="splashscreen_background">#ffffff</color>
-  <color name="iconBackground">#000000</color>
-  <color name="colorPrimary">#023c69</color>
-  <color name="colorPrimaryDark">#ffffff</color>
+  <!-- LearnLocal Brand Colors -->
+  <color name="splashscreen_background">#3D0DBD</color>
+  <color name="iconBackground">#4B2ACF</color>
+  <color name="colorPrimary">#4B2ACF</color>
+  <color name="colorPrimaryDark">#3D0DBD</color>
+  <color name="colorAccent">#FFE600</color>
+  <color name="brand_secondary">#4B1EB4</color>
+  <color name="brand_light_purple">#D6D3FF</color>
+  <color name="brand_yellow">#FFE600</color>
+  <color name="brand_white">#FFFFFF</color>
+  <color name="brand_black">#000000</color>
 </resources>
