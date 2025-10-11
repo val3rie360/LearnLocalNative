@@ -1,8 +1,8 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
-import MapView from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
+import MapView from "../../../components/PlatformMap";
 
 const Map = () => {
   return (

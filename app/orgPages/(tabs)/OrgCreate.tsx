@@ -20,8 +20,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from "react-native-safe-area-context";
+import MapView, { Marker } from "../../../components/PlatformMap";
+import { useAuth } from "../../../contexts/AuthContext";
+import { createOpportunity } from "../../../services/firestoreService";
 
 const categories = [
   "Scholarship / Grant",
@@ -32,11 +34,14 @@ const categories = [
 ];
 
 const OrgCreate = () => {
+  const { user } = useAuth();
   const [file, setFile] = useState("");
   const [level, setLevel] = useState("");
   const [showLevelDropdown, setShowLevelDropdown] = useState(false);
   const [subject, setSubject] = useState("");
   const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const levelOptions = [
     "Undergraduate",
@@ -345,40 +350,150 @@ const OrgCreate = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // Clear previous error
+    setErrorMessage("");
+
+    // Validation
     if (!title.trim() || !description.trim()) {
-      Alert.alert('Error', 'Please fill in all required fields');
+      setErrorMessage('Please fill in all required fields: Title and Description');
       return;
     }
 
+    if (!user?.uid) {
+      setErrorMessage('You must be logged in to create an opportunity');
+      return;
+    }
+
+    // Validate milestones for Scholarship/Competition categories
+    if (category === "Scholarship / Grant" || category === "Competition / Event") {
+      if (dateMilestones.length === 0) {
+        setErrorMessage('Please add at least one date milestone (e.g., Application Deadline)');
+        return;
+      }
+      
+      // Check if there's an incomplete milestone in the form
+      if (newMilestoneName.trim() || newMilestoneDate.trim()) {
+        if (!newMilestoneName.trim() || !newMilestoneDate.trim()) {
+          setErrorMessage('Please complete the milestone form or click "Add Milestone" to save it');
+          return;
+        }
+      }
+    }
+
     if (category === "Resources" && !uploadedFile) {
-      Alert.alert('Error', 'Please upload a PDF file for resources category');
+      setErrorMessage('Please upload a PDF file for resources category');
       return;
     }
 
     if ((category === "Study Spot" || category === "Workshop / Seminar") && !location) {
-      Alert.alert('Error', `Please select a location for ${category.toLowerCase()}`);
+      setErrorMessage(`Please select a location for ${category.toLowerCase()}`);
       return;
     }
 
     // Validate day selection for repeating workshops
     if (category === "Workshop / Seminar" && repeats && selectedDays.length === 0) {
-      Alert.alert('Error', 'Please select at least one day for repeating workshops');
+      setErrorMessage('Please select at least one day for repeating workshops');
       return;
     }
 
-    // Validate that all milestone fields are filled if any are added
-    if (newMilestoneName.trim() || newMilestoneDate.trim()) {
-      if (!newMilestoneName.trim() || !newMilestoneDate.trim()) {
-        Alert.alert('Error', 'Please complete the milestone form or clear the fields');
-        return;
-      }
-    }
+    setIsSubmitting(true);
 
-    // Here you would typically save the opportunity to your backend
-    // The dateMilestones array now contains objects with name and date properties
-    console.log('Date milestones:', dateMilestones);
-    Alert.alert('Success', 'Opportunity posted successfully!');
+    try {
+      // Build the opportunity data based on category
+      let opportunityData: any = {
+        title: title.trim(),
+        description: description.trim(),
+      };
+
+      // Add category-specific fields
+      if (category === "Scholarship / Grant" || category === "Competition / Event") {
+        // Scholarship/Competition specific fields
+        opportunityData = {
+          ...opportunityData,
+          ...(amount && { amount: amount.trim() }),
+          ...(eligibility && { eligibility: eligibility.trim() }),
+          ...(dateMilestones.length > 0 && { dateMilestones }),
+        };
+      } else if (category === "Workshop / Seminar") {
+        // Workshop specific fields
+        if (location) {
+          opportunityData = {
+            ...opportunityData,
+            workshopStarts: workshopStarts,
+            workshopEnds: workshopEnds,
+            repeats,
+            ...(repeats && { selectedDays }),
+            location: {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              timestamp: location.timestamp
+            }
+          };
+        }
+      } else if (category === "Study Spot") {
+        // Study Spot specific fields
+        if (location) {
+          opportunityData = {
+            ...opportunityData,
+            openTime,
+            closeTime,
+            location: {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              timestamp: location.timestamp
+            }
+          };
+        }
+      } else if (category === "Resources") {
+        // Resources specific fields
+        opportunityData = {
+          ...opportunityData,
+          uploadedFile: uploadedFile ? {
+            name: uploadedFile.name,
+            uri: uploadedFile.uri,
+            size: uploadedFile.size,
+            mimeType: uploadedFile.mimeType
+          } : null
+        };
+      }
+
+      // Create the opportunity using the hybrid model
+      const opportunityId = await createOpportunity(
+        opportunityData,
+        category,
+        user.uid
+      );
+
+      console.log('Opportunity created with ID:', opportunityId);
+      
+      // Reset form
+      setTitle("");
+      setDescription("");
+      setAmount("");
+      setEligibility("");
+      setDateMilestones([]);
+      setNewMilestoneName("");
+      setNewMilestoneDate("");
+      setWorkshopStarts("");
+      setWorkshopEnds("");
+      setRepeats(false);
+      setSelectedDays([]);
+      setOpenTime("");
+      setCloseTime("");
+      setLocation(null);
+      setUploadedFile(null);
+      setErrorMessage("");
+
+      Alert.alert('Success', 'Opportunity posted successfully!', [
+        { text: 'OK', onPress: () => console.log('Opportunity created') }
+      ]);
+    } catch (error) {
+      console.error('Error creating opportunity:', error);
+      setErrorMessage('Failed to create opportunity. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Icon for category
@@ -427,6 +542,21 @@ const OrgCreate = () => {
               </Text>
             </View>
             <View className="h-px bg-[#E5E0FF] mb-6" />
+
+            {/* Error Message */}
+            {errorMessage ? (
+              <View className="bg-red-50 border border-red-300 rounded-xl px-4 py-3 mb-4">
+                <View className="flex-row items-center">
+                  <Ionicons name="alert-circle" size={20} color="#DC2626" />
+                  <Text className="text-red-700 font-karla ml-2 flex-1">
+                    {errorMessage}
+                  </Text>
+                  <TouchableOpacity onPress={() => setErrorMessage("")}>
+                    <Ionicons name="close-circle" size={20} color="#DC2626" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : null}
 
             {/* Category */}
             <Text className="text-sm text-[#18181B] font-karla-bold mb-1">
@@ -520,7 +650,10 @@ const OrgCreate = () => {
         {category !== "Resources" && category !== "Study Spot" && category !== "Workshop / Seminar" && (
           <>
             <Text className="text-sm text-black font-semibold mb-1">
-              Date Milestones
+              Date Milestones *
+            </Text>
+            <Text className="text-xs text-gray-600 mb-2">
+              Add at least one important date (e.g., Application Deadline, Winner Announcement)
             </Text>
             
             {/* Display existing milestones */}
@@ -782,8 +915,11 @@ const OrgCreate = () => {
         <TouchableOpacity 
           className="bg-[#a084e8] rounded-full py-3 items-center mt-2 mb-8 shadow"
           onPress={handleSubmit}
+          disabled={isSubmitting}
         >
-          <Text className="text-white text-base font-bold">Submit</Text>
+          <Text className="text-white text-base font-bold">
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </Text>
         </TouchableOpacity>
       </View>
 

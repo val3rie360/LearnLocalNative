@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../firebaseconfig";
 
 // Function to add or update user profile
@@ -29,6 +29,212 @@ export const updateUserProfile = async (userId, profileData) => {
     console.log("Profile updated successfully");
   } catch (error) {
     console.error("Error updating user profile:", error);
+    throw error;
+  }
+};
+
+/**
+ * HYBRID OPPORTUNITIES SYSTEM
+ * 
+ * This system uses two parts:
+ * 1. A denormalized 'opportunities' collection with preview data for lists/feeds
+ * 2. Specific collections (scholarships, workshops, studySpots) with complete data
+ */
+
+// Map category names to collection names
+const getCollectionNameForCategory = (category) => {
+  const categoryMap = {
+    "Scholarship / Grant": "scholarships",
+    "Competition / Event": "competitions",
+    "Workshop / Seminar": "workshops",
+    "Resources": "resources",
+    "Study Spot": "studySpots"
+  };
+  return categoryMap[category] || "opportunities";
+};
+
+/**
+ * Create an opportunity with the hybrid model
+ * @param {Object} opportunityData - Complete opportunity data
+ * @param {string} category - Category of the opportunity
+ * @param {string} organizationId - ID of the organization creating the opportunity
+ * @returns {Promise<string>} - The ID of the created opportunity
+ */
+export const createOpportunity = async (opportunityData, category, organizationId) => {
+  try {
+    // Determine the specific collection based on category
+    const specificCollection = getCollectionNameForCategory(category);
+    
+    // Add metadata
+    const timestamp = serverTimestamp();
+    const completeData = {
+      ...opportunityData,
+      category,
+      organizationId,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      status: 'active'
+    };
+
+    // Step 1: Create the document in the specific collection (with full data)
+    const specificDocRef = await addDoc(collection(db, specificCollection), completeData);
+    const opportunityId = specificDocRef.id;
+
+    // Step 2: Create a denormalized preview document in the 'opportunities' collection
+    const previewData = {
+      id: opportunityId,
+      title: opportunityData.title,
+      description: opportunityData.description,
+      category,
+      organizationId,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      status: 'active',
+      // Include key filtering fields
+      ...(opportunityData.location && { location: opportunityData.location }),
+      ...(opportunityData.amount && { amount: opportunityData.amount }),
+      // Add a reference to the specific collection
+      specificCollection
+    };
+
+    await setDoc(doc(db, "opportunities", opportunityId), previewData);
+
+    console.log(`Opportunity created successfully with ID: ${opportunityId}`);
+    return opportunityId;
+  } catch (error) {
+    console.error("Error creating opportunity:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get the full details of an opportunity from its specific collection
+ * @param {string} opportunityId - ID of the opportunity
+ * @param {string} specificCollection - Name of the specific collection
+ * @returns {Promise<Object>} - Full opportunity data
+ */
+export const getOpportunityDetails = async (opportunityId, specificCollection) => {
+  try {
+    const docRef = doc(db, specificCollection, opportunityId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      console.log("No opportunity found with ID:", opportunityId);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting opportunity details:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get opportunity preview from the opportunities collection
+ * @param {string} opportunityId - ID of the opportunity
+ * @returns {Promise<Object>} - Preview data
+ */
+export const getOpportunityPreview = async (opportunityId) => {
+  try {
+    const docRef = doc(db, "opportunities", opportunityId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      console.log("No opportunity preview found with ID:", opportunityId);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting opportunity preview:", error);
+    throw error;
+  }
+};
+
+/**
+ * Update an opportunity in both collections
+ * @param {string} opportunityId - ID of the opportunity
+ * @param {string} specificCollection - Name of the specific collection
+ * @param {Object} updateData - Data to update
+ */
+export const updateOpportunity = async (opportunityId, specificCollection, updateData) => {
+  try {
+    const timestamp = serverTimestamp();
+    const dataWithTimestamp = {
+      ...updateData,
+      updatedAt: timestamp
+    };
+
+    // Update in specific collection
+    await setDoc(doc(db, specificCollection, opportunityId), dataWithTimestamp, { merge: true });
+
+    // Update preview data in opportunities collection
+    const previewUpdateData = {
+      updatedAt: timestamp,
+      ...(updateData.title && { title: updateData.title }),
+      ...(updateData.description && { description: updateData.description }),
+      ...(updateData.location && { location: updateData.location }),
+      ...(updateData.amount && { amount: updateData.amount }),
+      ...(updateData.status && { status: updateData.status })
+    };
+
+    await setDoc(doc(db, "opportunities", opportunityId), previewUpdateData, { merge: true });
+
+    console.log("Opportunity updated successfully");
+  } catch (error) {
+    console.error("Error updating opportunity:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all opportunities for a specific organization
+ * @param {string} organizationId - ID of the organization
+ * @returns {Promise<Array>} - Array of opportunity previews
+ */
+export const getOrganizationOpportunities = async (organizationId) => {
+  try {
+    const { query, where, getDocs, collection, orderBy } = await import("firebase/firestore");
+    
+    const q = query(
+      collection(db, "opportunities"),
+      where("organizationId", "==", organizationId),
+      orderBy("createdAt", "desc")
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const opportunities = [];
+    
+    querySnapshot.forEach((doc) => {
+      opportunities.push({ id: doc.id, ...doc.data() });
+    });
+    
+    return opportunities;
+  } catch (error) {
+    console.error("Error getting organization opportunities:", error);
+    throw error;
+  }
+};
+
+/**
+ * Delete an opportunity from both collections
+ * @param {string} opportunityId - ID of the opportunity
+ * @param {string} specificCollection - Name of the specific collection
+ */
+export const deleteOpportunity = async (opportunityId, specificCollection) => {
+  try {
+    const { deleteDoc } = await import("firebase/firestore");
+    
+    // Delete from specific collection
+    await deleteDoc(doc(db, specificCollection, opportunityId));
+    
+    // Delete from opportunities collection
+    await deleteDoc(doc(db, "opportunities", opportunityId));
+    
+    console.log("Opportunity deleted successfully");
+  } catch (error) {
+    console.error("Error deleting opportunity:", error);
     throw error;
   }
 };
