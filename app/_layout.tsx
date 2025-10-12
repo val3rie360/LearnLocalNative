@@ -38,7 +38,9 @@ function RootLayoutNav() {
   }, [user?.uid]);
 
   useEffect(() => {
+    // Don't do any redirects until both auth and role are loaded
     if (loading || roleLoading) {
+      console.log("Still loading auth or role data...");
       return;
     }
 
@@ -65,7 +67,7 @@ function RootLayoutNav() {
       router.replace("/login");
     }
     // Redirect authenticated users from auth pages to appropriate home based on role
-    else if (user && isOnAuthPages) {
+    else if (user && userRole && isOnAuthPages) {
       const homeRoute =
         userRole === "admin"
           ? "/adminPages/admin"
@@ -75,13 +77,13 @@ function RootLayoutNav() {
       console.log(
         `Redirecting authenticated ${userRole} user from auth pages to ${homeRoute}`
       );
-      router.push(homeRoute);
+      router.replace(homeRoute);
     }
     // Redirect users to correct pages based on their role
     else if (user && userRole) {
       if (userRole === "admin" && !isOnAdminPage) {
         console.log("Redirecting admin user to admin page");
-        router.push("/adminPages/admin");
+        router.replace("/adminPages/admin");
       } else if (userRole === "organization" && isOnProtectedStudentPages) {
         console.log(
           "Redirecting organization user from student pages to org pages"
@@ -127,6 +129,8 @@ export default function RootLayout() {
         }, 2000); // 2 seconds after fade-in
       });
     }
+
+    return () => clearTimeout(timeout);
   }, [fontsLoaded, fadeAnim]);
 
   if (!appReady) {
