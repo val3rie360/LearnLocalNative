@@ -1,10 +1,9 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React from "react";
+import { memo } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CategoriesGrid from "../../../components/CategoriesGrid";
 import { SearchBar } from "../../../components/Common";
 import OpportunityCard from "../../../components/OpportunityCard";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -52,6 +51,36 @@ const OPPORTUNITIES = [
   },
 ];
 
+type CategoryItemProps = {
+  icon: string;
+  family?: string;
+  bg: string;
+  label: string;
+};
+
+const CategoryItem = memo(function CategoryItem({
+  icon,
+  family = "Ionicons",
+  bg,
+  label,
+}: CategoryItemProps) {
+  const IconComponent =
+    family === "MaterialCommunityIcons" ? MaterialCommunityIcons : Ionicons;
+  return (
+    <View className="items-center">
+      <View
+        className="w-[63px] h-[63px] rounded-lg justify-center items-center shadow-sm"
+        style={{ backgroundColor: bg }}
+      >
+        <IconComponent name={icon as any} size={25} color="#fff" />
+      </View>
+      <Text className="mt-2.5 text-[13px] font-karla-bold text-black text-center">
+        {label}
+      </Text>
+    </View>
+  );
+});
+
 export default function Home() {
   const router = useRouter();
   const { user, profileData, profileLoading } = useAuth();
@@ -91,7 +120,6 @@ export default function Home() {
           </View>
           <SearchBar />
         </View>
-
         {/* Upcoming Deadlines */}
         <View className="mt-[-90px] px-5">
           <View
@@ -131,10 +159,12 @@ export default function Home() {
             />
           </View>
         </View>
-
         {/* Categories */}
-        <CategoriesGrid categories={CATEGORIES} />
-
+        <View className="flex-row justify-around my-5 px-4">
+          {CATEGORIES.map((c) => (
+            <CategoryItem key={c.label} {...c} />
+          ))}
+        </View>
         {/* Opportunities */}
         <LinearGradient
           colors={["#fff", "#DADEFF"]}

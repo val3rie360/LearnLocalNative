@@ -60,11 +60,10 @@ export default function OrgSignup() {
       setError("Passwords do not match");
       return;
     }
-    // Make file upload optional for now to test registration
-    // if (!file) {
-    //   setError("Please upload a verification document");
-    //   return;
-    // }
+    if (!file) {
+      setError("Please upload a verification document");
+      return;
+    }
     if (!accepted) {
       setError("Please accept the terms and conditions");
       return;
@@ -72,25 +71,51 @@ export default function OrgSignup() {
 
     setLoading(true);
     try {
+      console.log("📄 File to upload:", {
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      });
+
+      // Ensure all required properties exist
+      if (!file.uri || !file.name || file.size === undefined) {
+        throw new Error("Invalid file selected. Please try again.");
+      }
+
       const extraData = {
         name: trimmedName,
-        verificationFile: file,
+        verificationFile: {
+          uri: file.uri,
+          name: file.name,
+          size: file.size,
+          mimeType: file.mimeType,
+        },
       };
+
       console.log(
-        "Attempting to register organization with email:",
+        "🚀 Attempting to register organization with email:",
         trimmedEmail
       );
       await signUp(trimmedEmail, trimmedPassword, "organization", extraData);
-      console.log("Organization registered successfully");
+      console.log("✅ Organization registered successfully");
       router.replace("/orgPages/(tabs)/OrgHome");
-    } catch (error) {
-      console.error("Error registering organization:", error);
+    } catch (error: any) {
+      console.error("❌ Error registering organization:", error);
+      console.error("Error details:", {
+        code: error.code,
+        message: error.message,
+        stack: error.stack,
+      });
+
       if (error.code === "auth/email-already-in-use") {
         setError(
           "This email is already registered. Please use a different email or try logging in."
         );
       } else if (error.code === "auth/weak-password") {
         setError("Password is too weak. Please choose a stronger password.");
+      } else if (error.message?.includes("File upload failed")) {
+        setError("Failed to upload verification file. Please try again.");
       } else {
         setError(`Registration failed: ${error.message}`);
       }

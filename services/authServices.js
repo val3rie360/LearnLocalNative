@@ -23,20 +23,32 @@ export const signUp = async (email, password, role, extrData = {}) => {
 
     let verificationFileUrl = null;
     const { name, verificationFile } = extrData;
-    if (role === "organization" && extrData.verificationFile && extrData.verificationFile.uri) {
+    if (
+      role === "organization" &&
+      extrData.verificationFile &&
+      extrData.verificationFile.uri
+    ) {
       try {
         const file = extrData.verificationFile;
-        console.log("Uploading verification file:", file.name, "Size:", file.size);
+        console.log(
+          "Uploading verification file:",
+          file.name,
+          "Size:",
+          file.size
+        );
 
         // create a unique path for the file in firebase storage
-        const storageRef = ref(storage, `verifications/${user.uid}/${file.name}`);
+        const storageRef = ref(
+          storage,
+          `verifications/${user.uid}/${file.name}`
+        );
 
         // fetching file content as a blob for uploading
         const response = await fetch(file.uri);
         if (!response.ok) {
           throw new Error(`Failed to fetch file: ${response.statusText}`);
         }
-        
+
         const blob = await response.blob();
         console.log("File blob created, size:", blob.size);
 

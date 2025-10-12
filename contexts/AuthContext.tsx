@@ -1,12 +1,12 @@
-import { User } from 'firebase/auth';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authStateListener } from '../services/authServices';
-import { getUserProfile } from '../services/firestoreService';
+import { User } from "firebase/auth";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { authStateListener } from "../services/authServices";
+import { getUserProfile } from "../services/firestoreService";
 
 interface ProfileData {
   name?: string;
   email?: string;
-  role?: 'student' | 'organization';
+  role?: "student" | "organization" | "admin";
   createdAt?: {
     seconds: number;
   };
@@ -33,12 +33,14 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -79,13 +81,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      profileData, 
-      profileLoading, 
-      refreshProfile 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        profileData,
+        profileLoading,
+        refreshProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -47,13 +47,18 @@ function RootLayoutNav() {
       currentRoute === "studentPages" && segments[1] === "(tabs)";
     const isOnProtectedOrgPages =
       currentRoute === "orgPages" && segments[1] === "(tabs)";
+    const isOnAdminPage =
+      currentRoute === "adminPages" && segments[1] === "admin";
     const isOnAuthPages =
       currentRoute === "login" ||
       (currentRoute === "studentPages" && segments[1] === "studentsignup") ||
       (currentRoute === "orgPages" && segments[1] === "orgsignup");
 
     // Redirect unauthenticated users from protected pages to login
-    if (!user && (isOnProtectedStudentPages || isOnProtectedOrgPages)) {
+    if (
+      !user &&
+      (isOnProtectedStudentPages || isOnProtectedOrgPages || isOnAdminPage)
+    ) {
       console.log(
         "Redirecting unauthenticated user from protected pages to login"
       );
@@ -62,17 +67,22 @@ function RootLayoutNav() {
     // Redirect authenticated users from auth pages to appropriate home based on role
     else if (user && isOnAuthPages) {
       const homeRoute =
-        userRole === "organization"
-          ? "/orgPages/(tabs)/OrgHome"
-          : "/studentPages/(tabs)/Home";
+        userRole === "admin"
+          ? "/adminPages/admin"
+          : userRole === "organization"
+            ? "/orgPages/(tabs)/OrgHome"
+            : "/studentPages/(tabs)/Home";
       console.log(
         `Redirecting authenticated ${userRole} user from auth pages to ${homeRoute}`
       );
-      router.replace(homeRoute);
+      router.push(homeRoute);
     }
     // Redirect users to correct pages based on their role
     else if (user && userRole) {
-      if (userRole === "organization" && isOnProtectedStudentPages) {
+      if (userRole === "admin" && !isOnAdminPage) {
+        console.log("Redirecting admin user to admin page");
+        router.push("/adminPages/admin");
+      } else if (userRole === "organization" && isOnProtectedStudentPages) {
         console.log(
           "Redirecting organization user from student pages to org pages"
         );
@@ -86,7 +96,6 @@ function RootLayoutNav() {
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }
-
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -100,6 +109,12 @@ export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      console.log("Font loading timeout - proceeding anyway");
+      setAppReady(true);
+      SplashScreen.hideAsync();
+    }, 5000); // 5 second fallback
+
     if (fontsLoaded) {
       Animated.timing(fadeAnim, {
         toValue: 1,
