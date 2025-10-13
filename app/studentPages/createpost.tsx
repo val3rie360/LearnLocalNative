@@ -1,7 +1,9 @@
+import { useAuth } from "@/contexts/AuthContext";
+import { addCommunityPost } from "@/services/firestoreService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const categories = [
@@ -15,11 +17,38 @@ const categories = [
 export default function CreatePost() {
   const router = useRouter();
   const [title, setTitle] = useState("");
+  const { profileData } = useAuth();
   const [desc, setDesc] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
 
   const wordCount =
     desc.trim().length > 0 ? desc.trim().split(/\s+/).length : 0;
+
+  // Add this function to handle post creation
+  const handlePost = async () => {
+    if (!title.trim() || !selected) {
+      Alert.alert("Please enter a title and select a category.");
+      return;
+    }
+    if (!profileData?.name) {
+      Alert.alert("Error", "Could not find your user name.");
+      return;
+    }
+    console.log("Posting as user:", profileData.name); // Debug line
+    try {
+      await addCommunityPost({
+        user: profileData.name,
+        date: new Date().toLocaleDateString("en-US"),
+        title: title.trim(),
+        desc: desc.trim(),
+        tag: selected,
+        upvotes: 0,
+      });
+      router.back();
+    } catch (e) {
+      Alert.alert("Failed to post. Please try again.");
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#E6E4FA]">
@@ -39,6 +68,7 @@ export default function CreatePost() {
           <TouchableOpacity
             className="bg-[#4B1EB4] rounded-full px-5 py-2"
             activeOpacity={0.8}
+            onPress={handlePost} // <-- Add this
           >
             <Text className="text-white font-karla-bold text-[15px]">Post</Text>
           </TouchableOpacity>

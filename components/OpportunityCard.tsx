@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 
 type OpportunityCardProps = {
   title: string;
@@ -23,14 +23,34 @@ const InfoRow = ({
   label: string;
   value: string;
 }) => (
-  <View style={styles.infoRow}>
-    <Ionicons name={icon} size={16} color="#4B1EB4" style={styles.icon} />
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
+  <View className="flex-row items-center mb-1 flex-nowrap">
+    <Ionicons
+      name={icon}
+      size={16}
+      color="#4B1EB4"
+      style={{ marginRight: 6 }}
+    />
+    <Text className="text-[14px] text-[#4B1EB4] font-karla-bold mr-1.5">
+      {label}
+    </Text>
+    <Text
+      className="text-[14px] text-[#222] flex-shrink"
+      numberOfLines={1}
+      ellipsizeMode="tail"
+      style={{ fontFamily: "Karla" }}
+    >
       {value}
     </Text>
   </View>
 );
+
+function truncateEligibility(eligibility: string) {
+  const words = eligibility.trim().split(/\s+/);
+  if (words.length > 4) {
+    return words.slice(0, 4).join(" ") + " ...";
+  }
+  return eligibility;
+}
 
 const OpportunityCard: React.FC<OpportunityCardProps> = ({
   title,
@@ -42,128 +62,70 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({
   tag,
   onViewDetails,
   bookmarked = false,
-}) => (
-  <View style={styles.card}>
-    {/* Bookmark */}
-    <Ionicons
-      name={bookmarked ? "bookmark" : "bookmark-outline"}
-      size={22}
-      color={bookmarked ? "#4B1EB4" : "#BFC1D1"}
-      style={styles.bookmark}
-    />
+}) => {
+  const [isBookmarked, setIsBookmarked] = useState(bookmarked);
 
-    {/* Title */}
-    <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
-      {title}
-    </Text>
+  const handleBookmark = () => {
+    setIsBookmarked((prev) => !prev);
+    // Optionally, call a prop callback here to persist bookmark state
+  };
 
-    {/* Info */}
-    <InfoRow icon="person-outline" label="Posted by:" value={postedBy} />
-    <InfoRow icon="calendar-outline" label="Deadline:" value={deadline} />
-    <InfoRow icon="cash-outline" label="Amount:" value={amount} />
-    <InfoRow icon="location-outline" label="Eligibility:" value={eligibility} />
-
-    {/* Description */}
-    <Text style={styles.description} numberOfLines={3} ellipsizeMode="tail">
-      {description}
-    </Text>
-
-    {/* Footer */}
-    <View style={styles.footer}>
-      <View style={styles.tag}>
-        <Text style={styles.tagText}>{tag}</Text>
+  return (
+    <View
+      className="bg-white rounded-2xl p-4 mb-5 relative shadow-2xl shadow-[#4B1EB4]/40 border border-gray-200"
+      style={{ elevation: 1 }}
+    >
+      {/* Title and Bookmark Row */}
+      <View className="flex-row items-start justify-between mb-2">
+        <Text
+          className="text-[18px] text-[#4B1EB4] font-karla-bold pr-4 flex-1"
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {title}
+        </Text>
+        <Ionicons
+          name={isBookmarked ? "bookmark" : "bookmark-outline"}
+          size={22}
+          color={isBookmarked ? "#4B1EB4" : "#BFC1D1"}
+          onPress={handleBookmark}
+        />
       </View>
-      <TouchableOpacity style={styles.detailsBtn} onPress={onViewDetails}>
-        <Text style={styles.detailsBtnText}>View Details</Text>
-        <Ionicons name="arrow-forward" size={16} color="#fff" />
-      </TouchableOpacity>
+      {/* Info */}
+      <InfoRow icon="person-outline" label="Posted by:" value={postedBy} />
+      <InfoRow icon="calendar-outline" label="Deadline:" value={deadline} />
+      <InfoRow icon="cash-outline" label="Amount:" value={amount} />
+      <InfoRow
+        icon="location-outline"
+        label="Eligibility:"
+        value={truncateEligibility(eligibility)}
+      />
+      {/* Description */}
+      <Text
+        className="text-[#666] text-[13px] my-2 font-karla"
+        numberOfLines={3}
+        ellipsizeMode="tail"
+      >
+        {description}
+      </Text>
+      {/* Footer */}
+      <View className="flex-row items-center justify-between mt-2.5">
+        <View className="bg-[#BDFCFF] py-1.5 px-3.5 rounded-full">
+          <Text className="text-[14px] text-[#0B617C] font-karla-bold">
+            {tag}
+          </Text>
+        </View>
+        <TouchableOpacity
+          className="flex-row items-center bg-[#4B1EB4] rounded-full py-2 px-4"
+          onPress={onViewDetails}
+        >
+          <Text className="text-white font-karla-bold text-[14px] mr-1.5">
+            View Details
+          </Text>
+          <Ionicons name="arrow-forward" size={16} color="#fff" />
+        </TouchableOpacity>
+      </View>
     </View>
-  </View>
-);
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#E6E6FA",
-  },
-  bookmark: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: "Karla-Bold",
-    color: "#4B1EB4",
-    marginBottom: 10,
-    paddingRight: 30,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-    flexWrap: "nowrap",
-  },
-  icon: {
-    marginRight: 6,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: "#4B1EB4",
-    fontFamily: "Karla-Bold",
-    marginRight: 4,
-  },
-  infoValue: {
-    fontSize: 14,
-    color: "#222",
-    fontFamily: "Karla",
-    flexShrink: 1,
-  },
-  description: {
-    color: "#666",
-    fontSize: 13,
-    fontFamily: "Karla",
-    marginVertical: 8,
-  },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  tag: {
-    backgroundColor: "#BDFCFF",
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-  },
-  tagText: {
-    fontSize: 14,
-    color: "#0B617C",
-    fontFamily: "Karla-Bold",
-  },
-  detailsBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#4B1EB4",
-    borderRadius: 25,
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-  },
-  detailsBtnText: {
-    color: "#fff",
-    fontFamily: "Karla-Bold",
-    fontSize: 14,
-    marginRight: 6,
-  },
-});
-
+  );
+};
 export default OpportunityCard;

@@ -1,4 +1,14 @@
-import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../firebaseconfig";
 
 // Function to add or update user profile
@@ -22,6 +32,41 @@ export const getUserProfile = async (userId) => {
   }
 };
 
+// Function to get all community posts
+export const getCommunityPosts = async () => {
+  try {
+    const postsCol = collection(db, "posts");
+    const postsSnap = await getDocs(postsCol);
+    return postsSnap.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        user: data.user ?? "",
+        date: data.date ?? "",
+        title: data.title ?? "",
+        desc: data.desc ?? "",
+        tag: data.tag ?? "",
+        tagColor: data.tagColor,
+        tagTextColor: data.tagTextColor,
+        upvotes: data.upvotes,
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching community posts:", error);
+    throw error;
+  }
+};
+
+// Function to add a new community post
+export const addCommunityPost = async (postData) => {
+  try {
+    return await addDoc(collection(db, "posts"), postData);
+  } catch (error) {
+    console.error("Error adding community post:", error);
+    throw error;
+  }
+};
+
 // Function to update user profile data
 export const updateUserProfile = async (userId, profileData) => {
   try {
@@ -35,7 +80,7 @@ export const updateUserProfile = async (userId, profileData) => {
 
 /**
  * HYBRID OPPORTUNITIES SYSTEM
- * 
+ *
  * This system uses two parts:
  * 1. A denormalized 'opportunities' collection with preview data for lists/feeds
  * 2. Specific collections (scholarships, workshops, studySpots) with complete data
@@ -47,8 +92,8 @@ const getCollectionNameForCategory = (category) => {
     "Scholarship / Grant": "scholarships",
     "Competition / Event": "competitions",
     "Workshop / Seminar": "workshops",
-    "Resources": "resources",
-    "Study Spot": "studySpots"
+    Resources: "resources",
+    "Study Spot": "studySpots",
   };
   return categoryMap[category] || "opportunities";
 };
@@ -60,11 +105,15 @@ const getCollectionNameForCategory = (category) => {
  * @param {string} organizationId - ID of the organization creating the opportunity
  * @returns {Promise<string>} - The ID of the created opportunity
  */
-export const createOpportunity = async (opportunityData, category, organizationId) => {
+export const createOpportunity = async (
+  opportunityData,
+  category,
+  organizationId
+) => {
   try {
     // Determine the specific collection based on category
     const specificCollection = getCollectionNameForCategory(category);
-    
+
     // Add metadata
     const timestamp = serverTimestamp();
     const completeData = {
@@ -73,11 +122,14 @@ export const createOpportunity = async (opportunityData, category, organizationI
       organizationId,
       createdAt: timestamp,
       updatedAt: timestamp,
-      status: 'active'
+      status: "active",
     };
 
     // Step 1: Create the document in the specific collection (with full data)
-    const specificDocRef = await addDoc(collection(db, specificCollection), completeData);
+    const specificDocRef = await addDoc(
+      collection(db, specificCollection),
+      completeData
+    );
     const opportunityId = specificDocRef.id;
 
     // Step 2: Create a denormalized preview document in the 'opportunities' collection
@@ -89,12 +141,12 @@ export const createOpportunity = async (opportunityData, category, organizationI
       organizationId,
       createdAt: timestamp,
       updatedAt: timestamp,
-      status: 'active',
+      status: "active",
       // Include key filtering fields
       ...(opportunityData.location && { location: opportunityData.location }),
       ...(opportunityData.amount && { amount: opportunityData.amount }),
       // Add a reference to the specific collection
-      specificCollection
+      specificCollection,
     };
 
     await setDoc(doc(db, "opportunities", opportunityId), previewData);
@@ -113,11 +165,14 @@ export const createOpportunity = async (opportunityData, category, organizationI
  * @param {string} specificCollection - Name of the specific collection
  * @returns {Promise<Object>} - Full opportunity data
  */
-export const getOpportunityDetails = async (opportunityId, specificCollection) => {
+export const getOpportunityDetails = async (
+  opportunityId,
+  specificCollection
+) => {
   try {
     const docRef = doc(db, specificCollection, opportunityId);
     const docSnap = await getDoc(docRef);
-    
+
     if (docSnap.exists()) {
       return { id: docSnap.id, ...docSnap.data() };
     } else {
@@ -139,7 +194,7 @@ export const getOpportunityPreview = async (opportunityId) => {
   try {
     const docRef = doc(db, "opportunities", opportunityId);
     const docSnap = await getDoc(docRef);
-    
+
     if (docSnap.exists()) {
       return { id: docSnap.id, ...docSnap.data() };
     } else {
@@ -158,16 +213,24 @@ export const getOpportunityPreview = async (opportunityId) => {
  * @param {string} specificCollection - Name of the specific collection
  * @param {Object} updateData - Data to update
  */
-export const updateOpportunity = async (opportunityId, specificCollection, updateData) => {
+export const updateOpportunity = async (
+  opportunityId,
+  specificCollection,
+  updateData
+) => {
   try {
     const timestamp = serverTimestamp();
     const dataWithTimestamp = {
       ...updateData,
-      updatedAt: timestamp
+      updatedAt: timestamp,
     };
 
     // Update in specific collection
-    await setDoc(doc(db, specificCollection, opportunityId), dataWithTimestamp, { merge: true });
+    await setDoc(
+      doc(db, specificCollection, opportunityId),
+      dataWithTimestamp,
+      { merge: true }
+    );
 
     // Update preview data in opportunities collection
     const previewUpdateData = {
@@ -176,10 +239,12 @@ export const updateOpportunity = async (opportunityId, specificCollection, updat
       ...(updateData.description && { description: updateData.description }),
       ...(updateData.location && { location: updateData.location }),
       ...(updateData.amount && { amount: updateData.amount }),
-      ...(updateData.status && { status: updateData.status })
+      ...(updateData.status && { status: updateData.status }),
     };
 
-    await setDoc(doc(db, "opportunities", opportunityId), previewUpdateData, { merge: true });
+    await setDoc(doc(db, "opportunities", opportunityId), previewUpdateData, {
+      merge: true,
+    });
 
     console.log("Opportunity updated successfully");
   } catch (error) {
@@ -195,21 +260,23 @@ export const updateOpportunity = async (opportunityId, specificCollection, updat
  */
 export const getOrganizationOpportunities = async (organizationId) => {
   try {
-    const { query, where, getDocs, collection, orderBy } = await import("firebase/firestore");
-    
+    const { query, where, getDocs, collection, orderBy } = await import(
+      "firebase/firestore"
+    );
+
     const q = query(
       collection(db, "opportunities"),
       where("organizationId", "==", organizationId),
       orderBy("createdAt", "desc")
     );
-    
+
     const querySnapshot = await getDocs(q);
     const opportunities = [];
-    
+
     querySnapshot.forEach((doc) => {
       opportunities.push({ id: doc.id, ...doc.data() });
     });
-    
+
     return opportunities;
   } catch (error) {
     console.error("Error getting organization opportunities:", error);
@@ -225,16 +292,23 @@ export const getOrganizationOpportunities = async (organizationId) => {
 export const deleteOpportunity = async (opportunityId, specificCollection) => {
   try {
     const { deleteDoc } = await import("firebase/firestore");
-    
+
     // Delete from specific collection
     await deleteDoc(doc(db, specificCollection, opportunityId));
-    
+
     // Delete from opportunities collection
     await deleteDoc(doc(db, "opportunities", opportunityId));
-    
+
     console.log("Opportunity deleted successfully");
   } catch (error) {
     console.error("Error deleting opportunity:", error);
     throw error;
   }
+};
+
+export const updateCommunityPostUpvotes = async (postId, incrementBy = 1) => {
+  const postRef = doc(db, "posts", postId);
+  await updateDoc(postRef, {
+    upvotes: increment(incrementBy),
+  });
 };

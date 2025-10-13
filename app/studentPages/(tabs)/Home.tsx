@@ -47,7 +47,7 @@ const OPPORTUNITIES = [
     eligibility: "Grade 12 STEM strand students in the Philippines",
     description:
       "A scholarship program aimed at empowering future leaders in science, technology, engineering, and mathematics.",
-    tag: "Scholarship",
+    tag: "Scholarships",
   },
 ];
 
