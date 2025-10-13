@@ -5,8 +5,8 @@ import {
 import { Entypo, FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type CommunityPost = {
@@ -25,13 +25,17 @@ export default function CommunityPage() {
   const router = useRouter();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [upvoted, setUpvoted] = useState<{ [postId: string]: boolean }>({});
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Load upvoted state from AsyncStorage
+  // Extract fetch logic to a function
+  const fetchPosts = useCallback(async () => {
+    setRefreshing(true);
+    const data = await getCommunityPosts();
+    setPosts(data);
+    setRefreshing(false);
+  }, []);
+
   useEffect(() => {
-    const fetchPosts = async () => {
-      const data = await getCommunityPosts();
-      setPosts(data);
-    };
     fetchPosts();
 
     const loadUpvoted = async () => {
@@ -41,7 +45,7 @@ export default function CommunityPage() {
       } catch {}
     };
     loadUpvoted();
-  }, []);
+  }, [fetchPosts]);
 
   // Save upvoted state to AsyncStorage whenever it changes
   useEffect(() => {
@@ -120,6 +124,9 @@ export default function CommunityPage() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 30 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={fetchPosts} />
+          }
         >
           {posts.map((post) => {
             // Match tag style based on categories array
