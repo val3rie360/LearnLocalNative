@@ -30,6 +30,10 @@ export default function CreatePost() {
       Alert.alert("Please enter a title and select a category.");
       return;
     }
+    if (wordCount > 25) {
+      Alert.alert("Description cannot exceed 25 words.");
+      return;
+    }
     if (!profileData?.name) {
       Alert.alert("Error", "Could not find your user name.");
       return;
@@ -103,7 +107,11 @@ export default function CreatePost() {
             multiline
             maxLength={200}
           />
-          <Text className="text-right text-[#A1A1AA] text-[12px] font-karla mt-1 absolute bottom-2 right-4">
+          <Text
+            className={`text-right text-[12px] font-karla mt-1 absolute bottom-2 right-4 ${
+              wordCount > 25 ? "text-red-500" : "text-[#A1A1AA]"
+            }`}
+          >
             {wordCount}/25 words
           </Text>
         </View>
