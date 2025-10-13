@@ -1,9 +1,19 @@
-import { getCommunityPosts } from "@/services/firestoreService";
+import {
+  getCommunityPosts,
+  getLargestPosts,
+} from "@/services/firestoreService";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type CommunityPost = {
@@ -21,14 +31,26 @@ type CommunityPost = {
 export default function OrgBoard() {
   const router = useRouter();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [selectedSort, setSelectedSort] = useState<"top" | "default">(
+    "default"
+  );
+
+  const fetchPosts = useCallback(async () => {
+    const data = await getCommunityPosts();
+    setPosts(data);
+  }, []);
+
+  const fetchTopVotedPosts = useCallback(async () => {
+    const data = await getLargestPosts();
+    setPosts(data);
+    setShowSortModal(false);
+    setSelectedSort("top");
+  }, []);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const data = await getCommunityPosts();
-      setPosts(data);
-    };
     fetchPosts();
-  }, []);
+  }, [fetchPosts]);
 
   // Tag color logic (same as CommunityPage)
   const categories = [
@@ -60,8 +82,72 @@ export default function OrgBoard() {
             <Text className="font-karla-bold text-[17px] text-[#18181B] flex-1">
               Posts Feed
             </Text>
-            <Ionicons name="options-outline" size={20} color="#4B1EB4" />
+            <TouchableOpacity onPress={() => setShowSortModal(true)}>
+              <Ionicons name="options-outline" size={20} color="#4B1EB4" />
+            </TouchableOpacity>
           </View>
+
+          {/* Sort Modal */}
+          <Modal
+            visible={showSortModal}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowSortModal(false)}
+          >
+            <TouchableWithoutFeedback onPress={() => setShowSortModal(false)}>
+              <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.3)" }} />
+            </TouchableWithoutFeedback>
+            <View
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: "#fff",
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                padding: 24,
+                shadowColor: "#000",
+                shadowOpacity: 0.1,
+                shadowRadius: 10,
+                elevation: 10,
+              }}
+            >
+              <Text className="font-karla-bold text-lg mb-4">
+                Sort Posts By
+              </Text>
+              <TouchableOpacity
+                className="py-3 border-b border-[#eee]"
+                onPress={fetchTopVotedPosts}
+              >
+                <Text
+                  className={`text-base font-karla ${
+                    selectedSort === "top" ? "text-[#4B1EB4]" : "text-[#18181B]"
+                  }`}
+                >
+                  Top Votes
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="py-3"
+                onPress={() => {
+                  fetchPosts();
+                  setShowSortModal(false);
+                  setSelectedSort("default");
+                }}
+              >
+                <Text
+                  className={`text-base font-karla ${
+                    selectedSort === "default"
+                      ? "text-[#4B1EB4]"
+                      : "text-[#18181B]"
+                  }`}
+                >
+                  Default (Newest)
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Modal>
 
           {/* Posts */}
           <ScrollView
@@ -111,8 +197,9 @@ export default function OrgBoard() {
                         {post.tag}
                       </Text>
                     </View>
-                    <Text className="text-[#A1A1AA] text-[13px] font-karla">
-                      {post.upvotes ?? 0} upvotes
+                    <Text className="text-black text-[13px] font-karla">
+                      {post.upvotes ?? 0}{" "}
+                      {post.upvotes === 1 ? "upvote" : "upvotes"}
                     </Text>
                   </View>
                 </View>
