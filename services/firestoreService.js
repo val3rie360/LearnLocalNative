@@ -5,6 +5,8 @@ import {
   getDoc,
   getDocs,
   increment,
+  orderBy,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -41,18 +43,39 @@ export const getCommunityPosts = async () => {
       const data = doc.data();
       return {
         id: doc.id,
-        user: data.user ?? "",
-        date: data.date ?? "",
-        title: data.title ?? "",
-        desc: data.desc ?? "",
-        tag: data.tag ?? "",
-        tagColor: data.tagColor,
-        tagTextColor: data.tagTextColor,
-        upvotes: data.upvotes,
+        user: data.user,
+        date: data.date,
+        title: data.title,
+        desc: data.desc,
+        tag: data.tag,
+        upvotes: data.upvotes ?? 0, // <-- ensure upvotes is always present
       };
     });
   } catch (error) {
     console.error("Error fetching community posts:", error);
+    throw error;
+  }
+};
+
+export const getLargestPosts = async () => {
+  try {
+    const postsCol = collection(db, "posts");
+    const q = query(postsCol, orderBy("upvotes", "desc"));
+    const postsSnap = await getDocs(q);
+    return postsSnap.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        user: data.user,
+        date: data.date,
+        title: data.title,
+        desc: data.desc,
+        tag: data.tag,
+        upvotes: data.upvotes ?? 0,
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching largest posts:", error);
     throw error;
   }
 };

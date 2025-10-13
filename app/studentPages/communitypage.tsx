@@ -1,12 +1,22 @@
+import { useAuth } from "@/contexts/AuthContext"; // adjust path if needed
 import {
   getCommunityPosts,
+  getLargestPosts,
   updateCommunityPostUpvotes,
 } from "@/services/firestoreService";
 import { Entypo, FontAwesome, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState, useCallback } from "react";
-import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Modal,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type CommunityPost = {
@@ -23,9 +33,16 @@ type CommunityPost = {
 
 export default function CommunityPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const userId = user?.uid || "guest"; // fallback if not logged in
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [upvoted, setUpvoted] = useState<{ [postId: string]: boolean }>({});
   const [refreshing, setRefreshing] = useState(false);
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [selectedSort, setSelectedSort] = useState<"top" | "default">("default"); // new state for sorting
+
+  // Use a user-specific key for upvoted posts
+  const upvoteStorageKey = `community_upvoted_${userId}`;
 
   // Extract fetch logic to a function
   const fetchPosts = useCallback(async () => {
@@ -40,52 +57,71 @@ export default function CommunityPage() {
 
     const loadUpvoted = async () => {
       try {
-        const stored = await AsyncStorage.getItem("community_upvoted");
+        const stored = await AsyncStorage.getItem(upvoteStorageKey);
         if (stored) setUpvoted(JSON.parse(stored));
       } catch {}
     };
     loadUpvoted();
-  }, [fetchPosts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchPosts, userId]);
 
   // Save upvoted state to AsyncStorage whenever it changes
   useEffect(() => {
-    AsyncStorage.setItem("community_upvoted", JSON.stringify(upvoted));
-  }, [upvoted]);
+    AsyncStorage.setItem(upvoteStorageKey, JSON.stringify(upvoted));
+  }, [upvoted, upvoteStorageKey]);
 
   // Handler for upvote arrow tap
   const handleUpvote = async (postId: string) => {
-    if (upvoted[postId]) return;
+    const hasUpvoted = upvoted[postId];
 
+    // Optimistically update UI
     setUpvoted((prev) => ({
       ...prev,
-      [postId]: true,
+      [postId]: !hasUpvoted,
     }));
 
     setPosts((prevPosts) =>
       prevPosts.map((post) =>
         post.id === postId
-          ? { ...post, upvotes: (post.upvotes ?? 0) + 1 }
+          ? {
+              ...post,
+              upvotes: (post.upvotes ?? 0) + (hasUpvoted ? -1 : 1),
+            }
           : post
       )
     );
 
     try {
-      await updateCommunityPostUpvotes(postId, 1);
-      // No need to re-fetch posts, just update upvotes locally
+      await updateCommunityPostUpvotes(postId, hasUpvoted ? -1 : 1);
+      await fetchPosts();
     } catch (e) {
+      // Revert UI if error
       setUpvoted((prev) => ({
         ...prev,
-        [postId]: false,
+        [postId]: hasUpvoted,
       }));
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
-            ? { ...post, upvotes: (post.upvotes ?? 1) - 1 }
+            ? {
+                ...post,
+                upvotes: (post.upvotes ?? 0) + (hasUpvoted ? 1 : -1),
+              }
             : post
         )
       );
+      console.error(e);
     }
   };
+
+  // Add a function to fetch top-voted posts
+  const fetchTopVotedPosts = useCallback(async () => {
+    setRefreshing(true);
+    const data = await getLargestPosts();
+    setPosts(data);
+    setRefreshing(false);
+    setShowSortModal(false);
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F6F4FE]">
@@ -117,8 +153,75 @@ export default function CommunityPage() {
           <Text className="font-karla-bold text-[17px] text-[#18181B] flex-1">
             Posts Feed
           </Text>
-          <Ionicons name="options-outline" size={20} color="#4B1EB4" />
+          <TouchableOpacity onPress={() => setShowSortModal(true)}>
+            <Ionicons name="options-outline" size={20} color="#4B1EB4" />
+          </TouchableOpacity>
         </View>
+
+        {/* Sort Modal */}
+        <Modal
+          visible={showSortModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowSortModal(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowSortModal(false)}>
+            <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.3)" }} />
+          </TouchableWithoutFeedback>
+          <View
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: "#fff",
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 24,
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 10,
+              elevation: 10,
+            }}
+          >
+            <Text className="font-karla-bold text-lg mb-4">Sort Posts By</Text>
+            <TouchableOpacity
+              className="py-3 border-b border-[#eee]"
+              onPress={() => {
+                fetchTopVotedPosts();
+                setSelectedSort("top");
+              }}
+            >
+              <Text
+                className={`text-base font-karla ${
+                  selectedSort === "top"
+                    ? "text-[#4B1EB4]"
+                    : "text-[#18181B]"
+                }`}
+              >
+                Top Votes
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="py-3"
+              onPress={() => {
+                fetchPosts();
+                setShowSortModal(false);
+                setSelectedSort("default");
+              }}
+            >
+              <Text
+                className={`text-base font-karla ${
+                  selectedSort === "default"
+                    ? "text-[#4B1EB4]"
+                    : "text-[#18181B]"
+                }`}
+              >
+                Default (Newest)
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
 
         {/* Posts */}
         <ScrollView
@@ -194,7 +297,8 @@ export default function CommunityPage() {
                     />
                   </TouchableOpacity>
                   <Text className="text-[#A1A1AA] text-[13px] font-karla">
-                    {post.upvotes ?? 0} upvotes
+                    {post.upvotes ?? 0}{" "}
+                    {post.upvotes === 1 ? "upvote" : "upvotes"}
                   </Text>
                 </View>
               </View>
