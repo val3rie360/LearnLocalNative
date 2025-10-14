@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker } from "../../../components/PlatformMap";
 import { useAuth } from "../../../contexts/AuthContext";
+import { formatFileSize, uploadPDF, validateFile } from "../../../services/cloudinaryUploadService";
 import { createOpportunity } from "../../../services/firestoreService";
 
 const categories = [
@@ -69,6 +70,9 @@ const OrgCreate = () => {
   const [eligibility, setEligibility] = useState("");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<any>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [cloudinaryUploadId, setCloudinaryUploadId] = useState<string | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [mapRegion, setMapRegion] = useState({
     latitude: 37.78825,
@@ -336,17 +340,83 @@ const OrgCreate = () => {
 
   const handleFileUpload = async () => {
     try {
+      // Step 1: Pick the file
       const result = await DocumentPicker.getDocumentAsync({
         type: 'application/pdf',
         copyToCacheDirectory: true,
       });
       
-      if (!result.canceled) {
-        setUploadedFile(result.assets[0]);
-        Alert.alert('Success', 'PDF file uploaded successfully!');
+      if (result.canceled) {
+        return;
       }
+
+      const pickedFile = result.assets[0];
+      
+      // Step 2: Validate the file
+      const validation = validateFile({
+        name: pickedFile.name,
+        mimeType: pickedFile.mimeType,
+        size: pickedFile.size,
+      });
+
+      if (!validation.valid) {
+        Alert.alert('Invalid File', validation.error);
+        return;
+      }
+
+      // Show file info
+      Alert.alert(
+        'Upload PDF?',
+        `File: ${pickedFile.name}\nSize: ${formatFileSize(pickedFile.size)}\n\nReady to upload this file?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Upload',
+            onPress: async () => {
+              setIsUploading(true);
+              setUploadProgress(0);
+
+              try {
+                // Step 3: Upload to Cloudinary
+                console.log('Starting Cloudinary upload...');
+                const uploadId = await uploadPDF(
+                  {
+                    uri: pickedFile.uri,
+                    name: pickedFile.name,
+                    mimeType: pickedFile.mimeType,
+                    size: pickedFile.size,
+                  },
+                  user?.uid || '',
+                  {
+                    displayName: title || pickedFile.name,
+                    description: description || '',
+                    category: category,
+                    tags: [category],
+                  },
+                  (progress: number) => {
+                    setUploadProgress(progress);
+                  }
+                );
+
+                // Success!
+                console.log('Cloudinary upload successful! Upload ID:', uploadId);
+                setCloudinaryUploadId(uploadId);
+                setUploadedFile(pickedFile);
+                Alert.alert('Success!', 'PDF uploaded successfully!');
+              } catch (error: any) {
+                console.error('Cloudinary upload error:', error);
+                Alert.alert('Upload Failed', error.message || 'Failed to upload PDF');
+              } finally {
+                setIsUploading(false);
+                setUploadProgress(0);
+              }
+            },
+          },
+        ]
+      );
     } catch (error) {
-      Alert.alert('Error', 'Failed to upload PDF file');
+      console.error('File picker error:', error);
+      Alert.alert('Error', 'Failed to select PDF file');
     }
   };
 
@@ -381,8 +451,13 @@ const OrgCreate = () => {
       }
     }
 
-    if (category === "Resources" && !uploadedFile) {
+    if (category === "Resources" && !cloudinaryUploadId) {
       setErrorMessage('Please upload a PDF file for resources category');
+      return;
+    }
+
+    if (isUploading) {
+      setErrorMessage('Please wait for the file upload to complete');
       return;
     }
 
@@ -449,9 +524,9 @@ const OrgCreate = () => {
         // Resources specific fields
         opportunityData = {
           ...opportunityData,
+          cloudinaryUploadId: cloudinaryUploadId,
           uploadedFile: uploadedFile ? {
             name: uploadedFile.name,
-            uri: uploadedFile.uri,
             size: uploadedFile.size,
             mimeType: uploadedFile.mimeType
           } : null
@@ -483,6 +558,9 @@ const OrgCreate = () => {
       setCloseTime("");
       setLocation(null);
       setUploadedFile(null);
+      setCloudinaryUploadId(null);
+      setUploadProgress(0);
+      setIsUploading(false);
       setErrorMessage("");
 
       Alert.alert('Success', 'Opportunity posted successfully!', [
@@ -895,17 +973,53 @@ const OrgCreate = () => {
               Upload PDF Resource *
             </Text>
             <TouchableOpacity 
-              className="bg-white rounded-xl px-3 py-3 mb-3 border-2 border-dashed border-gray-300"
+              className={`rounded-xl px-3 py-3 mb-3 border-2 ${
+                uploadedFile 
+                  ? 'bg-green-50 border-green-400' 
+                  : 'bg-white border-dashed border-gray-300'
+              }`}
               onPress={handleFileUpload}
+              disabled={isUploading}
             >
               <View className="items-center">
-                <Text className="text-2xl mb-2">📄</Text>
-                <Text className="text-base text-gray-600">
-                  {uploadedFile ? uploadedFile.name || "PDF uploaded" : "Tap to upload PDF"}
-                </Text>
-                <Text className="text-sm text-gray-400 mt-1">
-                  PDF files only
-                </Text>
+                {isUploading ? (
+                  <>
+                    <Text className="text-2xl mb-2">⏳</Text>
+                    <Text className="text-base text-gray-600 font-karla-bold">
+                      Uploading... {uploadProgress}%
+                    </Text>
+                    {/* Progress Bar */}
+                    <View className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                      <View 
+                        className="bg-[#a084e8] h-2 rounded-full" 
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </View>
+                  </>
+                ) : uploadedFile ? (
+                  <>
+                    <Text className="text-2xl mb-2">✅</Text>
+                    <Text className="text-base text-green-700 font-karla-bold">
+                      {uploadedFile.name}
+                    </Text>
+                    <Text className="text-sm text-green-600 mt-1">
+                      {formatFileSize(uploadedFile.size)} • Ready
+                    </Text>
+                    <Text className="text-xs text-gray-500 mt-2">
+                      Tap to upload a different file
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text className="text-2xl mb-2">📄</Text>
+                    <Text className="text-base text-gray-600">
+                      Tap to upload PDF
+                    </Text>
+                    <Text className="text-sm text-gray-400 mt-1">
+                      PDF files only • Max 50MB
+                    </Text>
+                  </>
+                )}
               </View>
             </TouchableOpacity>
           </>
