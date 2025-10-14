@@ -29,6 +29,7 @@ type CommunityPost = {
   tagColor?: string;
   tagTextColor?: string;
   upvotes?: number;
+  upvotedBy?: string[];
 };
 
 export default function CommunityPage() {
@@ -39,7 +40,9 @@ export default function CommunityPage() {
   const [upvoted, setUpvoted] = useState<{ [postId: string]: boolean }>({});
   const [refreshing, setRefreshing] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
-  const [selectedSort, setSelectedSort] = useState<"top" | "default">("default"); // new state for sorting
+  const [selectedSort, setSelectedSort] = useState<"top" | "default">(
+    "default"
+  ); // new state for sorting
 
   // Use a user-specific key for upvoted posts
   const upvoteStorageKey = `community_upvoted_${userId}`;
@@ -72,46 +75,10 @@ export default function CommunityPage() {
 
   // Handler for upvote arrow tap
   const handleUpvote = async (postId: string) => {
-    const hasUpvoted = upvoted[postId];
+    if (!userId || userId === "guest") return; // Require login
 
-    // Optimistically update UI
-    setUpvoted((prev) => ({
-      ...prev,
-      [postId]: !hasUpvoted,
-    }));
-
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              upvotes: (post.upvotes ?? 0) + (hasUpvoted ? -1 : 1),
-            }
-          : post
-      )
-    );
-
-    try {
-      await updateCommunityPostUpvotes(postId, hasUpvoted ? -1 : 1);
-      await fetchPosts();
-    } catch (e) {
-      // Revert UI if error
-      setUpvoted((prev) => ({
-        ...prev,
-        [postId]: hasUpvoted,
-      }));
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId
-            ? {
-                ...post,
-                upvotes: (post.upvotes ?? 0) + (hasUpvoted ? 1 : -1),
-              }
-            : post
-        )
-      );
-      console.error(e);
-    }
+    await updateCommunityPostUpvotes(postId, userId);
+    await fetchPosts();
   };
 
   // Add a function to fetch top-voted posts
@@ -194,9 +161,7 @@ export default function CommunityPage() {
             >
               <Text
                 className={`text-base font-karla ${
-                  selectedSort === "top"
-                    ? "text-[#4B1EB4]"
-                    : "text-[#18181B]"
+                  selectedSort === "top" ? "text-[#4B1EB4]" : "text-[#18181B]"
                 }`}
               >
                 Top Votes
@@ -231,79 +196,101 @@ export default function CommunityPage() {
             <RefreshControl refreshing={refreshing} onRefresh={fetchPosts} />
           }
         >
-          {posts.map((post) => {
-            // Match tag style based on categories array
-            const categories = [
-              {
-                label: "Scholarship",
-                bg: "bg-[#BDFCFF]",
-                text: "text-[#106074]",
-              },
-              { label: "Event", bg: "bg-[#FFC3C4]", text: "text-[#934055]" },
-              { label: "Tutoring", bg: "bg-[#6C63FF]", text: "text-white" },
-              {
-                label: "Learning Materials",
-                bg: "bg-[#F2C25B]",
-                text: "text-[#745000]",
-              },
-              { label: "Workshop", bg: "bg-[#C6F7B2]", text: "text-[#3B7C1B]" },
-            ];
-            const category = categories.find((cat) => cat.label === post.tag);
+          {posts.length === 0 ? (
+            <View className="items-center mt-10">
+              <Text className="text-[#A1A1AA] text-base font-karla">
+                No posts yet. Be the first to create one!
+              </Text>
+            </View>
+          ) : (
+            posts.map((post) => {
+              // Match tag style based on categories array
+              const categories = [
+                {
+                  label: "Scholarship",
+                  bg: "bg-[#BDFCFF]",
+                  text: "text-[#106074]",
+                },
+                { label: "Event", bg: "bg-[#FFC3C4]", text: "text-[#934055]" },
+                { label: "Tutoring", bg: "bg-[#6C63FF]", text: "text-white" },
+                {
+                  label: "Learning Materials",
+                  bg: "bg-[#F2C25B]",
+                  text: "text-[#745000]",
+                },
+                {
+                  label: "Workshop",
+                  bg: "bg-[#C6F7B2]",
+                  text: "text-[#3B7C1B]",
+                },
+              ];
+              const category = categories.find((cat) => cat.label === post.tag);
 
-            const tagBg = category ? category.bg : "bg-[#FFD6E0]";
-            const tagText = category ? category.text : "text-[#C94F7C]";
+              const tagBg = category ? category.bg : "bg-[#FFD6E0]";
+              const tagText = category ? category.text : "text-[#C94F7C]";
 
-            return (
-              <View
-                key={post.id}
-                className="bg-white rounded-2xl px-4 py-4 mb-4 shadow-sm"
-                style={{
-                  shadowColor: "#000",
-                  shadowOpacity: 0.06,
-                  shadowRadius: 8,
-                  elevation: 2,
-                }}
-              >
-                <View className="flex-row items-center mb-0.5">
-                  <FontAwesome name="user-circle-o" size={18} color="#4B1EB4" />
-                  <Text className="ml-1.5 font-karla-bold text-[#18181B] text-[13px]">
-                    {post.user}
-                  </Text>
-                  <Text className="ml-1.5 text-[#A1A1AA] text-[12px] font-karla">
-                    posted {post.date}
-                  </Text>
-                </View>
-                <Text className="font-karla-bold text-[15px] text-[#18181B] mt-0.5">
-                  {post.title}
-                </Text>
-                <Text className="text-[#52525B] text-[13px] mt-0.5 mb-2 font-karla">
-                  {post.desc}
-                </Text>
-                <View className="flex-row items-center">
-                  <View className={`${tagBg} rounded-md px-2 py-0.5 mr-2`}>
-                    <Text className={`font-karla-bold text-[12px] ${tagText}`}>
-                      {post.tag}
+              return (
+                <View
+                  key={post.id}
+                  className="bg-white rounded-2xl px-4 py-4 mb-4 shadow-sm"
+                  style={{
+                    shadowColor: "#000",
+                    shadowOpacity: 0.06,
+                    shadowRadius: 8,
+                    elevation: 2,
+                  }}
+                >
+                  <View className="flex-row items-center mb-0.5">
+                    <FontAwesome
+                      name="user-circle-o"
+                      size={18}
+                      color="#4B1EB4"
+                    />
+                    <Text className="ml-1.5 font-karla-bold text-[#18181B] text-[13px]">
+                      {post.user}
+                    </Text>
+                    <Text className="ml-1.5 text-[#A1A1AA] text-[12px] font-karla">
+                      posted {post.date}
                     </Text>
                   </View>
-                  <TouchableOpacity
-                    onPress={() => handleUpvote(post.id)}
-                    activeOpacity={0.7}
-                  >
-                    <Entypo
-                      name="arrow-bold-up"
-                      size={16}
-                      color={upvoted[post.id] ? "#4B1EB4" : "#A1A1AA"} // secondary color if tapped
-                      style={{ marginRight: 3 }}
-                    />
-                  </TouchableOpacity>
-                  <Text className="text-[#A1A1AA] text-[13px] font-karla">
-                    {post.upvotes ?? 0}{" "}
-                    {post.upvotes === 1 ? "upvote" : "upvotes"}
+                  <Text className="font-karla-bold text-[15px] text-[#18181B] mt-0.5">
+                    {post.title}
                   </Text>
+                  <Text className="text-[#52525B] text-[13px] mt-0.5 mb-2 font-karla">
+                    {post.desc}
+                  </Text>
+                  <View className="flex-row items-center">
+                    <View className={`${tagBg} rounded-md px-2 py-0.5 mr-2`}>
+                      <Text
+                        className={`font-karla-bold text-[12px] ${tagText}`}
+                      >
+                        {post.tag}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleUpvote(post.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Entypo
+                        name="arrow-bold-up"
+                        size={16}
+                        color={
+                          post.upvotedBy?.includes(userId)
+                            ? "#4B1EB4"
+                            : "#A1A1AA"
+                        } // secondary color if tapped
+                        style={{ marginRight: 3 }}
+                      />
+                    </TouchableOpacity>
+                    <Text className="text-[#A1A1AA] text-[13px] font-karla">
+                      {post.upvotes ?? 0}{" "}
+                      {post.upvotes === 1 ? "upvote" : "upvotes"}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            );
-          })}
+              );
+            })
+          )}
         </ScrollView>
 
         {/* Create Post Button */}
