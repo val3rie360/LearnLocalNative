@@ -114,7 +114,7 @@ export const uploadPDF = async (file, organizationId, metadata, onProgress) => {
             // Save metadata to Firestore
             const uploadDoc = {
               id: uploadId,
-              organizationId,
+              organizationId: organizationId,
               fileName: file.name,
               displayName: metadata.displayName || file.name,
               description: metadata.description || '',
@@ -165,6 +165,10 @@ export const uploadPDF = async (file, organizationId, metadata, onProgress) => {
  */
 export const getOrganizationUploads = async (organizationId) => {
   try {
+    console.log('📂 Querying uploads collection...');
+    console.log('   organizationId:', organizationId);
+    
+    // Query matching the Firebase index: organizationId + status + createdAt
     const q = query(
       collection(db, 'uploads'),
       where('organizationId', '==', organizationId),
@@ -173,15 +177,20 @@ export const getOrganizationUploads = async (organizationId) => {
     );
 
     const querySnapshot = await getDocs(q);
+    console.log('📊 Query returned', querySnapshot.size, 'documents');
+    
     const uploads = [];
 
     querySnapshot.forEach((doc) => {
       uploads.push({ id: doc.id, ...doc.data() });
     });
 
+    console.log('✅ Active uploads:', uploads.length);
+
     return uploads;
   } catch (error) {
-    console.error('Error fetching uploads:', error);
+    console.error('❌ Error fetching uploads:', error);
+    console.log('💡 Index ID needed: Check if index CICAgJiUpoMK is enabled');
     throw error;
   }
 };
