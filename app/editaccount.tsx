@@ -85,7 +85,7 @@ export default function EditAccount() {
   const isOrg = profileData?.role === "organization";
 
   const EditAccountContent = () => (
-    <SafeAreaView className="flex-1 px-6 pt-1">
+    <SafeAreaView className="flex-1 px-6 pt-6">
       {/* Back Arrow */}
       <TouchableOpacity
         className="absolute left-4 top-20"

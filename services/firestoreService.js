@@ -10,6 +10,8 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { db } from "../firebaseconfig";
 
@@ -49,6 +51,7 @@ export const getCommunityPosts = async () => {
         desc: data.desc,
         tag: data.tag,
         upvotes: data.upvotes ?? 0, // <-- ensure upvotes is always present
+        upvotedBy: data.upvotedBy || [], // <-- ensure upvotedBy is always an array
       };
     });
   } catch (error) {
@@ -72,6 +75,7 @@ export const getLargestPosts = async () => {
         desc: data.desc,
         tag: data.tag,
         upvotes: data.upvotes ?? 0,
+        upvotedBy: data.upvotedBy || [],
       };
     });
   } catch (error) {
@@ -329,9 +333,23 @@ export const deleteOpportunity = async (opportunityId, specificCollection) => {
   }
 };
 
-export const updateCommunityPostUpvotes = async (postId, incrementBy = 1) => {
+export async function updateCommunityPostUpvotes(postId, userId) {
   const postRef = doc(db, "posts", postId);
-  await updateDoc(postRef, {
-    upvotes: increment(incrementBy),
-  });
-};
+  const postSnap = await getDoc(postRef);
+  const post = postSnap.data();
+  const hasUpvoted = post.upvotedBy?.includes(userId);
+
+  if (hasUpvoted) {
+    // Remove upvote
+    await updateDoc(postRef, {
+      upvotes: increment(-1),
+      upvotedBy: arrayRemove(userId),
+    });
+  } else {
+    // Add upvote
+    await updateDoc(postRef, {
+      upvotes: increment(1),
+      upvotedBy: arrayUnion(userId),
+    });
+  }
+}
