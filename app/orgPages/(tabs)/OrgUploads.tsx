@@ -4,9 +4,12 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Image,
   Linking,
+  Modal,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,18 +18,21 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
+  archiveUpload,
+  deleteUpload,
   formatFileSize,
-  getOrganizationUploads
+  getOrganizationUploads,
+  updateUploadMetadata,
 } from "../../../services/cloudinaryUploadService";
 
 const FileCard = ({
   upload,
   onPress,
-  onLongPress,
+  onOptions,
 }: {
   upload: any;
   onPress: () => void;
-  onLongPress: () => void;
+  onOptions: () => void;
 }) => {
   const thumbnailUrl = upload.cloudinarySecureUrl 
     ? upload.cloudinarySecureUrl.replace('/upload/', '/upload/w_150,h_150,c_fill,f_auto,q_auto/')
@@ -39,12 +45,17 @@ const FileCard = ({
   };
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      className="bg-white rounded-2xl p-4 items-center m-2 flex-1 min-w-[140px] max-w-[48%] shadow-md"
-    >
+    <View className="bg-white rounded-2xl p-4 items-center m-2 flex-1 min-w-[140px] max-w-[48%] shadow-md">
+      {/* Options Button (Top Right) */}
+      <TouchableOpacity
+        onPress={onOptions}
+        className="absolute top-2 right-2 z-10 bg-gray-100 rounded-full p-1.5"
+      >
+        <Feather name="more-vertical" size={16} color="#666" />
+      </TouchableOpacity>
+
       {/* PDF Thumbnail or Icon */}
-      <View className="mb-3 w-full items-center">
+      <TouchableOpacity onPress={onPress} className="mb-3 w-full items-center">
         {thumbnailUrl ? (
           <View className="relative">
             <Image
@@ -61,32 +72,34 @@ const FileCard = ({
             <Feather name="file-text" size={48} color="#EF4444" />
           </View>
         )}
-      </View>
+      </TouchableOpacity>
 
       {/* File Info */}
-      <Text
-        className="text-[15px] font-karla-bold text-[#222] mb-1 text-center"
-        numberOfLines={2}
-      >
-        {upload.displayName || upload.fileName}
-      </Text>
-      <Text className="text-xs text-[#888] text-center font-karla mb-1">
-        {formatDate(upload.createdAt)}
-      </Text>
-      <Text className="text-xs text-[#666] text-center font-karla">
-        {formatFileSize(upload.fileSize)}
-      </Text>
-      
-      {/* Download Count */}
-      {upload.downloadCount > 0 && (
-        <View className="flex-row items-center mt-2">
-          <MaterialIcons name="download" size={12} color="#6C63FF" />
-          <Text className="text-xs text-[#6C63FF] ml-1 font-karla">
-            {upload.downloadCount} downloads
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
+      <TouchableOpacity onPress={onPress} className="w-full">
+        <Text
+          className="text-[15px] font-karla-bold text-[#222] mb-1 text-center"
+          numberOfLines={2}
+        >
+          {upload.displayName || upload.fileName}
+        </Text>
+        <Text className="text-xs text-[#888] text-center font-karla mb-1">
+          {formatDate(upload.createdAt)}
+        </Text>
+        <Text className="text-xs text-[#666] text-center font-karla">
+          {formatFileSize(upload.fileSize)}
+        </Text>
+        
+        {/* Download Count */}
+        {upload.downloadCount > 0 && (
+          <View className="flex-row items-center justify-center mt-2">
+            <MaterialIcons name="download" size={12} color="#6C63FF" />
+            <Text className="text-xs text-[#6C63FF] ml-1 font-karla">
+              {upload.downloadCount} downloads
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -102,6 +115,17 @@ export default function OrgUploads() {
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  
+  // File management states
+  const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Fetch uploads
   const fetchUploads = async () => {
@@ -192,6 +216,139 @@ export default function OrgUploads() {
   const onRefresh = () => {
     setRefreshing(true);
     fetchUploads();
+  };
+
+  // Handle file options
+  const handleFileOptions = (upload: any) => {
+    setSelectedFile(upload);
+    setShowOptionsModal(true);
+  };
+
+  // Handle edit file
+  const handleEditFile = () => {
+    if (!selectedFile) return;
+    
+    setEditDisplayName(selectedFile.displayName || selectedFile.fileName || "");
+    setEditDescription(selectedFile.description || "");
+    setEditCategory(selectedFile.category || "");
+    setEditTags(selectedFile.tags?.join(", ") || "");
+    setShowOptionsModal(false);
+    setShowEditModal(true);
+  };
+
+  // Save file edits
+  const handleSaveEdit = async () => {
+    if (!selectedFile) return;
+
+    try {
+      setActionLoading(true);
+      
+      const updateData: any = {
+        displayName: editDisplayName.trim(),
+        description: editDescription.trim(),
+        category: editCategory.trim() || "Uncategorized",
+      };
+
+      // Parse tags
+      if (editTags.trim()) {
+        updateData.tags = editTags.split(',').map(tag => tag.trim()).filter(tag => tag);
+      } else {
+        updateData.tags = [];
+      }
+
+      await updateUploadMetadata(selectedFile.id, updateData);
+      
+      setSuccessMessage("File updated successfully!");
+      setShowEditModal(false);
+      setSelectedFile(null);
+      
+      // Refresh uploads
+      await fetchUploads();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (err: any) {
+      console.error('Error updating file:', err);
+      Alert.alert('Error', err.message || 'Failed to update file');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Handle hide/archive file
+  const handleHideFile = () => {
+    if (!selectedFile) return;
+
+    Alert.alert(
+      "Hide File",
+      `Are you sure you want to hide "${selectedFile.displayName || selectedFile.fileName}"? It will no longer be visible to students but can be restored later.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Hide",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+              setShowOptionsModal(false);
+              
+              await archiveUpload(selectedFile.id);
+              
+              setSuccessMessage("File hidden successfully!");
+              setSelectedFile(null);
+              
+              // Refresh uploads
+              await fetchUploads();
+              
+              setTimeout(() => setSuccessMessage(""), 3000);
+            } catch (err: any) {
+              console.error('Error hiding file:', err);
+              Alert.alert('Error', err.message || 'Failed to hide file');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Handle delete file
+  const handleDeleteFile = () => {
+    if (!selectedFile) return;
+
+    Alert.alert(
+      "Delete File",
+      `Are you sure you want to permanently delete "${selectedFile.displayName || selectedFile.fileName}"? This action cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+              setShowOptionsModal(false);
+              
+              await deleteUpload(selectedFile.id, selectedFile.cloudinaryPublicId);
+              
+              setSuccessMessage("File deleted successfully!");
+              setSelectedFile(null);
+              
+              // Refresh uploads
+              await fetchUploads();
+              
+              setTimeout(() => setSuccessMessage(""), 3000);
+            } catch (err: any) {
+              console.error('Error deleting file:', err);
+              Alert.alert('Error', err.message || 'Failed to delete file');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -362,7 +519,11 @@ export default function OrgUploads() {
               refreshing={refreshing}
               onRefresh={onRefresh}
               renderItem={({ item }) => (
-                <FileCard upload={item} onPress={() => handleFilePress(item)} />
+                <FileCard 
+                  upload={item} 
+                  onPress={() => handleFilePress(item)}
+                  onOptions={() => handleFileOptions(item)}
+                />
               )}
               ListEmptyComponent={
                 <View className="flex-1 justify-center items-center py-12">
@@ -380,7 +541,252 @@ export default function OrgUploads() {
               showsVerticalScrollIndicator={false}
             />
           )}
+
+          {/* Success Message */}
+          {successMessage !== "" && (
+            <View className="absolute bottom-8 left-5 right-5 bg-green-500 rounded-xl px-4 py-3 flex-row items-center shadow-lg">
+              <MaterialIcons name="check-circle" size={24} color="white" />
+              <Text className="text-white font-karla-bold ml-2 flex-1">
+                {successMessage}
+              </Text>
+            </View>
+          )}
         </View>
+
+        {/* File Options Modal */}
+        <Modal
+          visible={showOptionsModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowOptionsModal(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => setShowOptionsModal(false)}
+            className="flex-1 bg-black/50 justify-end"
+          >
+            <TouchableOpacity activeOpacity={1} className="bg-white rounded-t-3xl p-6">
+              {/* Modal Header */}
+              <View className="flex-row items-center justify-between mb-6">
+                <Text className="text-xl font-karla-bold text-[#222]">
+                  File Options
+                </Text>
+                <TouchableOpacity onPress={() => setShowOptionsModal(false)}>
+                  <Feather name="x" size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              {/* File Info */}
+              {selectedFile && (
+                <View className="bg-gray-50 rounded-xl p-4 mb-6">
+                  <Text className="font-karla-bold text-[#222] mb-1" numberOfLines={2}>
+                    {selectedFile.displayName || selectedFile.fileName}
+                  </Text>
+                  <Text className="text-sm text-[#666] font-karla">
+                    {formatFileSize(selectedFile.fileSize)} • {selectedFile.category || 'Uncategorized'}
+                  </Text>
+                </View>
+              )}
+
+              {/* Options */}
+              <View className="space-y-2">
+                {/* Edit */}
+                <TouchableOpacity
+                  onPress={handleEditFile}
+                  className="flex-row items-center p-4 bg-gray-50 rounded-xl"
+                >
+                  <View className="bg-blue-100 p-2 rounded-full">
+                    <Feather name="edit-2" size={20} color="#3B82F6" />
+                  </View>
+                  <View className="flex-1 ml-4">
+                    <Text className="font-karla-bold text-[#222]">Edit Details</Text>
+                    <Text className="text-sm text-[#666] font-karla">
+                      Update name, description, and tags
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={20} color="#999" />
+                </TouchableOpacity>
+
+                {/* Hide */}
+                <TouchableOpacity
+                  onPress={handleHideFile}
+                  className="flex-row items-center p-4 bg-gray-50 rounded-xl"
+                >
+                  <View className="bg-orange-100 p-2 rounded-full">
+                    <Feather name="eye-off" size={20} color="#F97316" />
+                  </View>
+                  <View className="flex-1 ml-4">
+                    <Text className="font-karla-bold text-[#222]">Hide File</Text>
+                    <Text className="text-sm text-[#666] font-karla">
+                      Make invisible to students
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={20} color="#999" />
+                </TouchableOpacity>
+
+                {/* Delete */}
+                <TouchableOpacity
+                  onPress={handleDeleteFile}
+                  className="flex-row items-center p-4 bg-red-50 rounded-xl"
+                >
+                  <View className="bg-red-100 p-2 rounded-full">
+                    <Feather name="trash-2" size={20} color="#EF4444" />
+                  </View>
+                  <View className="flex-1 ml-4">
+                    <Text className="font-karla-bold text-red-600">Delete File</Text>
+                    <Text className="text-sm text-red-500 font-karla">
+                      Permanently remove this file
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={20} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Cancel Button */}
+              <TouchableOpacity
+                onPress={() => setShowOptionsModal(false)}
+                className="mt-6 bg-gray-200 rounded-xl py-4"
+              >
+                <Text className="text-center font-karla-bold text-[#222]">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Edit File Modal */}
+        <Modal
+          visible={showEditModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowEditModal(false)}
+        >
+          <View className="flex-1 bg-black/50">
+            <View className="flex-1 mt-20 bg-white rounded-t-3xl">
+              <ScrollView className="flex-1 px-6 pt-6">
+                {/* Modal Header */}
+                <View className="flex-row items-center justify-between mb-6">
+                  <Text className="text-2xl font-karla-bold text-[#222]">
+                    Edit File Details
+                  </Text>
+                  <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                    <Feather name="x" size={24} color="#666" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Display Name */}
+                <View className="mb-5">
+                  <Text className="text-sm font-karla-bold text-[#222] mb-2">
+                    Display Name *
+                  </Text>
+                  <TextInput
+                    value={editDisplayName}
+                    onChangeText={setEditDisplayName}
+                    placeholder="Enter file name"
+                    className="bg-gray-50 rounded-xl px-4 py-3 font-karla text-[#222]"
+                  />
+                </View>
+
+                {/* Description */}
+                <View className="mb-5">
+                  <Text className="text-sm font-karla-bold text-[#222] mb-2">
+                    Description
+                  </Text>
+                  <TextInput
+                    value={editDescription}
+                    onChangeText={setEditDescription}
+                    placeholder="Enter file description"
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    className="bg-gray-50 rounded-xl px-4 py-3 font-karla text-[#222] h-24"
+                  />
+                </View>
+
+                {/* Category */}
+                <View className="mb-5">
+                  <Text className="text-sm font-karla-bold text-[#222] mb-2">
+                    Category
+                  </Text>
+                  <TextInput
+                    value={editCategory}
+                    onChangeText={setEditCategory}
+                    placeholder="e.g., Math, Science, History"
+                    className="bg-gray-50 rounded-xl px-4 py-3 font-karla text-[#222]"
+                  />
+                </View>
+
+                {/* Tags */}
+                <View className="mb-5">
+                  <Text className="text-sm font-karla-bold text-[#222] mb-2">
+                    Tags (comma-separated)
+                  </Text>
+                  <TextInput
+                    value={editTags}
+                    onChangeText={setEditTags}
+                    placeholder="e.g., study guide, exam prep, notes"
+                    className="bg-gray-50 rounded-xl px-4 py-3 font-karla text-[#222]"
+                  />
+                  <Text className="text-xs text-[#666] font-karla mt-1">
+                    Separate tags with commas
+                  </Text>
+                </View>
+
+                {/* File Info (Read-only) */}
+                {selectedFile && (
+                  <View className="bg-blue-50 rounded-xl p-4 mb-6">
+                    <Text className="text-sm font-karla-bold text-[#222] mb-2">
+                      File Information
+                    </Text>
+                    <Text className="text-sm text-[#666] font-karla">
+                      Original name: {selectedFile.fileName}
+                    </Text>
+                    <Text className="text-sm text-[#666] font-karla">
+                      Size: {formatFileSize(selectedFile.fileSize)}
+                    </Text>
+                    {selectedFile.downloadCount > 0 && (
+                      <Text className="text-sm text-[#666] font-karla">
+                        Downloads: {selectedFile.downloadCount}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </ScrollView>
+
+              {/* Action Buttons */}
+              <View className="px-6 pb-6 pt-4 bg-white border-t border-gray-200">
+                <TouchableOpacity
+                  onPress={handleSaveEdit}
+                  disabled={actionLoading || !editDisplayName.trim()}
+                  className={`rounded-xl py-4 mb-3 ${
+                    actionLoading || !editDisplayName.trim()
+                      ? 'bg-gray-300'
+                      : 'bg-[#6C63FF]'
+                  }`}
+                >
+                  {actionLoading ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text className="text-center font-karla-bold text-white text-lg">
+                      Save Changes
+                    </Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setShowEditModal(false)}
+                  disabled={actionLoading}
+                  className="bg-gray-200 rounded-xl py-4"
+                >
+                  <Text className="text-center font-karla-bold text-[#222] text-lg">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </LinearGradient>
     </SafeAreaView>
   );

@@ -53,13 +53,20 @@ setup-cloudinary.bat
 
 Create `.env` in project root:
 ```bash
+# SECURITY: Only add public values - never API secrets!
 EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your-actual-cloud-name
-EXPO_PUBLIC_CLOUDINARY_API_KEY=your-actual-api-key
-EXPO_PUBLIC_CLOUDINARY_API_SECRET=your-actual-api-secret
 EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=learn_local_uploads
+
+# ⚠️ DO NOT ADD API KEY OR SECRET WITH EXPO_PUBLIC_ PREFIX!
+# This exposes them in your app bundle - major security risk
+# API credentials should only be used server-side
+
+# For backend/server only (no EXPO_PUBLIC_ prefix):
+# CLOUDINARY_API_KEY=your-actual-api-key
+# CLOUDINARY_API_SECRET=your-actual-api-secret
 ```
 
-**Replace the values with your actual Cloudinary credentials!**
+**Replace cloud name with your actual value!**
 
 ### ☑️ Step 5: Deploy Firestore Rules (1 min)
 

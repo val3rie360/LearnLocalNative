@@ -43,17 +43,24 @@ echo ----------------------------------------
 if not exist .env (
     echo Creating .env file template...
     (
-        echo # Cloudinary Configuration
+        echo # Cloudinary Configuration - MOBILE APP
         echo # Get from: https://console.cloudinary.com/
+        echo # ONLY add public values - never API Secret!
         echo EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
-        echo EXPO_PUBLIC_CLOUDINARY_API_KEY=your-api-key
-        echo EXPO_PUBLIC_CLOUDINARY_API_SECRET=your-api-secret
         echo EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=learn_local_uploads
+        echo.
+        echo # WARNING: DO NOT add API Key or Secret with EXPO_PUBLIC_ prefix!
+        echo # The EXPO_PUBLIC_ prefix makes values PUBLIC in your app bundle.
+        echo # API credentials should only be used server-side.
+        echo.
+        echo # For backend/server use only:
+        echo # CLOUDINARY_API_KEY=your-api-key
+        echo # CLOUDINARY_API_SECRET=your-api-secret
     ) > .env
     echo.
     echo ✓ .env file created!
     echo.
-    echo NOW: Edit .env file and replace with your actual Cloudinary values
+    echo NOW: Edit .env file and replace with your actual Cloudinary cloud name
 ) else (
     echo .env file already exists
     echo Make sure it has Cloudinary configuration

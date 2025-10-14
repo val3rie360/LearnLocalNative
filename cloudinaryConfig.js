@@ -1,11 +1,15 @@
 // Cloudinary Configuration
 // Get your credentials from: https://console.cloudinary.com/
 
+// WARNING: DO NOT expose API Secret in client-side code!
+// Only cloudName and uploadPreset should be public.
+// API Key and Secret should ONLY be used server-side.
+
 export const cloudinaryConfig = {
   cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your-cloud-name',
-  apiKey: process.env.EXPO_PUBLIC_CLOUDINARY_API_KEY || 'your-api-key',
-  apiSecret: process.env.EXPO_PUBLIC_CLOUDINARY_API_SECRET || 'your-api-secret',
-  uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset', // For unsigned uploads
+  uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset',
+  // Note: We use unsigned uploads via upload preset (no API key/secret needed)
+  // For signed operations (delete, admin), use a backend API
 };
 
 /**

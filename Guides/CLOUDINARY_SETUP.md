@@ -63,10 +63,18 @@ Upload presets allow unsigned uploads (no API secret exposed in mobile app).
 
 ```bash
 # Cloudinary Configuration
+# ONLY add public values here - never API Secret!
 EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
-EXPO_PUBLIC_CLOUDINARY_API_KEY=your-api-key
-EXPO_PUBLIC_CLOUDINARY_API_SECRET=your-api-secret
 EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=learn_local_uploads
+
+# ⚠️ SECURITY WARNING:
+# DO NOT add EXPO_PUBLIC_CLOUDINARY_API_KEY or EXPO_PUBLIC_CLOUDINARY_API_SECRET
+# The EXPO_PUBLIC_ prefix exposes values in your app bundle!
+# API Key/Secret should ONLY be used server-side for admin operations.
+
+# For server-side operations (optional - only needed for backend):
+# CLOUDINARY_API_KEY=your-api-key
+# CLOUDINARY_API_SECRET=your-api-secret
 ```
 
 **Replace with your actual values!**
@@ -176,13 +184,15 @@ Store metadata in Firestore
 - Set folder structure
 - Disable sensitive transformations
 
-### API Secret
+### API Secret ⚠️ CRITICAL
 
-**Never expose in mobile app!**
-- Keep API_SECRET in `.env` only
-- Don't commit to git
-- Use for server-side operations only
-- Deletion requires API secret (implement server endpoint)
+**NEVER expose in mobile app!**
+- ❌ DO NOT use `EXPO_PUBLIC_` prefix for API secrets
+- ❌ DO NOT include in cloudinaryConfig.js
+- ✅ Only use on backend/server
+- ✅ Keep in server `.env` (without EXPO_PUBLIC_ prefix)
+- ✅ For mobile app, use unsigned upload presets only
+- Deletion/admin operations require API secret (implement secure backend endpoint)
 
 ## 💰 Cloudinary Free Tier
 
