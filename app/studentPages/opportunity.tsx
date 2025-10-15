@@ -1,20 +1,82 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getOpportunityDetails } from "../../services/firestoreService";
 
 const Opportunity = () => {
+  const { id, specificCollection } = useLocalSearchParams<{
+    id: string;
+    specificCollection: string;
+  }>();
+  const [opportunity, setOpportunity] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      if (!id || !specificCollection) {
+        setError("Missing opportunity information");
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const data = await getOpportunityDetails(id, specificCollection);
+        setOpportunity(data);
+      } catch (err: any) {
+        console.error("Error fetching opportunity:", err);
+        setError(err.message || "Failed to load opportunity");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetails();
+  }, [id, specificCollection]);
+
+  // Format date helper
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return "N/A";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#F6F4FE] items-center justify-center">
+        <ActivityIndicator size="large" color="#4B1EB4" />
+        <Text className="text-[#666] mt-4 font-karla">Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !opportunity) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#F6F4FE] items-center justify-center px-8">
+        <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
+        <Text className="text-[#666] text-center font-karla mt-4">{error || "Opportunity not found"}</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-[#F6F4FE]" edges={["top", "bottom"]}>
       {/* Header */}
       <View className="bg-[#4B1EB4] rounded-b-2xl pb-7 pt-12 px-5">
         <Text className="text-white font-karla-bold text-[28px] leading-tight mb-3">
-          National Robotics{"\n"}Challenge 2025
+          {opportunity.title}
         </Text>
         <View className="flex-row items-center mb-4">
           <View className="bg-[#FDE68A] rounded-full px-3 py-1 mr-2">
             <Text className="text-[#92400E] text-[13px] font-karla-bold">
-              Closes in 15 days
+              {opportunity.category || "Opportunity"}
             </Text>
           </View>
           <TouchableOpacity>
@@ -24,24 +86,23 @@ const Opportunity = () => {
         <View className="flex-row items-center mb-1">
           <Ionicons name="person-outline" size={16} color="#fff" />
           <Text className="ml-2 text-white text-[15px] font-karla">
-            <Text className="font-karla-bold">Posted by:</Text> National
-            Robotics Org
+            <Text className="font-karla-bold">Posted by:</Text> {opportunity.organizationName || "Organization"}
           </Text>
         </View>
         <View className="flex-row items-center mb-1">
           <Ionicons name="calendar-outline" size={16} color="#fff" />
           <Text className="ml-2 text-white text-[15px] font-karla">
-            <Text className="font-karla-bold">Date:</Text> Aug 25–27, 2025 | 9
-            AM – 5 PM
+            <Text className="font-karla-bold">Date:</Text> {formatDate(opportunity.createdAt)}
           </Text>
         </View>
-        <View className="flex-row items-center">
-          <MaterialIcons name="location-on" size={16} color="#fff" />
-          <Text className="ml-2 text-white text-[15px] font-karla">
-            <Text className="font-karla-bold">Location:</Text> Dumaguete City
-            Hall Grounds
-          </Text>
-        </View>
+        {(opportunity.location?.address || opportunity.studySpotLocation) && (
+          <View className="flex-row items-center">
+            <MaterialIcons name="location-on" size={16} color="#fff" />
+            <Text className="ml-2 text-white text-[15px] font-karla">
+              <Text className="font-karla-bold">Location:</Text> {opportunity.location?.address || opportunity.studySpotLocation}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Everything below header */}
@@ -52,52 +113,21 @@ const Opportunity = () => {
           showsVerticalScrollIndicator={false}
         >
           {/* Info Row */}
-          <View className="flex-row justify-between mb-5">
-            <View
-              className="bg-white rounded-xl px-3 py-3 items-center flex-1 mx-1 shadow-sm"
-              style={{ elevation: 2 }}
-            >
-              <Text className="font-karla-bold text-[#18181B] text-[13px] mb-1">
-                P30,000
-              </Text>
-              <Text className="text-[#6B7280] text-[11px] font-karla">
-                cash prize
-              </Text>
+          {opportunity.amount && (
+            <View className="flex-row justify-between mb-5">
+              <View
+                className="bg-white rounded-xl px-3 py-3 items-center flex-1 mx-1 shadow-sm"
+                style={{ elevation: 2 }}
+              >
+                <Text className="font-karla-bold text-[#18181B] text-[13px] mb-1">
+                  {opportunity.amount}
+                </Text>
+                <Text className="text-[#6B7280] text-[11px] font-karla">
+                  Amount
+                </Text>
+              </View>
             </View>
-            <View
-              className="bg-white rounded-xl px-3 py-3 items-center flex-1 mx-1 shadow-sm"
-              style={{ elevation: 2 }}
-            >
-              <Text className="font-karla-bold text-[#18181B] text-[13px] mb-1">
-                15
-              </Text>
-              <Text className="text-[#6B7280] text-[11px] font-karla">
-                Teams
-              </Text>
-            </View>
-            <View
-              className="bg-white rounded-xl px-3 py-3 items-center flex-1 mx-1 shadow-sm"
-              style={{ elevation: 2 }}
-            >
-              <Text className="font-karla-bold text-[#18181B] text-[13px] mb-1">
-                JHS or SHS
-              </Text>
-              <Text className="text-[#6B7280] text-[11px] font-karla">
-                Students
-              </Text>
-            </View>
-            <View
-              className="bg-white rounded-xl px-3 py-3 items-center flex-1 mx-1 shadow-sm"
-              style={{ elevation: 2 }}
-            >
-              <Text className="font-karla-bold text-[#18181B] text-[13px] mb-1">
-                15 – 21
-              </Text>
-              <Text className="text-[#6B7280] text-[11px] font-karla">
-                years old
-              </Text>
-            </View>
-          </View>
+          )}
 
           {/* Description & Requirements */}
           <View
@@ -108,33 +138,32 @@ const Opportunity = () => {
               Description
             </Text>
             <Text className="text-[#605E8F] text-[14px] font-karla mb-3">
-              Showcase your innovation at the 2025 National Robotics Challenge —
-              compete with the best minds in engineering and AI!
+              {opportunity.description || "No description available"}
             </Text>
-            <Text className="font-karla-bold text-[16px] text-[#18181B] mb-2">
-              Requirements
-            </Text>
-            <View>
-              <Text className="text-[#605E8F] text-[14px] font-karla mb-1">
-                • Open to students aged 15–21 who are currently enrolled in a
-                recognized school or university.
-              </Text>
-              <Text className="text-[#605E8F] text-[14px] font-karla mb-1">
-                • Participants may join either individually or in teams of 3–5
-                members.
-              </Text>
-              <Text className="text-[#605E8F] text-[14px] font-karla mb-1">
-                • Basic knowledge in robotics and programming is recommended but
-                not strictly required. All participants must bring a valid
-                school ID, personal laptop, and any necessary tools or materials
-                for their project.
-              </Text>
-              <Text className="text-[#605E8F] text-[14px] font-karla">
-                • Registration must be completed before the deadline, and
-                confirmed participants will receive further guidelines via
-                email.
-              </Text>
-            </View>
+            
+            {opportunity.eligibility && (
+              <>
+                <Text className="font-karla-bold text-[16px] text-[#18181B] mb-2">
+                  Eligibility
+                </Text>
+                <Text className="text-[#605E8F] text-[14px] font-karla mb-3">
+                  {opportunity.eligibility}
+                </Text>
+              </>
+            )}
+
+            {opportunity.dateMilestones && opportunity.dateMilestones.length > 0 && (
+              <>
+                <Text className="font-karla-bold text-[16px] text-[#18181B] mb-2">
+                  Important Dates
+                </Text>
+                {opportunity.dateMilestones.map((milestone: any, idx: number) => (
+                  <Text key={idx} className="text-[#605E8F] text-[14px] font-karla mb-1">
+                    • {milestone.name}: {milestone.date}
+                  </Text>
+                ))}
+              </>
+            )}
           </View>
 
           {/* Register Button */}

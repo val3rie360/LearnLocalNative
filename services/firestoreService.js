@@ -1,17 +1,18 @@
 import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  increment,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
+    addDoc,
+    arrayRemove,
+    arrayUnion,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    increment,
+    orderBy,
+    query,
+    serverTimestamp,
+    setDoc,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import { db } from "../firebaseconfig";
 
@@ -329,6 +330,32 @@ export const deleteOpportunity = async (opportunityId, specificCollection) => {
     console.log("Opportunity deleted successfully");
   } catch (error) {
     console.error("Error deleting opportunity:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all active opportunities for students (all organizations)
+ * @returns {Promise<Array>} - Array of active opportunities sorted by latest first
+ */
+export const getAllActiveOpportunities = async () => {
+  try {
+    const q = query(
+      collection(db, "opportunities"),
+      where("status", "==", "active"),
+      orderBy("createdAt", "desc")
+    );
+
+    const querySnapshot = await getDocs(q);
+    const opportunities = [];
+
+    querySnapshot.forEach((doc) => {
+      opportunities.push({ id: doc.id, ...doc.data() });
+    });
+
+    return opportunities;
+  } catch (error) {
+    console.error("Error fetching active opportunities:", error);
     throw error;
   }
 };
