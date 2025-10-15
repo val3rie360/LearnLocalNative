@@ -106,22 +106,12 @@ const OrgProfile: React.FC = () => {
                   <Text className="text-[14px] font-karla text-gray-600">
                     Verification:
                   </Text>
-                  <View
-                    className={`py-1 px-2 rounded ${
-                      profileData.verificationFileUrl
-                        ? "bg-green-100"
-                        : "bg-yellow-100"
-                    }`}
-                  >
-                    <Text
-                      className={`text-[12px] font-karla-bold ${
-                        profileData.verificationFileUrl
-                          ? "text-green-800"
-                          : "text-yellow-800"
-                      }`}
-                    >
-                      {profileData.verificationFileUrl ? "Verified" : "Pending"}
-                    </Text>
+                  <View className="flex-row justify-between items-center mb-2">
+                    <View className="py-1 px-2 rounded bg-yellow-100">
+                      <Text className="text-[12px] font-karla-bold text-yellow-800">
+                        Pending
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>

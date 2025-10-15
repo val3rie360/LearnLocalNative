@@ -4,8 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { auth, storage } from "../firebaseconfig";
+import { auth } from "../firebaseconfig";
 import { createUserProfile } from "./firestoreService";
 
 // Sign up function for user registration
@@ -21,58 +20,26 @@ export const signUp = async (email, password, role, extrData = {}) => {
     );
     const user = userCredential.user;
 
-    let verificationFileUrl = null;
-    const { name, verificationFile } = extrData;
-    if (
-      role === "organization" &&
-      extrData.verificationFile &&
-      extrData.verificationFile.uri
-    ) {
-      try {
-        const file = extrData.verificationFile;
-        console.log(
-          "Uploading verification file:",
-          file.name,
-          "Size:",
-          file.size
-        );
+    const { name, verificationFile, ...restExtra } = extrData || {};
 
-        // create a unique path for the file in firebase storage
-        const storageRef = ref(
-          storage,
-          `verifications/${user.uid}/${file.name}`
-        );
+    // Prefer Cloudinary URLs coming from the upload flow
+    const verificationFileUrl =
+      verificationFile?.cloudinarySecureUrl ||
+      verificationFile?.cloudinaryUrl ||
+      verificationFile?.url ||
+      null;
 
-        // fetching file content as a blob for uploading
-        const response = await fetch(file.uri);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch file: ${response.statusText}`);
-        }
-
-        const blob = await response.blob();
-        console.log("File blob created, size:", blob.size);
-
-        await uploadBytes(storageRef, blob);
-        verificationFileUrl = await getDownloadURL(storageRef);
-        console.log("File uploaded successfully. URL:", verificationFileUrl);
-      } catch (storageError) {
-        console.error("Storage upload error:", storageError);
-        // Don't throw the error, just log it and continue without the file
-        console.log("Continuing registration without file upload");
-      }
-    }
-
-    // Create user profile in Firestore
     const profileData = {
       email: user.email,
-      role: role,
+      role,
       name: name || null,
       createdAt: new Date(),
-
-      verificationFileUrl: verificationFileUrl || null,
+      verificationFileUrl,
+      ...(verificationFile ? { verificationFile } : {}),
+      ...restExtra,
     };
 
-    await createUserProfile(user.uid, { ...profileData, ...extrData });
+    await createUserProfile(user.uid, profileData);
 
     return user;
   } catch (error) {

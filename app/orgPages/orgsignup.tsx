@@ -8,9 +8,19 @@ import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signUp } from "../../services/authServices";
 import {
+  getUploadById,
+  uploadPDF,
+} from "../../services/cloudinaryUploadService";
+import {
   signInWithFacebook,
   signInWithGoogle,
 } from "../../services/socialAuthServices";
+
+type UploadDocument = {
+  cloudinaryPublicId?: string;
+  cloudinarySecureUrl?: string;
+  cloudinaryUrl?: string;
+};
 
 export default function OrgSignup() {
   const router = useRouter();
@@ -83,20 +93,49 @@ export default function OrgSignup() {
         throw new Error("Invalid file selected. Please try again.");
       }
 
+      console.log(
+        "🚀 Attempting to register organization with email:",
+        trimmedEmail
+      );
+
+      const sanitizedOrgId =
+        trimmedEmail.replace(/[^a-zA-Z0-9_-]/g, "_") || "pending-org";
+
+      const uploadId = await uploadPDF(
+        {
+          uri: file.uri,
+          name: file.name,
+          mimeType: file.mimeType,
+          size: file.size ?? 0,
+          type: file.mimeType ?? "application/pdf",
+        },
+        sanitizedOrgId,
+        {
+          displayName: file.name,
+          description: `${trimmedName} verification`,
+          category: "verification",
+          tags: ["organization", "verification"],
+        },
+        () => {}
+      );
+
+      const uploadDoc = (await getUploadById(uploadId)) as UploadDocument;
+
       const extraData = {
         name: trimmedName,
         verificationFile: {
           uri: file.uri,
           name: file.name,
-          size: file.size,
-          mimeType: file.mimeType,
+          size: file.size ?? 0,
+          mimeType: file.mimeType ?? "application/pdf",
+          uploadId,
+          cloudinaryPublicId: uploadDoc.cloudinaryPublicId,
+          cloudinarySecureUrl: uploadDoc.cloudinarySecureUrl,
+          cloudinaryUrl: uploadDoc.cloudinaryUrl,
+          storage: "cloudinary",
         },
       };
 
-      console.log(
-        "🚀 Attempting to register organization with email:",
-        trimmedEmail
-      );
       await signUp(trimmedEmail, trimmedPassword, "organization", extraData);
       console.log("✅ Organization registered successfully");
       router.replace("/orgPages/(tabs)/OrgHome");
