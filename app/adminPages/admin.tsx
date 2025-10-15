@@ -1,12 +1,13 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
   Linking,
   Modal,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -54,39 +55,45 @@ export default function SuperAdminReview() {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch users from Firestore
+  const fetchUsers = useCallback(async () => {
+    try {
+      if (!refreshing) setLoading(true);
+      const profilesSnapshot = await getDocs(collection(db, "profiles"));
+      const usersData: User[] = profilesSnapshot.docs
+        .map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name || "Unknown",
+            email: data.email || "No email",
+            role: data.role || "student",
+            createdAt: data.createdAt?.seconds
+              ? new Date(data.createdAt.seconds * 1000).toLocaleDateString()
+              : "Unknown date",
+            verificationStatus: data.verificationStatus || "pending",
+            verificationFileUrl: data.verificationFileUrl || null,
+          };
+        })
+        .filter((user) => user.role !== "admin"); // Filter out admin accounts
+      setUsers(usersData);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [refreshing]);
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const profilesSnapshot = await getDocs(collection(db, "profiles"));
-        const usersData: User[] = profilesSnapshot.docs
-          .map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              name: data.name || "Unknown",
-              email: data.email || "No email",
-              role: data.role || "student",
-              createdAt: data.createdAt?.seconds
-                ? new Date(data.createdAt.seconds * 1000).toLocaleDateString()
-                : "Unknown date",
-              verificationStatus: data.verificationStatus || "pending",
-              verificationFileUrl: data.verificationFileUrl || null,
-            };
-          })
-          .filter((user) => user.role !== "admin"); // Filter out admin accounts
-        setUsers(usersData);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleLogout = async () => {
     try {
@@ -131,7 +138,12 @@ export default function SuperAdminReview() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F6F4FE]" edges={["top"]}>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View className="flex-row justify-between items-center mb-6">
           <Text className="text-[22px] font-karla-bold text-[#18181B]">
             Account Verification
@@ -189,18 +201,26 @@ export default function SuperAdminReview() {
                 Joined: {user.createdAt}
               </Text>
 
-              {/* Verification File Button */}
-              {user.verificationFileUrl && (
-                <TouchableOpacity
-                  className="bg-[#E5E0FF] rounded-lg py-2 px-3 mb-2 flex-row items-center"
-                  onPress={() => handleViewFile(user.verificationFileUrl!)}
-                >
-                  <Ionicons name="document-attach" size={18} color="#4B1EB4" />
-                  <Text className="text-[#4B1EB4] font-karla-bold ml-2">
-                    View Verification File
+              {user.role === "organization" &&
+                (user.verificationFileUrl ? (
+                  <TouchableOpacity
+                    className="bg-[#E5E0FF] rounded-lg py-2 px-3 mb-2 flex-row items-center"
+                    onPress={() => handleViewFile(user.verificationFileUrl!)}
+                  >
+                    <Ionicons
+                      name="document-attach"
+                      size={18}
+                      color="#4B1EB4"
+                    />
+                    <Text className="text-[#4B1EB4] font-karla-bold ml-2">
+                      Open verification PDF
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text className="text-[12px] text-[#A1A1AA] font-karla mb-2">
+                    No verification file uploaded.
                   </Text>
-                </TouchableOpacity>
-              )}
+                ))}
 
               {user.verificationStatus === "pending" && (
                 <View className="flex-row gap-2 mt-2">

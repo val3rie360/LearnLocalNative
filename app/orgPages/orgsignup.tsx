@@ -4,7 +4,14 @@ import { DocumentPickerAsset } from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signUp } from "../../services/authServices";
 import {
@@ -193,6 +200,16 @@ export default function OrgSignup() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#4B1EB4]">
+      {loading && (
+        <View className="absolute inset-0 z-50 bg-black/40 justify-center items-center">
+          <View className="bg-white px-6 py-4 rounded-2xl items-center shadow-lg">
+            <ActivityIndicator size="large" color="#4B1EB4" />
+            <Text className="mt-3 text-[#4B1EB4] font-karla-bold">
+              Creating your account...
+            </Text>
+          </View>
+        </View>
+      )}
       <View className="flex-1 bg-secondary">
         {/* Top Section */}
         <View className="pt-5 pb-4 px-6 bg-[#4B1EB4]">
