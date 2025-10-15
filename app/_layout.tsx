@@ -1,7 +1,7 @@
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Animated, Image, Text, View } from "react-native";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { getUserProfile } from "../services/firestoreService";
@@ -13,28 +13,71 @@ function RootLayoutNav() {
   const segments = useSegments();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
+  const roleRetryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const roleFetchAttempts = useRef(0);
 
   // Fetch user role when user is authenticated
   useEffect(() => {
+    let isActive = true;
+
+    if (roleRetryTimeout.current) {
+      clearTimeout(roleRetryTimeout.current);
+      roleRetryTimeout.current = null;
+    }
+    roleFetchAttempts.current = 0;
+
     const fetchUserRole = async () => {
-      if (user?.uid) {
-        try {
-          setRoleLoading(true);
-          const profile = await getUserProfile(user.uid);
-          setUserRole(profile?.role || "student");
-        } catch (error) {
-          console.error("Error fetching user role:", error);
-          setUserRole("student"); // Default to student if error
-        } finally {
-          setRoleLoading(false);
-        }
-      } else {
+      if (!isActive) return;
+
+      if (!user?.uid) {
         setUserRole(null);
         setRoleLoading(false);
+        return;
+      }
+
+      if (roleFetchAttempts.current === 0) {
+        setRoleLoading(true);
+      }
+
+      try {
+        const profile = await getUserProfile(user.uid);
+
+        if (!isActive) return;
+
+        if (profile?.role) {
+          setUserRole(profile.role);
+          setRoleLoading(false);
+        } else if (roleFetchAttempts.current < 5) {
+          roleFetchAttempts.current += 1;
+          roleRetryTimeout.current = setTimeout(fetchUserRole, 400);
+        } else {
+          setUserRole(null);
+          setRoleLoading(false);
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+
+        if (!isActive) return;
+
+        if (roleFetchAttempts.current < 5) {
+          roleFetchAttempts.current += 1;
+          roleRetryTimeout.current = setTimeout(fetchUserRole, 400);
+        } else {
+          setUserRole(null);
+          setRoleLoading(false);
+        }
       }
     };
 
     fetchUserRole();
+
+    return () => {
+      isActive = false;
+      if (roleRetryTimeout.current) {
+        clearTimeout(roleRetryTimeout.current);
+        roleRetryTimeout.current = null;
+      }
+    };
   }, [user?.uid]);
 
   useEffect(() => {
