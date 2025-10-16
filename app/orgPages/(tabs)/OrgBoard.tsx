@@ -152,7 +152,7 @@ export default function OrgBoard() {
                       : "text-[#18181B]"
                   }`}
                 >
-                  Default (Newest)
+                  Default
                 </Text>
               </TouchableOpacity>
             </View>

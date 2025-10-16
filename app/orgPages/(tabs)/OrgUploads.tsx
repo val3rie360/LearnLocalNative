@@ -34,15 +34,24 @@ const FileCard = ({
   onPress: () => void;
   onOptions: () => void;
 }) => {
-  const thumbnailUrl = upload.cloudinarySecureUrl 
-    ? upload.cloudinarySecureUrl.replace('/upload/', '/upload/w_150,h_150,c_fill,f_auto,q_auto/')
+  const thumbnailUrl = upload.cloudinarySecureUrl
+    ? upload.cloudinarySecureUrl.replace(
+        "/upload/",
+        "/upload/w_150,h_150,c_fill,f_auto,q_auto/"
+      )
     : null;
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'N/A';
+    if (!timestamp) return "N/A";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
+    return date.toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "2-digit",
+    });
   };
+  const { user, profileData } = useAuth();
+  const isVerified = profileData?.verificationStatus === "verified";
 
   return (
     <View className="bg-white rounded-2xl p-4 items-center m-2 flex-1 min-w-[140px] max-w-[48%] shadow-md">
@@ -64,7 +73,9 @@ const FileCard = ({
               resizeMode="cover"
             />
             <View className="absolute bottom-0 right-0 bg-red-500 rounded-full p-1">
-              <Text className="text-white text-[10px] font-karla-bold">PDF</Text>
+              <Text className="text-white text-[10px] font-karla-bold">
+                PDF
+              </Text>
             </View>
           </View>
         ) : (
@@ -88,7 +99,7 @@ const FileCard = ({
         <Text className="text-xs text-[#666] text-center font-karla">
           {formatFileSize(upload.fileSize)}
         </Text>
-        
+
         {/* Download Count */}
         {upload.downloadCount > 0 && (
           <View className="flex-row items-center justify-center mt-2">
@@ -105,17 +116,17 @@ const FileCard = ({
 
 export default function OrgUploads() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, profileData } = useAuth();
   const [uploads, setUploads] = useState<any[]>([]);
   const [filteredUploads, setFilteredUploads] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<"date" | "name" | "size">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showSortMenu, setShowSortMenu] = useState(false);
-  
+
   // File management states
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
@@ -127,20 +138,22 @@ export default function OrgUploads() {
   const [actionLoading, setActionLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
+  const isVerified = profileData?.verificationStatus === "verified";
+
   // Fetch uploads
   const fetchUploads = async () => {
     if (!user?.uid) return;
 
     try {
       setError("");
-      console.log('Fetching uploads for organization:', user.uid);
+      console.log("Fetching uploads for organization:", user.uid);
       const data = await getOrganizationUploads(user.uid);
-      console.log('Fetched uploads:', data.length);
+      console.log("Fetched uploads:", data.length);
       setUploads(data);
       setFilteredUploads(data);
     } catch (err: any) {
-      console.error('Error fetching uploads:', err);
-      setError(err.message || 'Failed to load uploads');
+      console.error("Error fetching uploads:", err);
+      setError(err.message || "Failed to load uploads");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -154,36 +167,36 @@ export default function OrgUploads() {
   // Sort uploads
   const sortUploads = (uploadsToSort: any[]) => {
     const sorted = [...uploadsToSort];
-    
+
     sorted.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
-        case 'date':
+        case "date":
           const aTime = a.createdAt?.toMillis?.() || 0;
           const bTime = b.createdAt?.toMillis?.() || 0;
           comparison = bTime - aTime;
           break;
-        case 'name':
-          const aName = (a.displayName || a.fileName || '').toLowerCase();
-          const bName = (b.displayName || b.fileName || '').toLowerCase();
+        case "name":
+          const aName = (a.displayName || a.fileName || "").toLowerCase();
+          const bName = (b.displayName || b.fileName || "").toLowerCase();
           comparison = bName.localeCompare(aName);
           break;
-        case 'size':
+        case "size":
           comparison = (b.fileSize || 0) - (a.fileSize || 0);
           break;
       }
-      
-      return sortOrder === 'asc' ? -comparison : comparison;
+
+      return sortOrder === "asc" ? -comparison : comparison;
     });
-    
+
     return sorted;
   };
 
   // Handle search and sort
   useEffect(() => {
     let result = uploads;
-    
+
     // Apply search filter
     if (searchQuery.trim() !== "") {
       result = result.filter((upload) =>
@@ -192,10 +205,10 @@ export default function OrgUploads() {
           .includes(searchQuery.toLowerCase())
       );
     }
-    
+
     // Apply sorting
     result = sortUploads(result);
-    
+
     setFilteredUploads(result);
   }, [searchQuery, uploads, sortBy, sortOrder]);
 
@@ -204,11 +217,11 @@ export default function OrgUploads() {
     try {
       const url = upload.cloudinarySecureUrl || upload.cloudinaryUrl;
       if (url) {
-        console.log('Opening file:', url);
+        console.log("Opening file:", url);
         await Linking.openURL(url);
       }
     } catch (err) {
-      console.error('Error opening file:', err);
+      console.error("Error opening file:", err);
     }
   };
 
@@ -227,7 +240,7 @@ export default function OrgUploads() {
   // Handle edit file
   const handleEditFile = () => {
     if (!selectedFile) return;
-    
+
     setEditDisplayName(selectedFile.displayName || selectedFile.fileName || "");
     setEditDescription(selectedFile.description || "");
     setEditCategory(selectedFile.category || "");
@@ -242,7 +255,7 @@ export default function OrgUploads() {
 
     try {
       setActionLoading(true);
-      
+
       const updateData: any = {
         displayName: editDisplayName.trim(),
         description: editDescription.trim(),
@@ -251,25 +264,28 @@ export default function OrgUploads() {
 
       // Parse tags
       if (editTags.trim()) {
-        updateData.tags = editTags.split(',').map(tag => tag.trim()).filter(tag => tag);
+        updateData.tags = editTags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag);
       } else {
         updateData.tags = [];
       }
 
       await updateUploadMetadata(selectedFile.id, updateData);
-      
+
       setSuccessMessage("File updated successfully!");
       setShowEditModal(false);
       setSelectedFile(null);
-      
+
       // Refresh uploads
       await fetchUploads();
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err: any) {
-      console.error('Error updating file:', err);
-      Alert.alert('Error', err.message || 'Failed to update file');
+      console.error("Error updating file:", err);
+      Alert.alert("Error", err.message || "Failed to update file");
     } finally {
       setActionLoading(false);
     }
@@ -291,19 +307,19 @@ export default function OrgUploads() {
             try {
               setActionLoading(true);
               setShowOptionsModal(false);
-              
+
               await archiveUpload(selectedFile.id);
-              
+
               setSuccessMessage("File hidden successfully!");
               setSelectedFile(null);
-              
+
               // Refresh uploads
               await fetchUploads();
-              
+
               setTimeout(() => setSuccessMessage(""), 3000);
             } catch (err: any) {
-              console.error('Error hiding file:', err);
-              Alert.alert('Error', err.message || 'Failed to hide file');
+              console.error("Error hiding file:", err);
+              Alert.alert("Error", err.message || "Failed to hide file");
             } finally {
               setActionLoading(false);
             }
@@ -329,19 +345,22 @@ export default function OrgUploads() {
             try {
               setActionLoading(true);
               setShowOptionsModal(false);
-              
-              await deleteUpload(selectedFile.id, selectedFile.cloudinaryPublicId);
-              
+
+              await deleteUpload(
+                selectedFile.id,
+                selectedFile.cloudinaryPublicId
+              );
+
               setSuccessMessage("File deleted successfully!");
               setSelectedFile(null);
-              
+
               // Refresh uploads
               await fetchUploads();
-              
+
               setTimeout(() => setSuccessMessage(""), 3000);
             } catch (err: any) {
-              console.error('Error deleting file:', err);
-              Alert.alert('Error', err.message || 'Failed to delete file');
+              console.error("Error deleting file:", err);
+              Alert.alert("Error", err.message || "Failed to delete file");
             } finally {
               setActionLoading(false);
             }
@@ -361,7 +380,7 @@ export default function OrgUploads() {
               My Uploads
             </Text>
             <Text className="text-[15px] text-black mt-1 font-karla">
-              {uploads.length} file{uploads.length !== 1 ? 's' : ''} uploaded
+              {uploads.length} file{uploads.length !== 1 ? "s" : ""} uploaded
             </Text>
           </View>
 
@@ -389,29 +408,46 @@ export default function OrgUploads() {
           <View className="h-px bg-[#ECECEC] w-full my-2" />
 
           {/* Section Title with Sort */}
-          <View className="flex-row items-center justify-between mb-2 mt-2">
-            <Text className="text-[18px] font-karla-bold text-[#222]">
-              {searchQuery ? `Results (${filteredUploads.length})` : 'Your files'}
-            </Text>
-            <View className="flex-row items-center space-x-2">
-              {/* Sort Button */}
-              <TouchableOpacity
-                onPress={() => setShowSortMenu(!showSortMenu)}
-                className="flex-row items-center px-2 py-1"
+          <View className="mb-2 mt-2">
+            {!isVerified && (
+              <Text
+                className="w-full text-sm text-red-500 font-karla-bold text-center mb-2"
+                style={{ textDecorationLine: "underline" }}
               >
-                <Feather 
-                  name={sortOrder === 'desc' ? 'arrow-down' : 'arrow-up'} 
-                  size={18} 
-                  color="#6C63FF" 
-                />
-                <Text className="text-sm text-[#6C63FF] ml-1 font-karla">
-                  {sortBy === 'date' ? 'Date' : sortBy === 'name' ? 'Name' : 'Size'}
-                </Text>
-              </TouchableOpacity>
-              {/* Refresh Button */}
-              <TouchableOpacity onPress={onRefresh}>
-                <Feather name="refresh-cw" size={20} color="#6C63FF" />
-              </TouchableOpacity>
+                Your account is pending verification; your uploads are
+                temporarily hidden from students.
+              </Text>
+            )}
+            <View className="flex-row items-center justify-between">
+              <Text className="text-[18px] font-karla-bold text-[#222]">
+                {searchQuery
+                  ? `Results (${filteredUploads.length})`
+                  : "Your files"}
+              </Text>
+              <View className="flex-row items-center space-x-2">
+                {/* Sort Button */}
+                <TouchableOpacity
+                  onPress={() => setShowSortMenu(!showSortMenu)}
+                  className="flex-row items-center px-2 py-1"
+                >
+                  <Feather
+                    name={sortOrder === "desc" ? "arrow-down" : "arrow-up"}
+                    size={18}
+                    color="#6C63FF"
+                  />
+                  <Text className="text-sm text-[#6C63FF] ml-1 font-karla">
+                    {sortBy === "date"
+                      ? "Date"
+                      : sortBy === "name"
+                        ? "Name"
+                        : "Size"}
+                  </Text>
+                </TouchableOpacity>
+                {/* Refresh Button */}
+                <TouchableOpacity onPress={onRefresh}>
+                  <Feather name="refresh-cw" size={20} color="#6C63FF" />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -421,15 +457,21 @@ export default function OrgUploads() {
               <TouchableOpacity
                 className="flex-row items-center py-3 px-4 rounded-lg"
                 onPress={() => {
-                  setSortBy('date');
+                  setSortBy("date");
                   setShowSortMenu(false);
                 }}
               >
-                <Feather name="calendar" size={18} color={sortBy === 'date' ? '#6C63FF' : '#666'} />
-                <Text className={`flex-1 ml-3 font-karla ${sortBy === 'date' ? 'font-karla-bold text-[#6C63FF]' : 'text-[#333]'}`}>
+                <Feather
+                  name="calendar"
+                  size={18}
+                  color={sortBy === "date" ? "#6C63FF" : "#666"}
+                />
+                <Text
+                  className={`flex-1 ml-3 font-karla ${sortBy === "date" ? "font-karla-bold text-[#6C63FF]" : "text-[#333]"}`}
+                >
                   Date
                 </Text>
-                {sortBy === 'date' && (
+                {sortBy === "date" && (
                   <MaterialIcons name="check" size={20} color="#6C63FF" />
                 )}
               </TouchableOpacity>
@@ -437,15 +479,21 @@ export default function OrgUploads() {
               <TouchableOpacity
                 className="flex-row items-center py-3 px-4 rounded-lg"
                 onPress={() => {
-                  setSortBy('name');
+                  setSortBy("name");
                   setShowSortMenu(false);
                 }}
               >
-                <Feather name="type" size={18} color={sortBy === 'name' ? '#6C63FF' : '#666'} />
-                <Text className={`flex-1 ml-3 font-karla ${sortBy === 'name' ? 'font-karla-bold text-[#6C63FF]' : 'text-[#333]'}`}>
+                <Feather
+                  name="type"
+                  size={18}
+                  color={sortBy === "name" ? "#6C63FF" : "#666"}
+                />
+                <Text
+                  className={`flex-1 ml-3 font-karla ${sortBy === "name" ? "font-karla-bold text-[#6C63FF]" : "text-[#333]"}`}
+                >
                   Name
                 </Text>
-                {sortBy === 'name' && (
+                {sortBy === "name" && (
                   <MaterialIcons name="check" size={20} color="#6C63FF" />
                 )}
               </TouchableOpacity>
@@ -453,15 +501,21 @@ export default function OrgUploads() {
               <TouchableOpacity
                 className="flex-row items-center py-3 px-4 rounded-lg"
                 onPress={() => {
-                  setSortBy('size');
+                  setSortBy("size");
                   setShowSortMenu(false);
                 }}
               >
-                <Feather name="database" size={18} color={sortBy === 'size' ? '#6C63FF' : '#666'} />
-                <Text className={`flex-1 ml-3 font-karla ${sortBy === 'size' ? 'font-karla-bold text-[#6C63FF]' : 'text-[#333]'}`}>
+                <Feather
+                  name="database"
+                  size={18}
+                  color={sortBy === "size" ? "#6C63FF" : "#666"}
+                />
+                <Text
+                  className={`flex-1 ml-3 font-karla ${sortBy === "size" ? "font-karla-bold text-[#6C63FF]" : "text-[#333]"}`}
+                >
                   Size
                 </Text>
-                {sortBy === 'size' && (
+                {sortBy === "size" && (
                   <MaterialIcons name="check" size={20} color="#6C63FF" />
                 )}
               </TouchableOpacity>
@@ -473,17 +527,17 @@ export default function OrgUploads() {
               <TouchableOpacity
                 className="flex-row items-center justify-between py-3 px-4 rounded-lg"
                 onPress={() => {
-                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                 }}
               >
                 <View className="flex-row items-center">
-                  <Feather 
-                    name={sortOrder === 'desc' ? 'arrow-down' : 'arrow-up'} 
-                    size={18} 
-                    color="#6C63FF" 
+                  <Feather
+                    name={sortOrder === "desc" ? "arrow-down" : "arrow-up"}
+                    size={18}
+                    color="#6C63FF"
                   />
                   <Text className="ml-3 font-karla text-[#6C63FF]">
-                    {sortOrder === 'desc' ? 'Descending' : 'Ascending'}
+                    {sortOrder === "desc" ? "Descending" : "Ascending"}
                   </Text>
                 </View>
                 <MaterialIcons name="swap-vert" size={20} color="#6C63FF" />
@@ -495,13 +549,17 @@ export default function OrgUploads() {
           {loading ? (
             <View className="flex-1 justify-center items-center">
               <ActivityIndicator size="large" color="#6C63FF" />
-              <Text className="text-[#666] mt-4 font-karla">Loading your uploads...</Text>
+              <Text className="text-[#666] mt-4 font-karla">
+                Loading your uploads...
+              </Text>
             </View>
           ) : error ? (
             /* Error State */
             <View className="flex-1 justify-center items-center px-8">
               <Feather name="alert-circle" size={48} color="#EF4444" />
-              <Text className="text-[#666] mt-4 text-center font-karla">{error}</Text>
+              <Text className="text-[#666] mt-4 text-center font-karla">
+                {error}
+              </Text>
               <TouchableOpacity
                 onPress={fetchUploads}
                 className="bg-[#6C63FF] rounded-full px-6 py-3 mt-4"
@@ -519,8 +577,8 @@ export default function OrgUploads() {
               refreshing={refreshing}
               onRefresh={onRefresh}
               renderItem={({ item }) => (
-                <FileCard 
-                  upload={item} 
+                <FileCard
+                  upload={item}
                   onPress={() => handleFilePress(item)}
                   onOptions={() => handleFileOptions(item)}
                 />
@@ -529,12 +587,12 @@ export default function OrgUploads() {
                 <View className="flex-1 justify-center items-center py-12">
                   <Feather name="inbox" size={64} color="#CCC" />
                   <Text className="text-center text-[#666] mt-4 text-[16px] font-karla-bold">
-                    {searchQuery ? 'No files found' : 'No uploads yet'}
+                    {searchQuery ? "No files found" : "No uploads yet"}
                   </Text>
                   <Text className="text-center text-[#888] mt-2 text-[14px] font-karla px-8">
                     {searchQuery
-                      ? 'Try a different search term'
-                      : 'Upload your first PDF from the Create tab'}
+                      ? "Try a different search term"
+                      : "Upload your first PDF from the Create tab"}
                   </Text>
                 </View>
               }
@@ -565,7 +623,10 @@ export default function OrgUploads() {
             onPress={() => setShowOptionsModal(false)}
             className="flex-1 bg-black/50 justify-end"
           >
-            <TouchableOpacity activeOpacity={1} className="bg-white rounded-t-3xl p-6">
+            <TouchableOpacity
+              activeOpacity={1}
+              className="bg-white rounded-t-3xl p-6"
+            >
               {/* Modal Header */}
               <View className="flex-row items-center justify-between mb-6">
                 <Text className="text-xl font-karla-bold text-[#222]">
@@ -579,11 +640,15 @@ export default function OrgUploads() {
               {/* File Info */}
               {selectedFile && (
                 <View className="bg-gray-50 rounded-xl p-4 mb-6">
-                  <Text className="font-karla-bold text-[#222] mb-1" numberOfLines={2}>
+                  <Text
+                    className="font-karla-bold text-[#222] mb-1"
+                    numberOfLines={2}
+                  >
                     {selectedFile.displayName || selectedFile.fileName}
                   </Text>
                   <Text className="text-sm text-[#666] font-karla">
-                    {formatFileSize(selectedFile.fileSize)} • {selectedFile.category || 'Uncategorized'}
+                    {formatFileSize(selectedFile.fileSize)} •{" "}
+                    {selectedFile.category || "Uncategorized"}
                   </Text>
                 </View>
               )}
@@ -599,7 +664,9 @@ export default function OrgUploads() {
                     <Feather name="edit-2" size={20} color="#3B82F6" />
                   </View>
                   <View className="flex-1 ml-4">
-                    <Text className="font-karla-bold text-[#222]">Edit Details</Text>
+                    <Text className="font-karla-bold text-[#222]">
+                      Edit Details
+                    </Text>
                     <Text className="text-sm text-[#666] font-karla">
                       Update name, description, and tags
                     </Text>
@@ -616,7 +683,9 @@ export default function OrgUploads() {
                     <Feather name="eye-off" size={20} color="#F97316" />
                   </View>
                   <View className="flex-1 ml-4">
-                    <Text className="font-karla-bold text-[#222]">Hide File</Text>
+                    <Text className="font-karla-bold text-[#222]">
+                      Hide File
+                    </Text>
                     <Text className="text-sm text-[#666] font-karla">
                       Make invisible to students
                     </Text>
@@ -633,7 +702,9 @@ export default function OrgUploads() {
                     <Feather name="trash-2" size={20} color="#EF4444" />
                   </View>
                   <View className="flex-1 ml-4">
-                    <Text className="font-karla-bold text-red-600">Delete File</Text>
+                    <Text className="font-karla-bold text-red-600">
+                      Delete File
+                    </Text>
                     <Text className="text-sm text-red-500 font-karla">
                       Permanently remove this file
                     </Text>
@@ -761,8 +832,8 @@ export default function OrgUploads() {
                   disabled={actionLoading || !editDisplayName.trim()}
                   className={`rounded-xl py-4 mb-3 ${
                     actionLoading || !editDisplayName.trim()
-                      ? 'bg-gray-300'
-                      : 'bg-[#6C63FF]'
+                      ? "bg-gray-300"
+                      : "bg-[#6C63FF]"
                   }`}
                 >
                   {actionLoading ? (

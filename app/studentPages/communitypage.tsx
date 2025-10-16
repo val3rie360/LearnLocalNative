@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext"; // adjust path if needed
+import { useAuth } from "@/contexts/AuthContext";
 import {
   getCommunityPosts,
   getLargestPosts,
@@ -32,63 +32,157 @@ type CommunityPost = {
   upvotedBy?: string[];
 };
 
+const CATEGORY_STYLES: Record<string, { bg: string; text: string }> = {
+  Scholarship: { bg: "bg-[#BDFCFF]", text: "text-[#106074]" },
+  Event: { bg: "bg-[#FFC3C4]", text: "text-[#934055]" },
+  Tutoring: { bg: "bg-[#6C63FF]", text: "text-white" },
+  "Learning Materials": { bg: "bg-[#F2C25B]", text: "text-[#745000]" },
+  Workshop: { bg: "bg-[#C6F7B2]", text: "text-[#3B7C1B]" },
+};
+
+const DEFAULT_CATEGORY_STYLE = { bg: "bg-[#FFD6E0]", text: "text-[#C94F7C]" };
+
+const getPostTimestamp = (post: CommunityPost & { createdAt?: any }) => {
+  const createdAt = (post as any)?.createdAt;
+  if (createdAt?.toMillis) return createdAt.toMillis();
+  if (typeof createdAt === "number") return createdAt;
+  if (typeof createdAt?.seconds === "number") return createdAt.seconds * 1000;
+  const parsedDate = Date.parse(post.date);
+  return Number.isNaN(parsedDate) ? 0 : parsedDate;
+};
+
+const sortPostsByNewest = (list: CommunityPost[]) =>
+  [...list].sort((a, b) => getPostTimestamp(b) - getPostTimestamp(a));
+
+const buildUpvoteMap = (list: CommunityPost[], userId: string) =>
+  list.reduce<Record<string, boolean>>((acc, post) => {
+    acc[post.id] = Array.isArray(post.upvotedBy)
+      ? post.upvotedBy.includes(userId)
+      : false;
+    return acc;
+  }, {});
+
 export default function CommunityPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const userId = user?.uid || "guest"; // fallback if not logged in
+  const userId = user?.uid || "guest";
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [upvoted, setUpvoted] = useState<{ [postId: string]: boolean }>({});
+  const [upvoteProcessing, setUpvoteProcessing] = useState<
+    Record<string, boolean>
+  >({});
   const [refreshing, setRefreshing] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [selectedSort, setSelectedSort] = useState<"top" | "default">(
     "default"
-  ); // new state for sorting
+  );
 
-  // Use a user-specific key for upvoted posts
   const upvoteStorageKey = `community_upvoted_${userId}`;
 
-  // Extract fetch logic to a function
-  const fetchPosts = useCallback(async () => {
-    setRefreshing(true);
-    const data = await getCommunityPosts();
-    setPosts(data);
-    setRefreshing(false);
-  }, []);
+  const loadPosts = useCallback(
+    async (
+      mode: "default" | "top",
+      options: { showRefreshing?: boolean; closeSortModal?: boolean } = {}
+    ) => {
+      const { showRefreshing = false, closeSortModal = false } = options;
+      if (showRefreshing) setRefreshing(true);
+
+      try {
+        const data =
+          mode === "top" ? await getLargestPosts() : await getCommunityPosts();
+        const normalized = mode === "default" ? sortPostsByNewest(data) : data;
+
+        setPosts(normalized);
+        setUpvoted(buildUpvoteMap(normalized, userId));
+        setSelectedSort((prev) => (prev === mode ? prev : mode));
+      } catch (error) {
+        console.error("Error loading community posts:", error);
+      } finally {
+        if (showRefreshing) setRefreshing(false);
+        if (closeSortModal) setShowSortModal(false);
+      }
+    },
+    [userId]
+  );
 
   useEffect(() => {
-    fetchPosts();
-
-    const loadUpvoted = async () => {
+    void (async () => {
       try {
         const stored = await AsyncStorage.getItem(upvoteStorageKey);
         if (stored) setUpvoted(JSON.parse(stored));
       } catch {}
-    };
-    loadUpvoted();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchPosts, userId]);
+      await loadPosts("default");
+    })();
+  }, [loadPosts, upvoteStorageKey]);
 
-  // Save upvoted state to AsyncStorage whenever it changes
   useEffect(() => {
-    AsyncStorage.setItem(upvoteStorageKey, JSON.stringify(upvoted));
+    AsyncStorage.setItem(upvoteStorageKey, JSON.stringify(upvoted)).catch(
+      () => {}
+    );
   }, [upvoted, upvoteStorageKey]);
 
-  // Handler for upvote arrow tap
   const handleUpvote = async (postId: string) => {
-    if (!userId || userId === "guest") return; // Require login
+    if (!userId || userId === "guest") return;
+    if (upvoteProcessing[postId]) return;
 
-    await updateCommunityPostUpvotes(postId, userId);
-    await fetchPosts();
+    const currentlyUpvoted = !!upvoted[postId];
+
+    setUpvoteProcessing((prev) => ({ ...prev, [postId]: true }));
+    setUpvoted((prev) => ({ ...prev, [postId]: !currentlyUpvoted }));
+    setPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) return post;
+
+        const updatedUpvotes = Math.max(
+          0,
+          (post.upvotes ?? 0) + (currentlyUpvoted ? -1 : 1)
+        );
+
+        const updatedBy = Array.isArray(post.upvotedBy)
+          ? currentlyUpvoted
+            ? post.upvotedBy.filter((id) => id !== userId)
+            : [...post.upvotedBy, userId]
+          : currentlyUpvoted
+            ? []
+            : [userId];
+
+        return { ...post, upvotes: updatedUpvotes, upvotedBy: updatedBy };
+      })
+    );
+
+    try {
+      await updateCommunityPostUpvotes(postId, userId);
+      await loadPosts(selectedSort);
+    } catch (error) {
+      console.error("Error updating upvote:", error);
+      setUpvoted((prev) => ({ ...prev, [postId]: currentlyUpvoted }));
+      setPosts((prev) =>
+        prev.map((post) => {
+          if (post.id !== postId) return post;
+
+          const rollbackUpvotes = Math.max(
+            0,
+            (post.upvotes ?? 0) + (currentlyUpvoted ? 1 : -1)
+          );
+
+          const rollbackBy = Array.isArray(post.upvotedBy)
+            ? currentlyUpvoted
+              ? [...post.upvotedBy, userId]
+              : post.upvotedBy.filter((id) => id !== userId)
+            : currentlyUpvoted
+              ? [userId]
+              : [];
+
+          return { ...post, upvotes: rollbackUpvotes, upvotedBy: rollbackBy };
+        })
+      );
+    } finally {
+      setUpvoteProcessing((prev) => {
+        const { [postId]: _ignore, ...rest } = prev;
+        return rest;
+      });
+    }
   };
-
-  // Add a function to fetch top-voted posts
-  const fetchTopVotedPosts = useCallback(async () => {
-    setRefreshing(true);
-    const data = await getLargestPosts();
-    setPosts(data);
-    setRefreshing(false);
-    setShowSortModal(false);
-  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F6F4FE]">
@@ -135,29 +229,11 @@ export default function CommunityPage() {
           <TouchableWithoutFeedback onPress={() => setShowSortModal(false)}>
             <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.3)" }} />
           </TouchableWithoutFeedback>
-          <View
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: "#fff",
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              padding: 24,
-              shadowColor: "#000",
-              shadowOpacity: 0.1,
-              shadowRadius: 10,
-              elevation: 10,
-            }}
-          >
+          <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[20px] p-6 shadow-lg">
             <Text className="font-karla-bold text-lg mb-4">Sort Posts By</Text>
             <TouchableOpacity
               className="py-3 border-b border-[#eee]"
-              onPress={() => {
-                fetchTopVotedPosts();
-                setSelectedSort("top");
-              }}
+              onPress={() => loadPosts("top", { closeSortModal: true })}
             >
               <Text
                 className={`text-base font-karla ${
@@ -169,11 +245,7 @@ export default function CommunityPage() {
             </TouchableOpacity>
             <TouchableOpacity
               className="py-3"
-              onPress={() => {
-                fetchPosts();
-                setShowSortModal(false);
-                setSelectedSort("default");
-              }}
+              onPress={() => loadPosts("default", { closeSortModal: true })}
             >
               <Text
                 className={`text-base font-karla ${
@@ -193,7 +265,12 @@ export default function CommunityPage() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 30 }}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={fetchPosts} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() =>
+                loadPosts(selectedSort, { showRefreshing: true })
+              }
+            />
           }
         >
           {posts.length === 0 ? (
@@ -204,30 +281,8 @@ export default function CommunityPage() {
             </View>
           ) : (
             posts.map((post) => {
-              // Match tag style based on categories array
-              const categories = [
-                {
-                  label: "Scholarship",
-                  bg: "bg-[#BDFCFF]",
-                  text: "text-[#106074]",
-                },
-                { label: "Event", bg: "bg-[#FFC3C4]", text: "text-[#934055]" },
-                { label: "Tutoring", bg: "bg-[#6C63FF]", text: "text-white" },
-                {
-                  label: "Learning Materials",
-                  bg: "bg-[#F2C25B]",
-                  text: "text-[#745000]",
-                },
-                {
-                  label: "Workshop",
-                  bg: "bg-[#C6F7B2]",
-                  text: "text-[#3B7C1B]",
-                },
-              ];
-              const category = categories.find((cat) => cat.label === post.tag);
-
-              const tagBg = category ? category.bg : "bg-[#FFD6E0]";
-              const tagText = category ? category.text : "text-[#C94F7C]";
+              const category =
+                CATEGORY_STYLES[post.tag] ?? DEFAULT_CATEGORY_STYLE;
 
               return (
                 <View
@@ -260,9 +315,11 @@ export default function CommunityPage() {
                     {post.desc}
                   </Text>
                   <View className="flex-row items-center">
-                    <View className={`${tagBg} rounded-md px-2 py-0.5 mr-2`}>
+                    <View
+                      className={`${category.bg} rounded-md px-2 py-0.5 mr-2`}
+                    >
                       <Text
-                        className={`font-karla-bold text-[12px] ${tagText}`}
+                        className={`font-karla-bold text-[12px] ${category.text}`}
                       >
                         {post.tag}
                       </Text>
@@ -270,15 +327,12 @@ export default function CommunityPage() {
                     <TouchableOpacity
                       onPress={() => handleUpvote(post.id)}
                       activeOpacity={0.7}
+                      disabled={!userId || userId === "guest"}
                     >
                       <Entypo
                         name="arrow-bold-up"
                         size={16}
-                        color={
-                          post.upvotedBy?.includes(userId)
-                            ? "#4B1EB4"
-                            : "#A1A1AA"
-                        } // secondary color if tapped
+                        color={upvoted[post.id] ? "#4B1EB4" : "#A1A1AA"}
                         style={{ marginRight: 3 }}
                       />
                     </TouchableOpacity>

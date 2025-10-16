@@ -399,6 +399,15 @@ export default function OrgHome() {
                 />
               )}
             </View>
+            {!isVerified && (
+              <Text
+                className="mt-1 text-sm text-red-500 font-karla-bold text-center px-6"
+                style={{ textDecorationLine: "underline" }}
+              >
+                NOTE: Your account is pending verification; your opportunities
+                are temporarily hidden from students.
+              </Text>
+            )}
           </View>
 
           {/* Search Bar & Icon Row */}

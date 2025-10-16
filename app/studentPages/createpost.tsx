@@ -9,7 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const categories = [
   { label: "Scholarship", bg: "bg-[#BDFCFF]", text: "text-[#106074]" },
   { label: "Event", bg: "bg-[#FFC3C4]", text: "text-[#934055]" },
-  { label: "Tutoring", bg: "bg-[#6C63FF]", text: "text-white" },
+  { label: "Study Spot", bg: "bg-[#6C63FF]", text: "text-white" },
   { label: "Learning Materials", bg: "bg-[#F2C25B]", text: "text-[#745000]" },
   { label: "Workshop", bg: "bg-[#C6F7B2]", text: "text-[#3B7C1B]" },
 ];
