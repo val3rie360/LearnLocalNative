@@ -1,4 +1,5 @@
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
@@ -25,6 +26,7 @@ interface ProfileData {
   };
   verificationFileUrl?: string;
   verificationStatus?: "pending" | "verified" | "rejected";
+  photoURL?: string;
 }
 
 const OrgProfile: React.FC = () => {
@@ -35,9 +37,11 @@ const OrgProfile: React.FC = () => {
   const [profileInfo, setProfileInfo] = useState<ProfileData | null>(
     (profileData ?? null) as ProfileData | null
   );
+  const [avatarError, setAvatarError] = useState(false);
 
   useEffect(() => {
     setProfileInfo((profileData ?? null) as ProfileData | null);
+    setAvatarError(false);
   }, [profileData]);
 
   const handleRefresh = useCallback(async () => {
@@ -97,8 +101,32 @@ const OrgProfile: React.FC = () => {
         >
           <View className="flex-1 bg-transparent items-center pt-16">
             <View className="items-center mb-8">
-              <View className="bg-white rounded-full p-3 mb-2">
-                <FontAwesome name="users" size={78} color="#7D7CFF" />
+              <View className="bg-white rounded-full w-28 h-28 items-center justify-center border-[#ECEAFF] shadow">
+                {profileLoading ? (
+                  <FontAwesome name="users" size={72} color="#7D7CFF" />
+                ) : profileInfo?.photoURL && !avatarError ? (
+                  <ExpoImage
+                    source={{ uri: profileInfo.photoURL }}
+                    style={{
+                      width: 96,
+                      height: 96,
+                      borderRadius: 48,
+                      borderColor: "#b8b3e863",
+                      borderWidth: 3,
+                    }}
+                    contentFit="cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : user?.photoURL && !avatarError ? (
+                  <ExpoImage
+                    source={{ uri: user.photoURL }}
+                    style={{ width: 96, height: 96, borderRadius: 48 }}
+                    contentFit="cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  <FontAwesome name="users" size={72} color="#7D7CFF" />
+                )}
               </View>
               <View className="flex-row items-center">
                 <Text className="text-[20px] text-white font-karla-bold mb-1">

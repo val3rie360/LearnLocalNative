@@ -6,10 +6,14 @@
 // API Key and Secret should ONLY be used server-side.
 
 export const cloudinaryConfig = {
-  cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your-cloud-name',
-  uploadPreset: process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset',
-  // Note: We use unsigned uploads via upload preset (no API key/secret needed)
-  // For signed operations (delete, admin), use a backend API
+  cloudName: process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME || "your-cloud-name",
+  uploadPreset:
+    process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "unsigned_preset",
+  avatarPreset:
+    process.env.EXPO_PUBLIC_CLOUDINARY_AVATAR_UPLOAD_PRESET ||
+    process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
+    "unsigned_preset",
+  avatarFolder: process.env.EXPO_PUBLIC_CLOUDINARY_AVATAR_FOLDER || "avatars",
 };
 
 /**
@@ -33,11 +37,15 @@ export const getUploadUrl = () => {
  * Get Cloudinary resource URL
  */
 export const getResourceUrl = (publicId, options = {}) => {
-  const { format = 'pdf', flags = '' } = options;
+  const { format = "pdf", flags = "" } = options;
   return `https://res.cloudinary.com/${cloudinaryConfig.cloudName}/image/upload/${flags}${publicId}.${format}`;
 };
 
+/**
+ * Get Cloudinary image upload URL
+ */
+export const getImageUploadUrl = () => {
+  return `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`;
+};
+
 export default cloudinaryConfig;
-
-
-

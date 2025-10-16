@@ -11,6 +11,7 @@ import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Modal,
   RefreshControl,
   ScrollView,
@@ -36,6 +37,9 @@ interface ProfileData {
   };
   verificationFileUrl?: string;
   verificationStatus?: "pending" | "verified" | "rejected";
+  profileImageUrl?: string;
+  profilePictureUrl?: string;
+  photoURL?: string;
 }
 
 export default function OrgHome() {
@@ -338,7 +342,14 @@ export default function OrgHome() {
     return matchesSearch && matchesCategory;
   });
 
-  const isVerified = profileData?.verificationStatus === "verified";
+  const typedProfile = (profileData ?? {}) as ProfileData;
+  const isVerified = typedProfile?.verificationStatus === "verified";
+  const profileImageUri =
+    typedProfile?.profileImageUrl ||
+    typedProfile?.profilePictureUrl ||
+    typedProfile?.photoURL ||
+    user?.photoURL ||
+    null;
 
   return (
     <SafeAreaView
@@ -382,9 +393,17 @@ export default function OrgHome() {
           <View className="items-center mt-24 mb-2">
             <View
               className="bg-white rounded-full w-24 h-24 items-center justify-center border-4 border-[#ECEAFF] shadow"
-              style={{ elevation: 0 }}
+              style={{ elevation: 0, overflow: "hidden" }}
             >
-              <FontAwesome name="users" size={56} color="#7D7CFF" />
+              {profileImageUri ? (
+                <Image
+                  source={{ uri: profileImageUri }}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <FontAwesome name="users" size={56} color="#7D7CFF" />
+              )}
             </View>
             <View className="flex-row items-center mt-2">
               <Text className="text-white text-lg font-karla-bold">
@@ -417,9 +436,23 @@ export default function OrgHome() {
               <View className="flex-row items-center">
                 <View
                   className="w-9 h-9 rounded-full bg-[#D6D3FF] items-center justify-center mr-3"
-                  style={{ position: "relative" }}
+                  style={{ position: "relative", overflow: "hidden" }}
                 >
-                  <FontAwesome name="users" size={22} color="#7D7CFF" />
+                  {profileImageUri ? (
+                    <Image
+                      source={{ uri: profileImageUri }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderColor: "#cfcbf663",
+                        borderRadius: 48,
+                        borderWidth: 2,
+                      }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <FontAwesome name="users" size={22} color="#7D7CFF" />
+                  )}
                   {isVerified && (
                     <Ionicons
                       name="checkmark-circle"
@@ -590,9 +623,23 @@ export default function OrgHome() {
                   <View className="flex-row items-center flex-1">
                     <View
                       className="w-9 h-9 rounded-full bg-[#D6D3FF] items-center justify-center mr-3"
-                      style={{ position: "relative" }}
+                      style={{ position: "relative", overflow: "hidden" }}
                     >
-                      <FontAwesome name="users" size={22} color="#7D7CFF" />
+                      {profileImageUri ? (
+                        <Image
+                          source={{ uri: profileImageUri }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: 48,
+                            borderColor: "#cfcbf663",
+                            borderWidth: 2,
+                          }}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <FontAwesome name="users" size={22} color="#7D7CFF" />
+                      )}
                       {isVerified && (
                         <Ionicons
                           name="checkmark-circle"

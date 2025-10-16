@@ -1,10 +1,25 @@
-import { Feather, FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import {
+  Feather,
+  FontAwesome,
+  Ionicons,
+  MaterialIcons,
+} from "@expo/vector-icons";
+import { Image as ExpoImage } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { updateEmail, updatePassword, updateProfile } from "firebase/auth";
 import React, { useEffect, useState } from "react";
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { cloudinaryConfig, getImageUploadUrl } from "../cloudinaryConfig";
 import { useAuth } from "../contexts/AuthContext";
 import { updateUserProfile } from "../services/firestoreService";
 
@@ -16,6 +31,7 @@ interface ProfileData {
     seconds: number;
   };
   verificationFileUrl?: string;
+  photoURL?: string;
 }
 
 export default function EditAccount() {
@@ -26,12 +42,43 @@ export default function EditAccount() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
-  // Set form values when profile data changes
+  const fallbackAvatarPresetEnv =
+    process.env.EXPO_PUBLIC_CLOUDINARY_AVATAR_UPLOAD_PRESET ||
+    process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
+    "";
+  const avatarUploadPreset = (
+    fallbackAvatarPresetEnv ||
+    cloudinaryConfig.avatarPreset ||
+    ""
+  ).trim();
+  const isPresetPlaceholder =
+    !fallbackAvatarPresetEnv && avatarUploadPreset === "unsigned_preset";
+  const avatarUploadFolder =
+    process.env.EXPO_PUBLIC_CLOUDINARY_AVATAR_FOLDER ||
+    cloudinaryConfig.avatarFolder ||
+    "";
+  const cloudinaryImageUploadUrl =
+    cloudinaryConfig.cloudName &&
+    cloudinaryConfig.cloudName !== "your-cloud-name"
+      ? getImageUploadUrl()
+      : "";
+  const isCloudinaryConfigured =
+    !!cloudinaryImageUploadUrl && !!avatarUploadPreset && !isPresetPlaceholder;
+
   useEffect(() => {
     if (profileData) {
+      const profilePhoto =
+        (profileData as { photoURL?: string | null })?.photoURL ??
+        user?.photoURL ??
+        "";
       setName(profileData?.name || user?.displayName || "");
       setEmail(profileData?.email || user?.email || "");
+      setAvatarUrl(profilePhoto);
+      setAvatarError(false);
     }
   }, [profileData, user]);
 
@@ -44,8 +91,16 @@ export default function EditAccount() {
     setLoading(true);
     try {
       // Update Firebase Auth profile
-      if (name !== user.displayName) {
-        await updateProfile(user, { displayName: name });
+      const trimmedName = name.trim();
+      const currentPhoto = user.photoURL ?? "";
+      if (
+        trimmedName !== (user.displayName ?? "") ||
+        avatarUrl !== currentPhoto
+      ) {
+        await updateProfile(user, {
+          displayName: trimmedName,
+          photoURL: avatarUrl || undefined,
+        });
       }
 
       // Update email if changed
@@ -60,8 +115,9 @@ export default function EditAccount() {
 
       // Update Firestore profile
       const updatedProfileData = {
-        name: name.trim(),
+        name: trimmedName,
         email: email.trim(),
+        photoURL: avatarUrl || null,
         updatedAt: new Date(),
       };
 
@@ -84,15 +140,103 @@ export default function EditAccount() {
   // Determine avatar icon based on role
   const isOrg = profileData?.role === "organization";
 
+  const handlePickAvatar = async () => {
+    if (!isCloudinaryConfigured) {
+      Alert.alert(
+        "Cloudinary not configured",
+        "Add EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME and EXPO_PUBLIC_CLOUDINARY_AVATAR_UPLOAD_PRESET to your .env, then restart the app."
+      );
+      return;
+    }
+
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "Allow photo library access to change your profile picture."
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled || !result.assets?.length) return;
+
+    try {
+      setAvatarUploading(true);
+
+      const asset = result.assets[0];
+      setAvatarUrl(asset.uri); // show immediate preview
+      setAvatarError(false);
+
+      const extension = asset.mimeType?.split("/").pop() ?? "jpg";
+      const fileName =
+        asset.fileName ?? `avatar_${user?.uid ?? "user"}.${extension}`;
+
+      const formData = new FormData();
+      formData.append("file", {
+        uri: asset.uri,
+        name: fileName,
+        type: asset.mimeType ?? "image/jpeg",
+      } as any);
+      formData.append("upload_preset", avatarUploadPreset);
+      if (avatarUploadFolder) {
+        formData.append("folder", avatarUploadFolder);
+      }
+
+      const response = await fetch(cloudinaryImageUploadUrl, {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[Avatar] Upload failed:", errorText);
+        throw new Error("Upload failed.");
+      }
+
+      const uploadResult = await response.json();
+      console.log("[Avatar] Cloudinary response:", uploadResult);
+
+      const secureUrl =
+        typeof uploadResult.secure_url === "string" &&
+        uploadResult.secure_url.startsWith("http")
+          ? uploadResult.secure_url
+          : uploadResult.url;
+
+      if (!secureUrl || typeof secureUrl !== "string") {
+        throw new Error("Upload error: secure_url missing.");
+      }
+
+      setAvatarUrl(secureUrl as string); // persisted Cloudinary URL
+      setAvatarError(false);
+    } catch (error: any) {
+      console.error("Avatar upload error:", error);
+      Alert.alert("Error", error.message || "Failed to upload image.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const EditAccountContent = () => (
     <SafeAreaView className="flex-1 px-6 pt-6">
       {/* Back Arrow */}
       <TouchableOpacity
-        className="absolute left-4 top-20"
-        onPress={() => router.back()}
+        className="absolute left-5 top-20"
+        onPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace("/settings");
+          }
+        }}
         hitSlop={10}
       >
-        <Feather name="arrow-left" size={22} color="#18181B" />
+        <Ionicons name="arrow-back" size={24} color="#18181B" />
       </TouchableOpacity>
 
       {/* Title */}
@@ -103,7 +247,24 @@ export default function EditAccount() {
       {/* Profile Image */}
       <View className="items-center mb-8">
         <View className="relative">
-          {isOrg ? (
+          {avatarUrl && !avatarError ? (
+            <ExpoImage
+              source={{ uri: avatarUrl }}
+              style={{
+                width: 96,
+                height: 96,
+                borderRadius: 48,
+                borderWidth: 4,
+                borderColor: "#b8b3e863",
+              }}
+              contentFit="cover"
+              transition={200}
+              onError={(err) => {
+                console.error("[Avatar] display error:", event);
+                setAvatarError(true);
+              }}
+            />
+          ) : isOrg ? (
             <View
               className="bg-white rounded-full w-24 h-24 items-center justify-center border-4 border-[#ECEAFF] shadow"
               style={{ elevation: 0 }}
@@ -114,10 +275,16 @@ export default function EditAccount() {
             <FontAwesome name="user-circle-o" size={90} color="#18181B" />
           )}
           <TouchableOpacity
-            className="absolute bottom-2 -right-3 bg-white rounded-full p-1 shadow border border-[#e0d7ff]"
+            className="absolute bottom-2 -right-3 bg-white rounded-full p-1.5 shadow border border-[#e0d7ff]"
             style={{ elevation: 2 }}
+            onPress={handlePickAvatar}
+            disabled={avatarUploading}
           >
-            <MaterialIcons name="photo-camera" size={22} color="#4B1EB4" />
+            {avatarUploading ? (
+              <ActivityIndicator size="small" color="#4B1EB4" />
+            ) : (
+              <MaterialIcons name="photo-camera" size={22} color="#4B1EB4" />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -205,13 +372,19 @@ export default function EditAccount() {
       {/* Save Button */}
       <TouchableOpacity
         className={`rounded-full py-4 items-center shadow mt-2 ${
-          loading ? "bg-gray-400" : "bg-[#4B1EB4] active:opacity-90"
+          loading || profileLoading || avatarUploading
+            ? "bg-gray-400"
+            : "bg-[#4B1EB4] active:opacity-90"
         }`}
         onPress={handleSaveChanges}
-        disabled={loading || profileLoading}
+        disabled={loading || profileLoading || avatarUploading}
       >
         <Text className="text-white text-base font-karla-bold">
-          {loading ? "Saving..." : "Save Changes"}
+          {avatarUploading
+            ? "Uploading..."
+            : loading
+              ? "Saving..."
+              : "Save Changes"}
         </Text>
       </TouchableOpacity>
     </SafeAreaView>
