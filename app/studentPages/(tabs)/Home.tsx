@@ -202,10 +202,12 @@ export default function Home() {
 
   // Filter opportunities by category
   const filterOpportunities = (opps: any[]) => {
-    if (selectedCategory === "all") {
-      return opps;
-    }
-    return opps.filter((op) => op.specificCollection === selectedCategory);
+    return opps.filter((op) => {
+      const matchesCategory =
+        selectedCategory === "all" ||
+        op.specificCollection === selectedCategory;
+      return matchesCategory && isOpportunityOrganizationVerified(op);
+    });
   };
 
   // Sort opportunities based on selected criteria
@@ -283,7 +285,6 @@ export default function Home() {
     op?.organization?.name ??
     "Organization";
 
-  // Check if opportunity organization is verified
   const isOpportunityOrganizationVerified = (op: any): boolean =>
     (op?.organizationProfile?.verificationStatus ??
       op?.organizationVerificationStatus ??
