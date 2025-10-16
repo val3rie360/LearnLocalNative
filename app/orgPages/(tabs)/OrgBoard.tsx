@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Modal,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -35,10 +36,12 @@ export default function OrgBoard() {
   const [selectedSort, setSelectedSort] = useState<"top" | "default">(
     "default"
   );
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchPosts = useCallback(async () => {
     const data = await getCommunityPosts();
     setPosts(data);
+    setSelectedSort("default");
   }, []);
 
   const fetchTopVotedPosts = useCallback(async () => {
@@ -47,6 +50,12 @@ export default function OrgBoard() {
     setShowSortModal(false);
     setSelectedSort("top");
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchPosts();
+    setRefreshing(false);
+  }, [fetchPosts]);
 
   useEffect(() => {
     fetchPosts();
@@ -153,6 +162,14 @@ export default function OrgBoard() {
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 30 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={["#4B1EB4"]}
+                tintColor="#4B1EB4"
+              />
+            }
           >
             {posts.map((post) => {
               const category = categories.find((cat) => cat.label === post.tag);

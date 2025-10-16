@@ -1,30 +1,30 @@
 import {
-    FontAwesome,
-    FontAwesome5,
-    FontAwesome6,
-    Ionicons,
-    MaterialCommunityIcons,
+  FontAwesome,
+  FontAwesome5,
+  FontAwesome6,
+  Ionicons,
+  MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
-    deleteOpportunity,
-    getOpportunityDetails,
-    getOrganizationOpportunities
+  deleteOpportunity,
+  getOpportunityDetails,
+  getOrganizationOpportunities,
 } from "../../../services/firestoreService";
 
 interface ProfileData {
@@ -35,6 +35,7 @@ interface ProfileData {
     seconds: number;
   };
   verificationFileUrl?: string;
+  verificationStatus?: "pending" | "verified" | "rejected";
 }
 
 export default function OrgHome() {
@@ -48,13 +49,15 @@ export default function OrgHome() {
   const [editingOpportunity, setEditingOpportunity] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
+
   // Edit form states
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editAmount, setEditAmount] = useState("");
   const [editStatus, setEditStatus] = useState("active");
-  const [editDateMilestones, setEditDateMilestones] = useState<Array<{name: string, date: string}>>([]);
+  const [editDateMilestones, setEditDateMilestones] = useState<
+    Array<{ name: string; date: string }>
+  >([]);
   const [editLocation, setEditLocation] = useState<any>(null);
   const [editOpenTime, setEditOpenTime] = useState("");
   const [editCloseTime, setEditCloseTime] = useState("");
@@ -116,11 +119,15 @@ export default function OrgHome() {
       case "Competition / Event":
         return <FontAwesome6 name="medal" size={20} color="#4B1EB4" />;
       case "Workshop / Seminar":
-        return <FontAwesome5 name="chalkboard-teacher" size={20} color="#4B1EB4" />;
+        return (
+          <FontAwesome5 name="chalkboard-teacher" size={20} color="#4B1EB4" />
+        );
       case "Study Spot":
         return <Ionicons name="location" size={21} color="#4B1EB4" />;
       case "Resources":
-        return <MaterialCommunityIcons name="bookshelf" size={24} color="#4B1EB4" />;
+        return (
+          <MaterialCommunityIcons name="bookshelf" size={24} color="#4B1EB4" />
+        );
       default:
         return <FontAwesome6 name="scroll" size={20} color="#4B1EB4" />;
     }
@@ -130,10 +137,10 @@ export default function OrgHome() {
   const formatDate = (timestamp: any) => {
     if (!timestamp) return "N/A";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -157,8 +164,8 @@ export default function OrgHome() {
               console.error("Error deleting opportunity:", error);
               Alert.alert("Error", "Failed to delete opportunity");
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -213,9 +220,11 @@ export default function OrgHome() {
     }
 
     // Validate milestones for Scholarship/Competition
-    if ((editingOpportunity.category === "Scholarship / Grant" || 
-         editingOpportunity.category === "Competition / Event") && 
-        editDateMilestones.length === 0) {
+    if (
+      (editingOpportunity.category === "Scholarship / Grant" ||
+        editingOpportunity.category === "Competition / Event") &&
+      editDateMilestones.length === 0
+    ) {
       Alert.alert("Error", "Please add at least one date milestone");
       return;
     }
@@ -225,8 +234,10 @@ export default function OrgHome() {
     setIsSaving(true);
 
     try {
-      const { updateOpportunity } = await import("../../../services/firestoreService");
-      
+      const { updateOpportunity } = await import(
+        "../../../services/firestoreService"
+      );
+
       const updateData: any = {
         title: editTitle.trim(),
         description: editDescription.trim(),
@@ -234,20 +245,28 @@ export default function OrgHome() {
       };
 
       // Update amount for scholarships/competitions
-      if (editAmount && (editingOpportunity.category === "Scholarship / Grant" || 
-          editingOpportunity.category === "Competition / Event")) {
+      if (
+        editAmount &&
+        (editingOpportunity.category === "Scholarship / Grant" ||
+          editingOpportunity.category === "Competition / Event")
+      ) {
         updateData.amount = editAmount.trim();
       }
 
       // Update milestones for scholarships/competitions
-      if (editingOpportunity.category === "Scholarship / Grant" || 
-          editingOpportunity.category === "Competition / Event") {
+      if (
+        editingOpportunity.category === "Scholarship / Grant" ||
+        editingOpportunity.category === "Competition / Event"
+      ) {
         updateData.dateMilestones = editDateMilestones;
       }
 
       // Update location for study spots and workshops
-      if (editLocation && (editingOpportunity.category === "Study Spot" || 
-          editingOpportunity.category === "Workshop / Seminar")) {
+      if (
+        editLocation &&
+        (editingOpportunity.category === "Study Spot" ||
+          editingOpportunity.category === "Workshop / Seminar")
+      ) {
         updateData.location = editLocation;
       }
 
@@ -269,14 +288,15 @@ export default function OrgHome() {
 
       await updateOpportunity(
         editingOpportunity.id,
-        editingOpportunity.specificCollection || 
-        opportunities.find(o => o.id === editingOpportunity.id)?.specificCollection,
+        editingOpportunity.specificCollection ||
+          opportunities.find((o) => o.id === editingOpportunity.id)
+            ?.specificCollection,
         updateData
       );
 
       // Refresh the list
       await fetchOpportunities();
-      
+
       setEditModalVisible(false);
       setEditingOpportunity(null);
       Alert.alert("Success", "Opportunity updated successfully!");
@@ -291,7 +311,10 @@ export default function OrgHome() {
   // Helper functions for edit modal
   const addEditMilestone = (name: string, date: string) => {
     if (name.trim() && date.trim()) {
-      setEditDateMilestones([...editDateMilestones, { name: name.trim(), date: date.trim() }]);
+      setEditDateMilestones([
+        ...editDateMilestones,
+        { name: name.trim(), date: date.trim() },
+      ]);
     }
   };
 
@@ -300,17 +323,22 @@ export default function OrgHome() {
   };
 
   const toggleEditDay = (day: string) => {
-    setEditSelectedDays(prev => 
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    setEditSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
   };
 
   // Filter opportunities
-  const filteredOpportunities = opportunities.filter(opp => {
-    const matchesSearch = opp.title?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || opp.category === selectedCategory;
+  const filteredOpportunities = opportunities.filter((opp) => {
+    const matchesSearch = opp.title
+      ?.toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      !selectedCategory || opp.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const isVerified = profileData?.verificationStatus === "verified";
 
   return (
     <SafeAreaView
@@ -359,16 +387,17 @@ export default function OrgHome() {
               <FontAwesome name="users" size={56} color="#7D7CFF" />
             </View>
             <View className="flex-row items-center mt-2">
-              {/* Verified checkmark on the left of the name */}
-              <Ionicons
-                name="checkmark-circle-outline"
-                size={18}
-                color="#8ee8ffff"
-                style={{ marginRight: 6 }}
-              />
               <Text className="text-white text-lg font-karla-bold">
                 {getDisplayName()}
               </Text>
+              {isVerified && (
+                <Ionicons
+                  name="checkmark-circle"
+                  size={18}
+                  color="#60ecffff"
+                  style={{ marginLeft: 6 }}
+                />
+              )}
             </View>
           </View>
 
@@ -382,19 +411,20 @@ export default function OrgHome() {
                   style={{ position: "relative" }}
                 >
                   <FontAwesome name="users" size={22} color="#7D7CFF" />
-                  {/* Verified checkmark */}
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={14}
-                    color="#4BDBFF"
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      right: -2,
-                      backgroundColor: "#fff",
-                      borderRadius: 7,
-                    }}
-                  />
+                  {isVerified && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={14}
+                      color="#60ecffff"
+                      style={{
+                        position: "absolute",
+                        bottom: 0,
+                        right: -2,
+                        backgroundColor: "#fff",
+                        borderRadius: 7,
+                      }}
+                    />
+                  )}
                 </View>
                 <View className="flex-row flex-1 items-center bg-[#F7F7F8] rounded-3xl px-4 h-11 mb-4.5 border border-[#ECECEC]">
                   <TextInput
@@ -408,45 +438,99 @@ export default function OrgHome() {
               </View>
               {/* Categories Row */}
               <View className="flex-row justify-end mt-1.5 mb-1 px-2">
-                <TouchableOpacity onPress={() => setSelectedCategory(selectedCategory === "Scholarship / Grant" ? null : "Scholarship / Grant")}>
-                <FontAwesome6
-                  name="scroll"
-                  size={19}
-                    color={selectedCategory === "Scholarship / Grant" ? "#4B1EB4" : "#57477cbd"}
-                  style={{ marginRight: 25 }}
-                />
+                <TouchableOpacity
+                  onPress={() =>
+                    setSelectedCategory(
+                      selectedCategory === "Scholarship / Grant"
+                        ? null
+                        : "Scholarship / Grant"
+                    )
+                  }
+                >
+                  <FontAwesome6
+                    name="scroll"
+                    size={19}
+                    color={
+                      selectedCategory === "Scholarship / Grant"
+                        ? "#4B1EB4"
+                        : "#57477cbd"
+                    }
+                    style={{ marginRight: 25 }}
+                  />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setSelectedCategory(selectedCategory === "Competition / Event" ? null : "Competition / Event")}>
-                <FontAwesome6
-                  name="medal"
-                  size={20}
-                    color={selectedCategory === "Competition / Event" ? "#4B1EB4" : "#57477cbd"}
-                  style={{ marginRight: 25 }}
-                />
+                <TouchableOpacity
+                  onPress={() =>
+                    setSelectedCategory(
+                      selectedCategory === "Competition / Event"
+                        ? null
+                        : "Competition / Event"
+                    )
+                  }
+                >
+                  <FontAwesome6
+                    name="medal"
+                    size={20}
+                    color={
+                      selectedCategory === "Competition / Event"
+                        ? "#4B1EB4"
+                        : "#57477cbd"
+                    }
+                    style={{ marginRight: 25 }}
+                  />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setSelectedCategory(selectedCategory === "Workshop / Seminar" ? null : "Workshop / Seminar")}>
-                <FontAwesome5
-                  name="chalkboard-teacher"
-                  size={20}
-                    color={selectedCategory === "Workshop / Seminar" ? "#4B1EB4" : "#57477cbd"}
-                  style={{ marginRight: 25 }}
-                />
+                <TouchableOpacity
+                  onPress={() =>
+                    setSelectedCategory(
+                      selectedCategory === "Workshop / Seminar"
+                        ? null
+                        : "Workshop / Seminar"
+                    )
+                  }
+                >
+                  <FontAwesome5
+                    name="chalkboard-teacher"
+                    size={20}
+                    color={
+                      selectedCategory === "Workshop / Seminar"
+                        ? "#4B1EB4"
+                        : "#57477cbd"
+                    }
+                    style={{ marginRight: 25 }}
+                  />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setSelectedCategory(selectedCategory === "Study Spot" ? null : "Study Spot")}>
-                <Ionicons
-                  name="location"
-                  size={21}
-                    color={selectedCategory === "Study Spot" ? "#4B1EB4" : "#57477cbd"}
-                  style={{ marginRight: 25 }}
-                />
+                <TouchableOpacity
+                  onPress={() =>
+                    setSelectedCategory(
+                      selectedCategory === "Study Spot" ? null : "Study Spot"
+                    )
+                  }
+                >
+                  <Ionicons
+                    name="location"
+                    size={21}
+                    color={
+                      selectedCategory === "Study Spot"
+                        ? "#4B1EB4"
+                        : "#57477cbd"
+                    }
+                    style={{ marginRight: 25 }}
+                  />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setSelectedCategory(selectedCategory === "Resources" ? null : "Resources")}>
-                <MaterialCommunityIcons
-                  name="bookshelf"
-                  size={24}
-                    color={selectedCategory === "Resources" ? "#4B1EB4" : "#57477cbd"}
-                  style={{ marginRight: 25 }}
-                />
+                <TouchableOpacity
+                  onPress={() =>
+                    setSelectedCategory(
+                      selectedCategory === "Resources" ? null : "Resources"
+                    )
+                  }
+                >
+                  <MaterialCommunityIcons
+                    name="bookshelf"
+                    size={24}
+                    color={
+                      selectedCategory === "Resources" ? "#4B1EB4" : "#57477cbd"
+                    }
+                    style={{ marginRight: 25 }}
+                  />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setSelectedCategory(null)}>
                   <Ionicons name="close-circle" size={20} color="#57477cbd" />
@@ -459,7 +543,9 @@ export default function OrgHome() {
           {loading && (
             <View className="flex-1 items-center justify-center py-20">
               <ActivityIndicator size="large" color="#4B1EB4" />
-              <Text className="text-[#4B1EB4] font-karla mt-2">Loading opportunities...</Text>
+              <Text className="text-[#4B1EB4] font-karla mt-2">
+                Loading opportunities...
+              </Text>
             </View>
           )}
 
@@ -471,130 +557,154 @@ export default function OrgHome() {
                 Let's Get Started!
               </Text>
               <Text className="text-gray-600 text-base font-karla mt-2 text-center">
-                {opportunities.length === 0 
+                {opportunities.length === 0
                   ? "You haven't posted any opportunities yet. Tap the + button below to create your first opportunity!"
-                  : "No opportunities match your search criteria."
-                }
+                  : "No opportunities match your search criteria."}
               </Text>
             </View>
           )}
 
           {/* Opportunities List */}
-          {!loading && filteredOpportunities.map((item) => (
-            <View
-              key={item.id}
-              className="bg-[#ffffff] rounded-2xl mx-4 mb-5 p-4"
-              style={{
-                shadowColor: "#7D7CFF",
-                shadowOpacity: 0.08,
-                shadowRadius: 8,
-                elevation: 2,
-              }}
-            >
-              <View className="flex-row items-center justify-between mb-2">
-                <View className="flex-row items-center flex-1">
-                <View
-                  className="w-9 h-9 rounded-full bg-[#D6D3FF] items-center justify-center mr-3"
-                  style={{ position: "relative" }}
-                >
-                  <FontAwesome name="users" size={22} color="#7D7CFF" />
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={14}
-                    color="#4BDBFF"
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      right: -2,
-                      backgroundColor: "#fff",
-                      borderRadius: 7,
-                    }}
-                  />
-                </View>
-                <View className="flex-1">
-                  <View className="flex-row items-center">
-                      <Text className="font-karla-bold text-black text-sm">
-                      {getDisplayName()}
-                      </Text>
-                      <View className="ml-2">
-                        {getCategoryIcon(item.category)}
-                      </View>
+          {!loading &&
+            filteredOpportunities.map((item) => (
+              <View
+                key={item.id}
+                className="bg-[#ffffff] rounded-2xl mx-4 mb-5 p-4"
+                style={{
+                  shadowColor: "#7D7CFF",
+                  shadowOpacity: 0.08,
+                  shadowRadius: 8,
+                  elevation: 2,
+                }}
+              >
+                <View className="flex-row items-center justify-between mb-2">
+                  <View className="flex-row items-center flex-1">
+                    <View
+                      className="w-9 h-9 rounded-full bg-[#D6D3FF] items-center justify-center mr-3"
+                      style={{ position: "relative" }}
+                    >
+                      <FontAwesome name="users" size={22} color="#7D7CFF" />
+                      {isVerified && (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={14}
+                          color="#4BDBFF"
+                          style={{
+                            position: "absolute",
+                            bottom: 0,
+                            right: -2,
+                            backgroundColor: "#fff",
+                            borderRadius: 7,
+                          }}
+                        />
+                      )}
                     </View>
-                    <Text className="text-[#18181B] text-xs font-karla">
-                      {formatDate(item.createdAt)}
-                    </Text>
+                    <View className="flex-1">
+                      <View className="flex-row items-center">
+                        <Text className="font-karla-bold text-black text-sm">
+                          {getDisplayName()}
+                        </Text>
+                        <View className="ml-2">
+                          {getCategoryIcon(item.category)}
+                        </View>
+                      </View>
+                      <Text className="text-[#18181B] text-xs font-karla">
+                        {formatDate(item.createdAt)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Action Buttons */}
+                  <View className="flex-row">
+                    <TouchableOpacity
+                      onPress={() => handleViewDetails(item)}
+                      className="mr-3"
+                    >
+                      <Ionicons name="eye" size={20} color="#4B1EB4" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleEdit(item)}
+                      className="mr-3"
+                    >
+                      <Ionicons
+                        name="create-outline"
+                        size={20}
+                        color="#F59E0B"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() =>
+                        handleDelete(item.id, item.specificCollection)
+                      }
+                    >
+                      <Ionicons name="trash" size={20} color="#FF6B6B" />
+                    </TouchableOpacity>
                   </View>
                 </View>
-                
-                {/* Action Buttons */}
-                <View className="flex-row">
-                  <TouchableOpacity 
-                    onPress={() => handleViewDetails(item)}
-                    className="mr-3"
+
+                <TouchableOpacity onPress={() => handleViewDetails(item)}>
+                  <Text className="font-karla-bold text-[#4B1EB4] text-base mb-2">
+                    {item.title}
+                  </Text>
+                  <Text
+                    className="text-gray-600 text-sm font-karla mb-2"
+                    numberOfLines={2}
                   >
-                    <Ionicons name="eye" size={20} color="#4B1EB4" />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    onPress={() => handleEdit(item)}
-                    className="mr-3"
-                  >
-                    <Ionicons name="create-outline" size={20} color="#F59E0B" />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    onPress={() => handleDelete(item.id, item.specificCollection)}
-                  >
-                    <Ionicons name="trash" size={20} color="#FF6B6B" />
-                  </TouchableOpacity>
-                </View>
+                    {item.description}
+                  </Text>
+
+                  {/* Category-specific info */}
+                  {item.amount && (
+                    <View className="flex-row items-center mb-1">
+                      <FontAwesome name="money" size={14} color="#7D7CFF" />
+                      <Text className="font-karla-bold text-[#18181B] text-xs ml-2">
+                        Amount:
+                      </Text>
+                      <Text className="font-karla text-[#18181B] text-xs ml-1">
+                        {item.amount}
+                      </Text>
+                    </View>
+                  )}
+
+                  {item.location && (
+                    <View className="flex-row items-center mb-1">
+                      <Ionicons
+                        name="location-outline"
+                        size={14}
+                        color="#7D7CFF"
+                      />
+                      <Text className="font-karla-bold text-[#18181B] text-xs ml-2">
+                        Location:
+                      </Text>
+                      <Text className="font-karla text-[#18181B] text-xs ml-1">
+                        {item.location.latitude?.toFixed(4)},{" "}
+                        {item.location.longitude?.toFixed(4)}
+                      </Text>
+                    </View>
+                  )}
+
+                  <View className="flex-row items-center mt-2">
+                    <View
+                      className={`px-3 py-1 rounded-full ${
+                        item.status === "active"
+                          ? "bg-green-100"
+                          : "bg-gray-100"
+                      }`}
+                    >
+                      <Text
+                        className={`text-xs font-karla-bold ${
+                          item.status === "active"
+                            ? "text-green-600"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        {item.status?.toUpperCase() || "ACTIVE"}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
               </View>
-
-              <TouchableOpacity onPress={() => handleViewDetails(item)}>
-                <Text className="font-karla-bold text-[#4B1EB4] text-base mb-2">
-                {item.title}
-              </Text>
-                <Text className="text-gray-600 text-sm font-karla mb-2" numberOfLines={2}>
-                  {item.description}
-                </Text>
-
-                {/* Category-specific info */}
-                {item.amount && (
-                  <View className="flex-row items-center mb-1">
-                    <FontAwesome name="money" size={14} color="#7D7CFF" />
-                    <Text className="font-karla-bold text-[#18181B] text-xs ml-2">
-                      Amount:
-                    </Text>
-                    <Text className="font-karla text-[#18181B] text-xs ml-1">
-                      {item.amount}
-                    </Text>
-                  </View>
-                )}
-
-                {item.location && (
-                  <View className="flex-row items-center mb-1">
-                    <Ionicons name="location-outline" size={14} color="#7D7CFF" />
-                    <Text className="font-karla-bold text-[#18181B] text-xs ml-2">
-                      Location:
-                    </Text>
-                    <Text className="font-karla text-[#18181B] text-xs ml-1">
-                      {item.location.latitude?.toFixed(4)}, {item.location.longitude?.toFixed(4)}
-                    </Text>
-                  </View>
-                )}
-
-                <View className="flex-row items-center mt-2">
-                  <View className={`px-3 py-1 rounded-full ${
-                    item.status === 'active' ? 'bg-green-100' : 'bg-gray-100'
-                  }`}>
-                    <Text className={`text-xs font-karla-bold ${
-                      item.status === 'active' ? 'text-green-600' : 'text-gray-600'
-                    }`}>
-                      {item.status?.toUpperCase() || 'ACTIVE'}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </View>
-          ))}
+            ))}
         </ScrollView>
 
         {/* Edit Modal */}
@@ -659,13 +769,14 @@ export default function OrgHome() {
                         placeholder="Enter description"
                         multiline
                         numberOfLines={4}
-                        style={{ minHeight: 100, textAlignVertical: 'top' }}
+                        style={{ minHeight: 100, textAlignVertical: "top" }}
                       />
                     </View>
 
                     {/* Amount (only for scholarships/competitions) */}
-                    {(editingOpportunity.category === "Scholarship / Grant" || 
-                      editingOpportunity.category === "Competition / Event") && (
+                    {(editingOpportunity.category === "Scholarship / Grant" ||
+                      editingOpportunity.category ===
+                        "Competition / Event") && (
                       <View className="mb-4">
                         <Text className="text-sm font-karla-bold text-gray-700 mb-1">
                           Amount
@@ -681,28 +792,42 @@ export default function OrgHome() {
                     )}
 
                     {/* Date Milestones (for scholarships/competitions) */}
-                    {(editingOpportunity.category === "Scholarship / Grant" || 
-                      editingOpportunity.category === "Competition / Event") && (
+                    {(editingOpportunity.category === "Scholarship / Grant" ||
+                      editingOpportunity.category ===
+                        "Competition / Event") && (
                       <View className="mb-4">
                         <Text className="text-sm font-karla-bold text-gray-700 mb-2">
                           Date Milestones *
                         </Text>
-                        
+
                         {/* Display existing milestones */}
                         {editDateMilestones.map((milestone, index) => (
-                          <View key={index} className="bg-purple-50 rounded-xl mb-2 px-3 py-2 flex-row items-center justify-between">
+                          <View
+                            key={index}
+                            className="bg-purple-50 rounded-xl mb-2 px-3 py-2 flex-row items-center justify-between"
+                          >
                             <View className="flex-1">
-                              <Text className="text-sm font-karla-bold text-[#4B1EB4]">{milestone.name}</Text>
-                              <Text className="text-xs text-gray-600">{milestone.date}</Text>
+                              <Text className="text-sm font-karla-bold text-[#4B1EB4]">
+                                {milestone.name}
+                              </Text>
+                              <Text className="text-xs text-gray-600">
+                                {milestone.date}
+                              </Text>
                             </View>
-                            <TouchableOpacity onPress={() => removeEditMilestone(index)}>
-                              <Ionicons name="close-circle" size={24} color="#EF4444" />
+                            <TouchableOpacity
+                              onPress={() => removeEditMilestone(index)}
+                            >
+                              <Ionicons
+                                name="close-circle"
+                                size={24}
+                                color="#EF4444"
+                              />
                             </TouchableOpacity>
                           </View>
                         ))}
 
                         {/* Add milestone button */}
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl py-3 items-center"
                           onPress={() => {
                             Alert.prompt(
@@ -714,24 +839,29 @@ export default function OrgHome() {
                                   text: "Add",
                                   onPress: (text?: string) => {
                                     if (text) {
-                                      const parts = text.split(',');
+                                      const parts = text.split(",");
                                       if (parts.length >= 2) {
-                                        addEditMilestone(parts[0].trim(), parts.slice(1).join(',').trim());
+                                        addEditMilestone(
+                                          parts[0].trim(),
+                                          parts.slice(1).join(",").trim()
+                                        );
                                       }
                                     }
-                                  }
-                                }
+                                  },
+                                },
                               ]
                             );
                           }}
                         >
-                          <Text className="text-gray-600 font-karla-bold">+ Add Milestone</Text>
+                          <Text className="text-gray-600 font-karla-bold">
+                            + Add Milestone
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     )}
 
                     {/* Location (for study spots and workshops) */}
-                    {(editingOpportunity.category === "Study Spot" || 
+                    {(editingOpportunity.category === "Study Spot" ||
                       editingOpportunity.category === "Workshop / Seminar") && (
                       <View className="mb-4">
                         <Text className="text-sm font-karla-bold text-gray-700 mb-2">
@@ -749,13 +879,15 @@ export default function OrgHome() {
                               <Text className="text-xs text-gray-600">
                                 Long: {editLocation.longitude?.toFixed(6)}
                               </Text>
-                              <TouchableOpacity 
+                              <TouchableOpacity
                                 className="mt-2 bg-red-100 rounded-lg py-2"
                                 onPress={() => setEditLocation(null)}
                               >
-                                <Text className="text-center text-red-600 font-karla-bold">Remove Location</Text>
-                    </TouchableOpacity>
-                  </View>
+                                <Text className="text-center text-red-600 font-karla-bold">
+                                  Remove Location
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
                           ) : (
                             <Text className="text-gray-500 font-karla text-center">
                               Location editing requires map integration
@@ -773,7 +905,9 @@ export default function OrgHome() {
                         </Text>
                         <View className="flex-row space-x-3">
                           <View className="flex-1">
-                            <Text className="text-xs text-gray-600 mb-1">Opens at</Text>
+                            <Text className="text-xs text-gray-600 mb-1">
+                              Opens at
+                            </Text>
                             <TextInput
                               className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-base text-black"
                               value={editOpenTime}
@@ -782,7 +916,9 @@ export default function OrgHome() {
                             />
                           </View>
                           <View className="flex-1">
-                            <Text className="text-xs text-gray-600 mb-1">Closes at</Text>
+                            <Text className="text-xs text-gray-600 mb-1">
+                              Closes at
+                            </Text>
                             <TextInput
                               className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-base text-black"
                               value={editCloseTime}
@@ -803,7 +939,9 @@ export default function OrgHome() {
                           </Text>
                           <View className="flex-row space-x-3">
                             <View className="flex-1">
-                              <Text className="text-xs text-gray-600 mb-1">Starts at</Text>
+                              <Text className="text-xs text-gray-600 mb-1">
+                                Starts at
+                              </Text>
                               <TextInput
                                 className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-base text-black"
                                 value={editWorkshopStarts}
@@ -812,7 +950,9 @@ export default function OrgHome() {
                               />
                             </View>
                             <View className="flex-1">
-                              <Text className="text-xs text-gray-600 mb-1">Ends at</Text>
+                              <Text className="text-xs text-gray-600 mb-1">
+                                Ends at
+                              </Text>
                               <TextInput
                                 className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-base text-black"
                                 value={editWorkshopEnds}
@@ -831,14 +971,16 @@ export default function OrgHome() {
                             </Text>
                             <TouchableOpacity
                               className={`w-12 h-6 rounded-full ${
-                                editRepeats ? 'bg-[#4B1EB4]' : 'bg-gray-300'
+                                editRepeats ? "bg-[#4B1EB4]" : "bg-gray-300"
                               }`}
                               onPress={() => setEditRepeats(!editRepeats)}
                             >
                               <View
                                 className="w-5 h-5 rounded-full bg-white"
                                 style={{
-                                  transform: [{ translateX: editRepeats ? 24 : 2 }],
+                                  transform: [
+                                    { translateX: editRepeats ? 24 : 2 },
+                                  ],
                                   marginTop: 2,
                                 }}
                               />
@@ -847,23 +989,33 @@ export default function OrgHome() {
 
                           {editRepeats && (
                             <View className="bg-gray-50 border border-gray-300 rounded-xl p-3">
-                              <Text className="text-sm text-gray-600 mb-2">Repeat on days:</Text>
+                              <Text className="text-sm text-gray-600 mb-2">
+                                Repeat on days:
+                              </Text>
                               <View className="flex-row flex-wrap gap-2">
-                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                                {[
+                                  "Monday",
+                                  "Tuesday",
+                                  "Wednesday",
+                                  "Thursday",
+                                  "Friday",
+                                  "Saturday",
+                                  "Sunday",
+                                ].map((day) => (
                                   <TouchableOpacity
                                     key={day}
                                     className={`px-3 py-2 rounded-full border ${
                                       editSelectedDays.includes(day)
-                                        ? 'bg-[#4B1EB4] border-[#4B1EB4]'
-                                        : 'bg-white border-gray-300'
+                                        ? "bg-[#4B1EB4] border-[#4B1EB4]"
+                                        : "bg-white border-gray-300"
                                     }`}
                                     onPress={() => toggleEditDay(day)}
                                   >
-                    <Text
+                                    <Text
                                       className={`text-sm font-karla ${
                                         editSelectedDays.includes(day)
-                                          ? 'text-white'
-                                          : 'text-gray-700'
+                                          ? "text-white"
+                                          : "text-gray-700"
                                       }`}
                                     >
                                       {day.substring(0, 3)}
@@ -885,29 +1037,37 @@ export default function OrgHome() {
                       <View className="flex-row space-x-3">
                         <TouchableOpacity
                           className={`flex-1 py-3 rounded-xl border-2 ${
-                            editStatus === 'active' 
-                              ? 'bg-green-50 border-green-500' 
-                              : 'bg-gray-50 border-gray-300'
+                            editStatus === "active"
+                              ? "bg-green-50 border-green-500"
+                              : "bg-gray-50 border-gray-300"
                           }`}
-                          onPress={() => setEditStatus('active')}
+                          onPress={() => setEditStatus("active")}
                         >
-                          <Text className={`text-center font-karla-bold ${
-                            editStatus === 'active' ? 'text-green-600' : 'text-gray-600'
-                          }`}>
+                          <Text
+                            className={`text-center font-karla-bold ${
+                              editStatus === "active"
+                                ? "text-green-600"
+                                : "text-gray-600"
+                            }`}
+                          >
                             Active
-                    </Text>
+                          </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           className={`flex-1 py-3 rounded-xl border-2 ${
-                            editStatus === 'closed' 
-                              ? 'bg-red-50 border-red-500' 
-                              : 'bg-gray-50 border-gray-300'
+                            editStatus === "closed"
+                              ? "bg-red-50 border-red-500"
+                              : "bg-gray-50 border-gray-300"
                           }`}
-                          onPress={() => setEditStatus('closed')}
+                          onPress={() => setEditStatus("closed")}
                         >
-                          <Text className={`text-center font-karla-bold ${
-                            editStatus === 'closed' ? 'text-red-600' : 'text-gray-600'
-                          }`}>
+                          <Text
+                            className={`text-center font-karla-bold ${
+                              editStatus === "closed"
+                                ? "text-red-600"
+                                : "text-gray-600"
+                            }`}
+                          >
                             Closed
                           </Text>
                         </TouchableOpacity>
@@ -917,12 +1077,17 @@ export default function OrgHome() {
                     {/* Note about category */}
                     <View className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
                       <View className="flex-row items-start">
-                        <Ionicons name="information-circle" size={20} color="#3B82F6" />
+                        <Ionicons
+                          name="information-circle"
+                          size={20}
+                          color="#3B82F6"
+                        />
                         <View className="flex-1 ml-2">
                           <Text className="font-karla text-blue-800 text-sm">
-                            Note: Only the category cannot be changed after creation. All other fields can be updated.
-                    </Text>
-                  </View>
+                            Note: Only the category cannot be changed after
+                            creation. All other fields can be updated.
+                          </Text>
+                        </View>
                       </View>
                     </View>
 
@@ -935,7 +1100,7 @@ export default function OrgHome() {
                       >
                         <Text className="text-center font-karla-bold text-gray-700">
                           Cancel
-                    </Text>
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         className="flex-1 bg-[#4B1EB4] rounded-xl py-3"
@@ -943,8 +1108,8 @@ export default function OrgHome() {
                         disabled={isSaving}
                       >
                         <Text className="text-center font-karla-bold text-white">
-                          {isSaving ? 'Saving...' : 'Save Changes'}
-                    </Text>
+                          {isSaving ? "Saving..." : "Save Changes"}
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -988,7 +1153,9 @@ export default function OrgHome() {
                     </View>
 
                     <View className="mb-4">
-                      <Text className="font-karla-bold text-gray-700 mb-1">Description:</Text>
+                      <Text className="font-karla-bold text-gray-700 mb-1">
+                        Description:
+                      </Text>
                       <Text className="font-karla text-gray-600">
                         {selectedOpportunity.description}
                       </Text>
@@ -996,7 +1163,9 @@ export default function OrgHome() {
 
                     {selectedOpportunity.amount && (
                       <View className="mb-4">
-                        <Text className="font-karla-bold text-gray-700 mb-1">Amount:</Text>
+                        <Text className="font-karla-bold text-gray-700 mb-1">
+                          Amount:
+                        </Text>
                         <Text className="font-karla text-gray-600">
                           {selectedOpportunity.amount}
                         </Text>
@@ -1005,77 +1174,110 @@ export default function OrgHome() {
 
                     {selectedOpportunity.eligibility && (
                       <View className="mb-4">
-                        <Text className="font-karla-bold text-gray-700 mb-1">Eligibility:</Text>
+                        <Text className="font-karla-bold text-gray-700 mb-1">
+                          Eligibility:
+                        </Text>
                         <Text className="font-karla text-gray-600">
                           {selectedOpportunity.eligibility}
                         </Text>
                       </View>
                     )}
 
-                    {selectedOpportunity.dateMilestones && selectedOpportunity.dateMilestones.length > 0 && (
-                      <View className="mb-4">
-                        <Text className="font-karla-bold text-gray-700 mb-2">Milestones:</Text>
-                        {selectedOpportunity.dateMilestones.map((milestone: any, index: number) => (
-                          <View key={index} className="bg-purple-50 p-2 rounded-lg mb-2">
-                            <Text className="font-karla-bold text-[#4B1EB4]">{milestone.name}</Text>
-                            <Text className="font-karla text-gray-600">{milestone.date}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
+                    {selectedOpportunity.dateMilestones &&
+                      selectedOpportunity.dateMilestones.length > 0 && (
+                        <View className="mb-4">
+                          <Text className="font-karla-bold text-gray-700 mb-2">
+                            Milestones:
+                          </Text>
+                          {selectedOpportunity.dateMilestones.map(
+                            (milestone: any, index: number) => (
+                              <View
+                                key={index}
+                                className="bg-purple-50 p-2 rounded-lg mb-2"
+                              >
+                                <Text className="font-karla-bold text-[#4B1EB4]">
+                                  {milestone.name}
+                                </Text>
+                                <Text className="font-karla text-gray-600">
+                                  {milestone.date}
+                                </Text>
+                              </View>
+                            )
+                          )}
+                        </View>
+                      )}
 
                     {selectedOpportunity.location && (
                       <View className="mb-4">
-                        <Text className="font-karla-bold text-gray-700 mb-1">Location:</Text>
-                        <Text className="font-karla text-gray-600">
-                          Lat: {selectedOpportunity.location.latitude?.toFixed(6)}
+                        <Text className="font-karla-bold text-gray-700 mb-1">
+                          Location:
                         </Text>
                         <Text className="font-karla text-gray-600">
-                          Long: {selectedOpportunity.location.longitude?.toFixed(6)}
+                          Lat:{" "}
+                          {selectedOpportunity.location.latitude?.toFixed(6)}
+                        </Text>
+                        <Text className="font-karla text-gray-600">
+                          Long:{" "}
+                          {selectedOpportunity.location.longitude?.toFixed(6)}
                         </Text>
                       </View>
                     )}
 
                     {selectedOpportunity.openTime && (
                       <View className="mb-4">
-                        <Text className="font-karla-bold text-gray-700 mb-1">Hours:</Text>
+                        <Text className="font-karla-bold text-gray-700 mb-1">
+                          Hours:
+                        </Text>
                         <Text className="font-karla text-gray-600">
-                          {selectedOpportunity.openTime} - {selectedOpportunity.closeTime}
+                          {selectedOpportunity.openTime} -{" "}
+                          {selectedOpportunity.closeTime}
                         </Text>
                       </View>
                     )}
 
                     {selectedOpportunity.workshopStarts && (
                       <View className="mb-4">
-                        <Text className="font-karla-bold text-gray-700 mb-1">Workshop Schedule:</Text>
+                        <Text className="font-karla-bold text-gray-700 mb-1">
+                          Workshop Schedule:
+                        </Text>
                         <Text className="font-karla text-gray-600">
-                          {selectedOpportunity.workshopStarts} - {selectedOpportunity.workshopEnds}
+                          {selectedOpportunity.workshopStarts} -{" "}
+                          {selectedOpportunity.workshopEnds}
                         </Text>
                         {selectedOpportunity.repeats && (
                           <Text className="font-karla text-gray-600 mt-1">
-                            Repeats on: {selectedOpportunity.selectedDays?.join(', ')}
+                            Repeats on:{" "}
+                            {selectedOpportunity.selectedDays?.join(", ")}
                           </Text>
                         )}
                       </View>
                     )}
 
                     <View className="mb-4">
-                      <Text className="font-karla-bold text-gray-700 mb-1">Status:</Text>
-                      <Text className={`font-karla ${
-                        selectedOpportunity.status === 'active' ? 'text-green-600' : 'text-gray-600'
-                      }`}>
-                        {selectedOpportunity.status?.toUpperCase() || 'ACTIVE'}
+                      <Text className="font-karla-bold text-gray-700 mb-1">
+                        Status:
+                      </Text>
+                      <Text
+                        className={`font-karla ${
+                          selectedOpportunity.status === "active"
+                            ? "text-green-600"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        {selectedOpportunity.status?.toUpperCase() || "ACTIVE"}
                       </Text>
                     </View>
 
                     <View className="mb-4">
-                      <Text className="font-karla-bold text-gray-700 mb-1">Created:</Text>
+                      <Text className="font-karla-bold text-gray-700 mb-1">
+                        Created:
+                      </Text>
                       <Text className="font-karla text-gray-600">
                         {formatDate(selectedOpportunity.createdAt)}
                       </Text>
                     </View>
                   </View>
-              )}
+                )}
               </ScrollView>
             </View>
           </View>

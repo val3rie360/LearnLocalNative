@@ -11,6 +11,7 @@ interface ProfileData {
     seconds: number;
   };
   verificationFileUrl?: string;
+  verificationStatus?: "pending" | "verified" | "rejected";
   updatedAt?: Date;
 }
 

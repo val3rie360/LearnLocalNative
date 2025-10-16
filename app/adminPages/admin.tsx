@@ -1,9 +1,10 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Linking,
   Modal,
@@ -76,7 +77,7 @@ export default function SuperAdminReview() {
             verificationFileUrl: data.verificationFileUrl || null,
           };
         })
-        .filter((user) => user.role !== "admin"); // Filter out admin accounts
+        .filter((user) => user.role === "organization"); // Filter out admin accounts
       setUsers(usersData);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -103,14 +104,49 @@ export default function SuperAdminReview() {
     }
   };
 
-  const handleApprove = async (userId: string) => {
-    console.log("Approve user:", userId);
-    // TODO: Update Firestore with verification status
+  const updateVerificationStatus = async (
+    userId: string,
+    status: User["verificationStatus"]
+  ) => {
+    try {
+      await updateDoc(doc(db, "profiles", userId), {
+        verificationStatus: status,
+      });
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === userId ? { ...user, verificationStatus: status } : user
+        )
+      );
+    } catch (error) {
+      console.error("Error updating verification status:", error);
+      Alert.alert("Error", "Failed to update verification status.");
+    }
   };
 
-  const handleReject = async (userId: string) => {
-    console.log("Reject user:", userId);
-    // TODO: Update Firestore with verification status
+  const handleApprove = (userId: string, name: string) => {
+    Alert.alert(
+      "Approve organization",
+      `Are you sure you want to verify ${name}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Approve",
+          style: "default",
+          onPress: () => updateVerificationStatus(userId, "verified"),
+        },
+      ]
+    );
+  };
+
+  const handleReject = (userId: string, name: string) => {
+    Alert.alert("Reject organization", `Reject ${name}'s verification?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Reject",
+        style: "destructive",
+        onPress: () => updateVerificationStatus(userId, "rejected"),
+      },
+    ]);
   };
 
   const handleViewFile = (fileUrl: string) => {
@@ -226,7 +262,7 @@ export default function SuperAdminReview() {
                 <View className="flex-row gap-2 mt-2">
                   <TouchableOpacity
                     className="flex-1 bg-green-100 rounded-full py-2 items-center"
-                    onPress={() => handleApprove(user.id)}
+                    onPress={() => handleApprove(user.id, user.name)}
                   >
                     <Text className="text-green-800 font-karla-bold">
                       Approve
@@ -234,7 +270,7 @@ export default function SuperAdminReview() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     className="flex-1 bg-red-100 rounded-full py-2 items-center"
-                    onPress={() => handleReject(user.id)}
+                    onPress={() => handleReject(user.id, user.name)}
                   >
                     <Text className="text-red-800 font-karla-bold">Reject</Text>
                   </TouchableOpacity>

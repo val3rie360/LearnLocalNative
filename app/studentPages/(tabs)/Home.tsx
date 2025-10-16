@@ -2,7 +2,15 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { memo, useEffect, useState } from "react";
-import { ActivityIndicator, Modal, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SearchBar } from "../../../components/Common";
 import OpportunityCard from "../../../components/OpportunityCard";
@@ -17,6 +25,7 @@ interface ProfileData {
     seconds: number;
   };
   verificationFileUrl?: string;
+  verificationStatus?: "pending" | "verified" | "rejected";
 }
 
 // Static data outside component for efficiency
@@ -28,9 +37,24 @@ const DEADLINES = [
 
 const CATEGORIES = [
   { icon: "apps", label: "All", bg: "#6B7280", value: "all" },
-  { icon: "school-outline", label: "Scholarships", bg: "#48DEE6", value: "scholarships" },
-  { icon: "trophy", label: "Competitions", bg: "#5548E6", value: "competitions" },
-  { icon: "bulb-outline", label: "Workshops", bg: "#F59E0B", value: "workshops" },
+  {
+    icon: "school-outline",
+    label: "Scholarships",
+    bg: "#48DEE6",
+    value: "scholarships",
+  },
+  {
+    icon: "trophy",
+    label: "Competitions",
+    bg: "#5548E6",
+    value: "competitions",
+  },
+  {
+    icon: "bulb-outline",
+    label: "Workshops",
+    bg: "#F59E0B",
+    value: "workshops",
+  },
   {
     icon: "desk",
     label: "Study Spots",
@@ -39,14 +63,25 @@ const CATEGORIES = [
     value: "studySpots",
   },
   // Resources redirects to Library tab instead of filtering
-  { icon: "book-outline", label: "Resources", bg: "#F25B5E", value: "resources", isRedirect: true, redirectTo: "/studentPages/(tabs)/Library" },
+  {
+    icon: "book-outline",
+    label: "Resources",
+    bg: "#F25B5E",
+    value: "resources",
+    isRedirect: true,
+    redirectTo: "/studentPages/(tabs)/Library",
+  },
 ];
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest First", icon: "arrow-down" },
   { value: "oldest", label: "Oldest First", icon: "arrow-up" },
   { value: "deadline-soon", label: "Deadline: Soonest First", icon: "time" },
-  { value: "deadline-far", label: "Deadline: Latest First", icon: "time-outline" },
+  {
+    value: "deadline-far",
+    label: "Deadline: Latest First",
+    icon: "time-outline",
+  },
 ];
 
 type CategoryItemProps = {
@@ -74,7 +109,7 @@ const CategoryItem = memo(function CategoryItem({
         className={`w-[63px] h-[63px] rounded-lg justify-center items-center shadow-sm ${
           isSelected ? "border-2 border-[#4B1EB4]" : ""
         }`}
-        style={{ 
+        style={{
           backgroundColor: bg,
           opacity: isSelected ? 1 : 0.7,
         }}
@@ -86,7 +121,7 @@ const CategoryItem = memo(function CategoryItem({
           </View>
         )}
       </View>
-      <Text 
+      <Text
         className="mt-2.5 text-[13px] text-black text-center"
         style={{
           fontFamily: isSelected ? "Karla-Bold" : "Karla-Regular",
@@ -123,17 +158,21 @@ export default function Home() {
   const formatDate = (timestamp: any) => {
     if (!timestamp) return "N/A";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
   // Helper function to extract earliest deadline from opportunity
   const getEarliestDeadline = (opportunity: any): Date => {
     // Check for dateMilestones array
-    if (opportunity.dateMilestones && Array.isArray(opportunity.dateMilestones) && opportunity.dateMilestones.length > 0) {
+    if (
+      opportunity.dateMilestones &&
+      Array.isArray(opportunity.dateMilestones) &&
+      opportunity.dateMilestones.length > 0
+    ) {
       const dates = opportunity.dateMilestones
         .map((milestone: any) => {
           if (milestone.date?.toDate) return milestone.date.toDate();
@@ -141,20 +180,23 @@ export default function Home() {
           return null;
         })
         .filter((date: any) => date && !isNaN(date.getTime()));
-      
+
       if (dates.length > 0) {
         return new Date(Math.min(...dates.map((d: Date) => d.getTime())));
       }
     }
-    
+
     // Check for deadline field
     if (opportunity.deadline) {
-      const deadline = opportunity.deadline.toDate ? opportunity.deadline.toDate() : new Date(opportunity.deadline);
+      const deadline = opportunity.deadline.toDate
+        ? opportunity.deadline.toDate()
+        : new Date(opportunity.deadline);
       if (!isNaN(deadline.getTime())) return deadline;
     }
-    
+
     // Fallback to createdAt + 30 days if no deadline
-    const fallback = opportunity.createdAt?.toDate?.() || new Date(opportunity.createdAt);
+    const fallback =
+      opportunity.createdAt?.toDate?.() || new Date(opportunity.createdAt);
     return new Date(fallback.getTime() + 30 * 24 * 60 * 60 * 1000);
   };
 
@@ -169,7 +211,7 @@ export default function Home() {
   // Sort opportunities based on selected criteria
   const sortOpportunities = (opps: any[]) => {
     const sorted = [...opps];
-    
+
     switch (sortBy) {
       case "newest":
         return sorted.sort((a, b) => {
@@ -177,28 +219,28 @@ export default function Home() {
           const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
           return dateB.getTime() - dateA.getTime();
         });
-      
+
       case "oldest":
         return sorted.sort((a, b) => {
           const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
           const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
           return dateA.getTime() - dateB.getTime();
         });
-      
+
       case "deadline-soon":
         return sorted.sort((a, b) => {
           const deadlineA = getEarliestDeadline(a);
           const deadlineB = getEarliestDeadline(b);
           return deadlineA.getTime() - deadlineB.getTime();
         });
-      
+
       case "deadline-far":
         return sorted.sort((a, b) => {
           const deadlineA = getEarliestDeadline(a);
           const deadlineB = getEarliestDeadline(b);
           return deadlineB.getTime() - deadlineA.getTime();
         });
-      
+
       default:
         return sorted;
     }
@@ -234,9 +276,22 @@ export default function Home() {
     fetchOpportunities();
   };
 
+  // Get organization name from opportunity
+  const getOpportunityOrganizationName = (op: any): string =>
+    op?.organizationProfile?.name ??
+    op?.organizationName ??
+    op?.organization?.name ??
+    "Organization";
+
+  // Check if opportunity organization is verified
+  const isOpportunityOrganizationVerified = (op: any): boolean =>
+    (op?.organizationProfile?.verificationStatus ??
+      op?.organizationVerificationStatus ??
+      op?.organization?.verificationStatus) === "verified";
+
   return (
     <SafeAreaView className="flex-1 bg-[#4B1EB4]" edges={["top"]}>
-      <ScrollView 
+      <ScrollView
         className="bg-[#E0E3FF] flex-1"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -307,15 +362,15 @@ export default function Home() {
           <Text className="text-[16px] font-karla-bold mb-3 px-5 text-[#333]">
             Filter by Category
           </Text>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
           >
             {CATEGORIES.map((c) => (
-              <CategoryItem 
-                key={c.value} 
-                {...c} 
+              <CategoryItem
+                key={c.value}
+                {...c}
                 isSelected={selectedCategory === c.value}
                 onPress={() => {
                   if (c.isRedirect && c.redirectTo) {
@@ -340,17 +395,19 @@ export default function Home() {
         >
           <View className="flex-row justify-between items-center mb-3">
             <View>
-              <Text className="text-[20px] font-karla-bold">
-                Opportunities
-              </Text>
+              <Text className="text-[20px] font-karla-bold">Opportunities</Text>
               {!loading && (
                 <Text className="text-[13px] text-[#666] font-karla mt-0.5">
-                  {getDisplayedOpportunities().length} {getDisplayedOpportunities().length === 1 ? 'result' : 'results'}
-                  {selectedCategory !== "all" && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.label}`}
+                  {getDisplayedOpportunities().length}{" "}
+                  {getDisplayedOpportunities().length === 1
+                    ? "result"
+                    : "results"}
+                  {selectedCategory !== "all" &&
+                    ` in ${CATEGORIES.find((c) => c.value === selectedCategory)?.label}`}
                 </Text>
               )}
             </View>
-            
+
             {/* Sort Button */}
             <TouchableOpacity
               onPress={() => setShowSortModal(true)}
@@ -359,7 +416,9 @@ export default function Home() {
             >
               <Ionicons name="funnel" size={16} color="#4B1EB4" />
               <Text className="ml-1.5 text-[#4B1EB4] font-karla-bold text-[13px]">
-                {SORT_OPTIONS.find(opt => opt.value === sortBy)?.label.split(":")[0] || "Sort"}
+                {SORT_OPTIONS.find((opt) => opt.value === sortBy)?.label.split(
+                  ":"
+                )[0] || "Sort"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -367,26 +426,31 @@ export default function Home() {
           {loading ? (
             <View className="py-8 items-center">
               <ActivityIndicator size="large" color="#4B1EB4" />
-              <Text className="text-[#666] mt-2 font-karla">Loading opportunities...</Text>
+              <Text className="text-[#666] mt-2 font-karla">
+                Loading opportunities...
+              </Text>
             </View>
           ) : getDisplayedOpportunities().length > 0 ? (
             getDisplayedOpportunities().map((op) => (
-              <OpportunityCard 
+              <OpportunityCard
                 key={op.id}
                 title={op.title}
-                postedBy={op.organizationName || "Organization"}
+                postedBy={getOpportunityOrganizationName(op)}
+                posterVerified={isOpportunityOrganizationVerified(op)}
                 deadline={formatDate(op.createdAt)}
                 amount={op.amount || "N/A"}
                 eligibility={op.eligibility || "See details"}
                 description={op.description}
                 tag={op.category}
-                onViewDetails={() => router.push({
-                  pathname: "../opportunity",
-                  params: { 
-                    id: op.id, 
-                    specificCollection: op.specificCollection 
-                  }
-                })}
+                onViewDetails={() =>
+                  router.push({
+                    pathname: "../opportunity",
+                    params: {
+                      id: op.id,
+                      specificCollection: op.specificCollection,
+                    },
+                  })
+                }
               />
             ))
           ) : (
@@ -396,8 +460,8 @@ export default function Home() {
                 No opportunities found
               </Text>
               <Text className="text-[#999] font-karla text-center mt-1">
-                {selectedCategory !== "all" 
-                  ? `No ${CATEGORIES.find(c => c.value === selectedCategory)?.label.toLowerCase()} available right now`
+                {selectedCategory !== "all"
+                  ? `No ${CATEGORIES.find((c) => c.value === selectedCategory)?.label.toLowerCase()} available right now`
                   : "Check back later for new opportunities"}
               </Text>
               {selectedCategory !== "all" && (
@@ -447,16 +511,20 @@ export default function Home() {
                     setShowSortModal(false);
                   }}
                   className={`flex-row items-center px-4 py-3.5 ${
-                    index < SORT_OPTIONS.length - 1 ? "border-b border-gray-100" : ""
+                    index < SORT_OPTIONS.length - 1
+                      ? "border-b border-gray-100"
+                      : ""
                   }`}
                   style={{
-                    backgroundColor: sortBy === option.value ? "#F6F4FE" : "transparent",
+                    backgroundColor:
+                      sortBy === option.value ? "#F6F4FE" : "transparent",
                   }}
                 >
                   <View
                     className="w-10 h-10 rounded-full items-center justify-center mr-3"
                     style={{
-                      backgroundColor: sortBy === option.value ? "#4B1EB4" : "#E0E3FF",
+                      backgroundColor:
+                        sortBy === option.value ? "#4B1EB4" : "#E0E3FF",
                     }}
                   >
                     <Ionicons
@@ -465,11 +533,14 @@ export default function Home() {
                       color={sortBy === option.value ? "#fff" : "#4B1EB4"}
                     />
                   </View>
-                  
+
                   <Text
                     className="flex-1 font-karla text-[15px]"
                     style={{
-                      fontFamily: sortBy === option.value ? "Karla-Bold" : "Karla-Regular",
+                      fontFamily:
+                        sortBy === option.value
+                          ? "Karla-Bold"
+                          : "Karla-Regular",
                       color: sortBy === option.value ? "#4B1EB4" : "#333",
                     }}
                   >
@@ -477,7 +548,11 @@ export default function Home() {
                   </Text>
 
                   {sortBy === option.value && (
-                    <Ionicons name="checkmark-circle" size={24} color="#4B1EB4" />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={24}
+                      color="#4B1EB4"
+                    />
                   )}
                 </TouchableOpacity>
               ))}

@@ -1,18 +1,18 @@
 import {
-    addDoc,
-    arrayRemove,
-    arrayUnion,
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    increment,
-    orderBy,
-    query,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
-    where,
+  addDoc,
+  arrayRemove,
+  arrayUnion,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "../firebaseconfig";
 
@@ -349,11 +349,45 @@ export const getAllActiveOpportunities = async () => {
     const querySnapshot = await getDocs(q);
     const opportunities = [];
 
-    querySnapshot.forEach((doc) => {
-      opportunities.push({ id: doc.id, ...doc.data() });
+    querySnapshot.forEach((docSnap) => {
+      opportunities.push({ id: docSnap.id, ...docSnap.data() });
     });
 
-    return opportunities;
+    const organizationIds = [
+      ...new Set(
+        opportunities
+          .map((op) => op.organizationId)
+          .filter((id) => typeof id === "string" && id.length)
+      ),
+    ];
+
+    let profilesMap = new Map();
+    if (organizationIds.length) {
+      const profileEntries = await Promise.all(
+        organizationIds.map(async (orgId) => {
+          const profileSnap = await getDoc(doc(db, "profiles", orgId));
+          return [orgId, profileSnap.exists() ? profileSnap.data() : null];
+        })
+      );
+      profilesMap = new Map(profileEntries);
+    }
+
+    return opportunities.map((opportunity) => {
+      const profile = profilesMap.get(opportunity.organizationId) || null;
+      const profileName = profile?.name;
+
+      return {
+        ...opportunity,
+        organizationProfile: profile
+          ? { id: opportunity.organizationId, ...profile }
+          : undefined,
+        organizationName:
+          profileName || opportunity.organizationName || "Organization",
+        organizationVerificationStatus:
+          profile?.verificationStatus ??
+          opportunity.organizationVerificationStatus,
+      };
+    });
   } catch (error) {
     console.error("Error fetching active opportunities:", error);
     throw error;

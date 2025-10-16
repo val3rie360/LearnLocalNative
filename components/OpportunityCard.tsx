@@ -12,16 +12,19 @@ type OpportunityCardProps = {
   tag: string;
   onViewDetails?: () => void;
   bookmarked?: boolean;
+  posterVerified?: boolean;
 };
 
 const InfoRow = ({
   icon,
   label,
   value,
+  valueSuffix,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string;
+  valueSuffix?: React.ReactNode;
 }) => (
   <View className="flex-row items-center mb-1 flex-nowrap">
     <Ionicons
@@ -41,6 +44,7 @@ const InfoRow = ({
     >
       {value}
     </Text>
+    {valueSuffix}
   </View>
 );
 
@@ -62,6 +66,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({
   tag,
   onViewDetails,
   bookmarked = false,
+  posterVerified = false,
 }) => {
   const [isBookmarked, setIsBookmarked] = useState(bookmarked);
 
