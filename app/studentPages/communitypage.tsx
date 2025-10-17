@@ -40,7 +40,7 @@ const CATEGORY_STYLES: Record<string, { bg: string; text: string }> = {
   Workshop: { bg: "bg-[#C6F7B2]", text: "text-[#3B7C1B]" },
 };
 
-const DEFAULT_CATEGORY_STYLE = { bg: "bg-[#FFD6E0]", text: "text-[#C94F7C]" };
+const DEFAULT_CATEGORY_STYLE = { bg: "bg-[#6C63FF]", text: "text-white" };
 
 const getPostTimestamp = (post: CommunityPost & { createdAt?: any }) => {
   const createdAt = (post as any)?.createdAt;

@@ -19,7 +19,8 @@
       "edgeToEdgeEnabled": true,
       "statusBarColor": "#3D0DBD",
       "navigationBarColor": "#3D0DBD",
-      "statusBarStyle": "light"
+      "statusBarStyle": "light",
+      "package": "com.anonymous.learnlocalnative"
     },
     "web": {
       "bundler": "metro",
@@ -41,6 +42,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "86229baf-5e34-43d4-96ba-fc6b44b3be51"
+      }
     }
   }
 }

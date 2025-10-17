@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { WebView } from "react-native-webview";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
   archiveUpload,
@@ -137,6 +138,7 @@ export default function OrgUploads() {
   const [editTags, setEditTags] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const isVerified = profileData?.verificationStatus === "verified";
 
@@ -856,6 +858,36 @@ export default function OrgUploads() {
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        </Modal>
+
+        {/* PDF Preview Modal */}
+        <Modal
+          visible={!!previewUrl}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setPreviewUrl(null)}
+        >
+          <View className="flex-1 bg-black/60">
+            <SafeAreaView className="flex-1 bg-white rounded-t-3xl mt-12">
+              <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-200">
+                <Text className="text-lg font-karla-bold text-[#222]">
+                  Preview
+                </Text>
+                <TouchableOpacity onPress={() => setPreviewUrl(null)}>
+                  <Feather name="x" size={24} color="#666" />
+                </TouchableOpacity>
+              </View>
+              <WebView
+                source={{ uri: previewUrl ?? "" }}
+                startInLoadingState
+                renderLoading={() => (
+                  <View className="flex-1 justify-center items-center">
+                    <ActivityIndicator size="large" color="#6C63FF" />
+                  </View>
+                )}
+              />
+            </SafeAreaView>
           </View>
         </Modal>
       </LinearGradient>

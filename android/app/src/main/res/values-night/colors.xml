@@ -1,5 +1,4 @@
 <resources>
-  <!-- LearnLocal Brand Colors - Dark Mode -->
   <color name="splashscreen_background">#3D0DBD</color>
   <color name="iconBackground">#4B2ACF</color>
   <color name="colorPrimary">#4B2ACF</color>
