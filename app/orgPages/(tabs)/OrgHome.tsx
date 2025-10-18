@@ -334,6 +334,8 @@ export default function OrgHome() {
 
   // Filter opportunities
   const filteredOpportunities = opportunities.filter((opp) => {
+    if (opp.category === "Resources") return false;
+
     const matchesSearch = opp.title
       ?.toLowerCase()
       .includes(searchQuery.toLowerCase());

@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -89,9 +89,9 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({
         >
           {title}
         </Text>
-        <Ionicons
-          name={isBookmarked ? "bookmark" : "bookmark-outline"}
-          size={22}
+        <FontAwesome
+          name={isBookmarked ? "bookmark" : "bookmark-o"}
+          size={27}
           color={isBookmarked ? "#4B1EB4" : "#BFC1D1"}
           onPress={handleBookmark}
         />

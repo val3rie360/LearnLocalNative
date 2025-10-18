@@ -1,7 +1,15 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getOpportunityDetails } from "../../services/firestoreService";
 
@@ -21,7 +29,7 @@ const Opportunity = () => {
         setLoading(false);
         return;
       }
-      
+
       try {
         setLoading(true);
         const data = await getOpportunityDetails(id, specificCollection);
@@ -41,11 +49,28 @@ const Opportunity = () => {
   const formatDate = (timestamp: any) => {
     if (!timestamp) return "N/A";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
+  };
+
+  const handleRegister = async () => {
+    const rawLink = opportunity?.link?.trim();
+    if (!rawLink) {
+      Alert.alert("Unavailable", "No registration link provided.");
+      return;
+    }
+    const normalizedLink = /^https?:\/\//i.test(rawLink)
+      ? rawLink
+      : `https://${rawLink}`;
+    const canOpen = await Linking.canOpenURL(normalizedLink);
+    if (!canOpen) {
+      Alert.alert("Error", "Cannot open this link.");
+      return;
+    }
+    await Linking.openURL(normalizedLink);
   };
 
   if (loading) {
@@ -61,7 +86,9 @@ const Opportunity = () => {
     return (
       <SafeAreaView className="flex-1 bg-[#F6F4FE] items-center justify-center px-8">
         <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
-        <Text className="text-[#666] text-center font-karla mt-4">{error || "Opportunity not found"}</Text>
+        <Text className="text-[#666] text-center font-karla mt-4">
+          {error || "Opportunity not found"}
+        </Text>
       </SafeAreaView>
     );
   }
@@ -86,20 +113,23 @@ const Opportunity = () => {
         <View className="flex-row items-center mb-1">
           <Ionicons name="person-outline" size={16} color="#fff" />
           <Text className="ml-2 text-white text-[15px] font-karla">
-            <Text className="font-karla-bold">Posted by:</Text> {opportunity.organizationName || "Organization"}
+            <Text className="font-karla-bold">Posted by:</Text>{" "}
+            {opportunity.organizationName || "Organization"}
           </Text>
         </View>
         <View className="flex-row items-center mb-1">
           <Ionicons name="calendar-outline" size={16} color="#fff" />
           <Text className="ml-2 text-white text-[15px] font-karla">
-            <Text className="font-karla-bold">Date:</Text> {formatDate(opportunity.createdAt)}
+            <Text className="font-karla-bold">Date:</Text>{" "}
+            {formatDate(opportunity.createdAt)}
           </Text>
         </View>
         {(opportunity.location?.address || opportunity.studySpotLocation) && (
           <View className="flex-row items-center">
             <MaterialIcons name="location-on" size={16} color="#fff" />
             <Text className="ml-2 text-white text-[15px] font-karla">
-              <Text className="font-karla-bold">Location:</Text> {opportunity.location?.address || opportunity.studySpotLocation}
+              <Text className="font-karla-bold">Location:</Text>{" "}
+              {opportunity.location?.address || opportunity.studySpotLocation}
             </Text>
           </View>
         )}
@@ -140,7 +170,7 @@ const Opportunity = () => {
             <Text className="text-[#605E8F] text-[14px] font-karla mb-3">
               {opportunity.description || "No description available"}
             </Text>
-            
+
             {opportunity.eligibility && (
               <>
                 <Text className="font-karla-bold text-[16px] text-[#18181B] mb-2">
@@ -152,23 +182,34 @@ const Opportunity = () => {
               </>
             )}
 
-            {opportunity.dateMilestones && opportunity.dateMilestones.length > 0 && (
-              <>
-                <Text className="font-karla-bold text-[16px] text-[#18181B] mb-2">
-                  Important Dates
-                </Text>
-                {opportunity.dateMilestones.map((milestone: any, idx: number) => (
-                  <Text key={idx} className="text-[#605E8F] text-[14px] font-karla mb-1">
-                    • {milestone.name}: {milestone.date}
+            {opportunity.dateMilestones &&
+              opportunity.dateMilestones.length > 0 && (
+                <>
+                  <Text className="font-karla-bold text-[16px] text-[#18181B] mb-2">
+                    Important Dates
                   </Text>
-                ))}
-              </>
-            )}
+                  {opportunity.dateMilestones.map(
+                    (milestone: any, idx: number) => (
+                      <Text
+                        key={idx}
+                        className="text-[#605E8F] text-[14px] font-karla mb-1"
+                      >
+                        • {milestone.name}: {milestone.date}
+                      </Text>
+                    )
+                  )}
+                </>
+              )}
           </View>
 
           {/* Register Button */}
           <View className="items-center mb-4">
-            <TouchableOpacity className="bg-[#4B1EB4] rounded-full py-3 px-8 items-center w-full max-w-[300px]">
+            <TouchableOpacity
+              className={`bg-[#4B1EB4] rounded-full py-3 px-8 items-center w-full max-w-[300px] ${!opportunity.link ? "opacity-50" : ""}`}
+              activeOpacity={0.8}
+              disabled={!opportunity.link}
+              onPress={handleRegister}
+            >
               <Text className="text-white font-karla-bold text-[16px]">
                 Register Now
               </Text>
