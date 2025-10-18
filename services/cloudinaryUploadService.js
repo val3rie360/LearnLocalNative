@@ -427,5 +427,79 @@ export const downloadFile = async (uploadId) => {
   }
 };
 
+/**
+ * Get all active uploads from all organizations (for student Library view)
+ * Only includes uploads from verified organizations
+ * @param {number} limit - Optional limit on number of results
+ * @returns {Promise<Array>} - Array of all active uploads with organization info
+ */
+export const getAllActiveUploads = async (limit = null) => {
+  try {
+    console.log('📚 Fetching all active uploads for Library...');
+    
+    const q = query(
+      collection(db, 'uploads'),
+      where('status', '==', 'active'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    console.log('📊 Query returned', querySnapshot.size, 'documents');
+    
+    const uploads = [];
+
+    querySnapshot.forEach((doc) => {
+      uploads.push({ id: doc.id, ...doc.data() });
+    });
+
+    console.log('✅ Total active uploads:', uploads.length);
+
+    // Get unique organization IDs
+    const organizationIds = [...new Set(
+      uploads
+        .map((upload) => upload.organizationId)
+        .filter((id) => typeof id === 'string' && id.length)
+    )];
+
+    // Fetch organization profiles to check verification status
+    let profilesMap = new Map();
+    if (organizationIds.length > 0) {
+      const profilePromises = organizationIds.map(async (orgId) => {
+        try {
+          const profileSnap = await getDoc(doc(db, 'profiles', orgId));
+          return [orgId, profileSnap.exists() ? profileSnap.data() : null];
+        } catch (error) {
+          console.error(`Error fetching profile for ${orgId}:`, error);
+          return [orgId, null];
+        }
+      });
+      const profileEntries = await Promise.all(profilePromises);
+      profilesMap = new Map(profileEntries);
+    }
+
+    // Filter uploads from verified organizations only and add organization info
+    const verifiedUploads = uploads
+      .map((upload) => {
+        const profile = profilesMap.get(upload.organizationId) || null;
+        const isVerified = profile?.verificationStatus === 'verified';
+        
+        return {
+          ...upload,
+          organizationName: profile?.name || 'Organization',
+          organizationVerificationStatus: profile?.verificationStatus || 'pending',
+          isVerified,
+        };
+      })
+      .filter((upload) => upload.isVerified); // Only show uploads from verified orgs
+
+    console.log('✅ Verified uploads:', verifiedUploads.length);
+
+    return limit ? verifiedUploads.slice(0, limit) : verifiedUploads;
+  } catch (error) {
+    console.error('❌ Error fetching all uploads:', error);
+    throw error;
+  }
+};
+
 
 

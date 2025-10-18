@@ -1,18 +1,18 @@
 import {
-  addDoc,
-  arrayRemove,
-  arrayUnion,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  increment,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
+    addDoc,
+    arrayRemove,
+    arrayUnion,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    increment,
+    orderBy,
+    query,
+    serverTimestamp,
+    setDoc,
+    updateDoc,
+    where,
 } from "firebase/firestore";
 import { db } from "../firebaseconfig";
 
@@ -414,3 +414,115 @@ export async function updateCommunityPostUpvotes(postId, userId) {
     });
   }
 }
+
+/**
+ * LIBRARY BOOKMARK MANAGEMENT
+ * Manages student bookmarks for educational resources
+ */
+
+/**
+ * Add a resource to user's bookmarks
+ * @param {string} userId - Student user ID
+ * @param {string} uploadId - Resource upload ID
+ * @returns {Promise<void>}
+ */
+export const addBookmark = async (userId, uploadId) => {
+  try {
+    const userRef = doc(db, "profiles", userId);
+    await updateDoc(userRef, {
+      bookmarkedResources: arrayUnion(uploadId),
+    });
+    console.log("Bookmark added:", uploadId);
+  } catch (error) {
+    console.error("Error adding bookmark:", error);
+    throw error;
+  }
+};
+
+/**
+ * Remove a resource from user's bookmarks
+ * @param {string} userId - Student user ID
+ * @param {string} uploadId - Resource upload ID
+ * @returns {Promise<void>}
+ */
+export const removeBookmark = async (userId, uploadId) => {
+  try {
+    const userRef = doc(db, "profiles", userId);
+    await updateDoc(userRef, {
+      bookmarkedResources: arrayRemove(uploadId),
+    });
+    console.log("Bookmark removed:", uploadId);
+  } catch (error) {
+    console.error("Error removing bookmark:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all bookmarked resources for a user
+ * @param {string} userId - Student user ID
+ * @returns {Promise<Array>} - Array of bookmarked upload documents
+ */
+export const getBookmarkedResources = async (userId) => {
+  try {
+    const userRef = doc(db, "profiles", userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+      return [];
+    }
+
+    const bookmarkedIds = userSnap.data().bookmarkedResources || [];
+    
+    if (bookmarkedIds.length === 0) {
+      return [];
+    }
+
+    // Fetch each bookmarked resource
+    const resourcePromises = bookmarkedIds.map(async (uploadId) => {
+      try {
+        const uploadRef = doc(db, "uploads", uploadId);
+        const uploadSnap = await getDoc(uploadRef);
+        
+        if (uploadSnap.exists() && uploadSnap.data().status === "active") {
+          return { id: uploadSnap.id, ...uploadSnap.data() };
+        }
+        return null;
+      } catch (error) {
+        console.error(`Error fetching upload ${uploadId}:`, error);
+        return null;
+      }
+    });
+
+    const resources = await Promise.all(resourcePromises);
+    
+    // Filter out null values (deleted or inactive resources)
+    return resources.filter((resource) => resource !== null);
+  } catch (error) {
+    console.error("Error getting bookmarked resources:", error);
+    throw error;
+  }
+};
+
+/**
+ * Check if a resource is bookmarked by a user
+ * @param {string} userId - Student user ID
+ * @param {string} uploadId - Resource upload ID
+ * @returns {Promise<boolean>}
+ */
+export const isResourceBookmarked = async (userId, uploadId) => {
+  try {
+    const userRef = doc(db, "profiles", userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+      return false;
+    }
+
+    const bookmarkedIds = userSnap.data().bookmarkedResources || [];
+    return bookmarkedIds.includes(uploadId);
+  } catch (error) {
+    console.error("Error checking bookmark status:", error);
+    return false;
+  }
+};

@@ -260,7 +260,7 @@ export default function EditAccount() {
               contentFit="cover"
               transition={200}
               onError={(err) => {
-                console.error("[Avatar] display error:", event);
+                console.error("[Avatar] display error:", err);
                 setAvatarError(true);
               }}
             />

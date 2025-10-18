@@ -13,6 +13,7 @@ interface ProfileData {
   verificationFileUrl?: string;
   verificationStatus?: "pending" | "verified" | "rejected";
   updatedAt?: Date;
+  bookmarkedResources?: string[];
 }
 
 interface AuthContextType {

@@ -200,13 +200,16 @@ export default function Home() {
     return new Date(fallback.getTime() + 30 * 24 * 60 * 60 * 1000);
   };
 
-  // Filter opportunities by category
+  // Filter opportunities by category (excluding resources from all categories)
   const filterOpportunities = (opps: any[]) => {
+    // Always exclude resources from the feed and filter by verified organizations
     return opps.filter((op) => {
+      const isNotResource = op.specificCollection !== "resources";
       const matchesCategory =
         selectedCategory === "all" ||
         op.specificCollection === selectedCategory;
-      return matchesCategory && isOpportunityOrganizationVerified(op);
+      const isVerified = isOpportunityOrganizationVerified(op);
+      return isNotResource && matchesCategory && isVerified;
     });
   };
 
