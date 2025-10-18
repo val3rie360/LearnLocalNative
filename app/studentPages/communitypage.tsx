@@ -62,6 +62,29 @@ const buildUpvoteMap = (list: CommunityPost[], userId: string) =>
     return acc;
   }, {});
 
+const applyUpvoteToPosts = (
+  list: CommunityPost[],
+  postId: string,
+  willUpvote: boolean,
+  userId: string
+) =>
+  list.map((post) => {
+    if (post.id !== postId) return post;
+
+    const baseUpvotes = post.upvotes ?? 0;
+    const baseUpvotedBy = Array.isArray(post.upvotedBy) ? post.upvotedBy : [];
+    const wasUpvoted = baseUpvotedBy.includes(userId);
+
+    if (wasUpvoted === willUpvote) return post;
+
+    const nextUpvotes = Math.max(0, baseUpvotes + (willUpvote ? 1 : -1));
+    const nextUpvotedBy = willUpvote
+      ? [...baseUpvotedBy, userId]
+      : baseUpvotedBy.filter((id) => id !== userId);
+
+    return { ...post, upvotes: nextUpvotes, upvotedBy: nextUpvotedBy };
+  });
+
 export default function CommunityPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -94,7 +117,7 @@ export default function CommunityPage() {
 
         setPosts(normalized);
         setUpvoted(buildUpvoteMap(normalized, userId));
-        setSelectedSort((prev) => (prev === mode ? prev : mode));
+        setSelectedSort(mode);
       } catch (error) {
         console.error("Error loading community posts:", error);
       } finally {
@@ -126,29 +149,11 @@ export default function CommunityPage() {
     if (upvoteProcessing[postId]) return;
 
     const currentlyUpvoted = !!upvoted[postId];
+    const willUpvote = !currentlyUpvoted;
 
     setUpvoteProcessing((prev) => ({ ...prev, [postId]: true }));
-    setUpvoted((prev) => ({ ...prev, [postId]: !currentlyUpvoted }));
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) return post;
-
-        const updatedUpvotes = Math.max(
-          0,
-          (post.upvotes ?? 0) + (currentlyUpvoted ? -1 : 1)
-        );
-
-        const updatedBy = Array.isArray(post.upvotedBy)
-          ? currentlyUpvoted
-            ? post.upvotedBy.filter((id) => id !== userId)
-            : [...post.upvotedBy, userId]
-          : currentlyUpvoted
-            ? []
-            : [userId];
-
-        return { ...post, upvotes: updatedUpvotes, upvotedBy: updatedBy };
-      })
-    );
+    setUpvoted((prev) => ({ ...prev, [postId]: willUpvote }));
+    setPosts((prev) => applyUpvoteToPosts(prev, postId, willUpvote, userId));
 
     try {
       await updateCommunityPostUpvotes(postId, userId);
@@ -157,24 +162,7 @@ export default function CommunityPage() {
       console.error("Error updating upvote:", error);
       setUpvoted((prev) => ({ ...prev, [postId]: currentlyUpvoted }));
       setPosts((prev) =>
-        prev.map((post) => {
-          if (post.id !== postId) return post;
-
-          const rollbackUpvotes = Math.max(
-            0,
-            (post.upvotes ?? 0) + (currentlyUpvoted ? 1 : -1)
-          );
-
-          const rollbackBy = Array.isArray(post.upvotedBy)
-            ? currentlyUpvoted
-              ? [...post.upvotedBy, userId]
-              : post.upvotedBy.filter((id) => id !== userId)
-            : currentlyUpvoted
-              ? [userId]
-              : [];
-
-          return { ...post, upvotes: rollbackUpvotes, upvotedBy: rollbackBy };
-        })
+        applyUpvoteToPosts(prev, postId, currentlyUpvoted, userId)
       );
     } finally {
       setUpvoteProcessing((prev) => {

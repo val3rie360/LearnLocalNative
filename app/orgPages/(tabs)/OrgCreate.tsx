@@ -4,10 +4,10 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import DateTimePicker from '@react-native-community/datetimepicker';
-import * as DocumentPicker from 'expo-document-picker';
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as DocumentPicker from "expo-document-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
 import React, { useState } from "react";
 import {
   Alert,
@@ -23,7 +23,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker } from "../../../components/PlatformMap";
 import { useAuth } from "../../../contexts/AuthContext";
-import { formatFileSize, uploadPDF, validateFile } from "../../../services/cloudinaryUploadService";
+import {
+  formatFileSize,
+  uploadPDF,
+  validateFile,
+} from "../../../services/cloudinaryUploadService";
 import { createOpportunity } from "../../../services/firestoreService";
 
 const categories = [
@@ -55,7 +59,9 @@ const OrgCreate = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [dateMilestones, setDateMilestones] = useState<Array<{name: string, date: string}>>([]);
+  const [dateMilestones, setDateMilestones] = useState<
+    Array<{ name: string; date: string }>
+  >([]);
   const [newMilestoneName, setNewMilestoneName] = useState("");
   const [newMilestoneDate, setNewMilestoneDate] = useState("");
   const [newMilestoneDateObj, setNewMilestoneDateObj] = useState(new Date());
@@ -72,8 +78,12 @@ const OrgCreate = () => {
   const [uploadedFile, setUploadedFile] = useState<any>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [cloudinaryUploadId, setCloudinaryUploadId] = useState<string | null>(null);
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [cloudinaryUploadId, setCloudinaryUploadId] = useState<string | null>(
+    null
+  );
+  const [location, setLocation] = useState<Location.LocationObject | null>(
+    null
+  );
   const [mapRegion, setMapRegion] = useState({
     latitude: 37.78825,
     longitude: -122.4324,
@@ -111,13 +121,15 @@ const OrgCreate = () => {
     "10:00 PM",
   ];
   const [studySpotDetails, setStudySpotDetails] = useState("");
-  
+  const [link, setLink] = useState("");
+
   // Workshop/Seminar specific fields
   const [workshopStarts, setWorkshopStarts] = useState("");
   const [workshopEnds, setWorkshopEnds] = useState("");
   const [workshopStartsDate, setWorkshopStartsDate] = useState(new Date());
   const [workshopEndsDate, setWorkshopEndsDate] = useState(new Date());
-  const [showWorkshopStartsPicker, setShowWorkshopStartsPicker] = useState(false);
+  const [showWorkshopStartsPicker, setShowWorkshopStartsPicker] =
+    useState(false);
   const [showWorkshopEndsPicker, setShowWorkshopEndsPicker] = useState(false);
   const [repeats, setRepeats] = useState(false);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
@@ -130,15 +142,15 @@ const OrgCreate = () => {
     { key: "Thursday", label: "Thu" },
     { key: "Friday", label: "Fri" },
     { key: "Saturday", label: "Sat" },
-    { key: "Sunday", label: "Sun" }
+    { key: "Sunday", label: "Sun" },
   ];
 
   const categoriesWithIcons = [
     { id: 1, name: "Scholarship / Grant", icon: "🎓" },
-    { id: 2, name: "Workshop", icon: "🔧" },
-    { id: 3, name: "Competition", icon: "🏆" },
+    { id: 2, name: "Competition / Event", icon: "🏆" },
+    { id: 3, name: "Workshop / Seminar", icon: "🔧" },
     { id: 4, name: "Study Spot", icon: "📚" },
-    { id: 5, name: "Upload Resource", icon: "📄" }
+    { id: 5, name: "Resources", icon: "📄" },
   ];
 
   const handleCategorySelect = (selectedCategory: string) => {
@@ -147,20 +159,20 @@ const OrgCreate = () => {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
   const handleOpenTimeChange = (event: any, selectedDate?: Date) => {
-    console.log('Open time change:', event.type, selectedDate);
-    
-    if (Platform.OS === 'android') {
+    console.log("Open time change:", event.type, selectedDate);
+
+    if (Platform.OS === "android") {
       setShowOpenTimePicker(false);
     }
-    
+
     if (selectedDate) {
       setOpenTimeDate(selectedDate);
       setOpenTime(formatTime(selectedDate));
@@ -168,12 +180,12 @@ const OrgCreate = () => {
   };
 
   const handleCloseTimeChange = (event: any, selectedDate?: Date) => {
-    console.log('Close time change:', event.type, selectedDate);
-    
-    if (Platform.OS === 'android') {
+    console.log("Close time change:", event.type, selectedDate);
+
+    if (Platform.OS === "android") {
       setShowCloseTimePicker(false);
     }
-    
+
     if (selectedDate) {
       setCloseTimeDate(selectedDate);
       setCloseTime(formatTime(selectedDate));
@@ -192,12 +204,12 @@ const OrgCreate = () => {
 
   // Workshop time handlers
   const handleWorkshopStartsChange = (event: any, selectedDate?: Date) => {
-    console.log('Workshop starts change:', event.type, selectedDate);
-    
-    if (Platform.OS === 'android') {
+    console.log("Workshop starts change:", event.type, selectedDate);
+
+    if (Platform.OS === "android") {
       setShowWorkshopStartsPicker(false);
     }
-    
+
     if (selectedDate) {
       setWorkshopStartsDate(selectedDate);
       setWorkshopStarts(formatTime(selectedDate));
@@ -205,12 +217,12 @@ const OrgCreate = () => {
   };
 
   const handleWorkshopEndsChange = (event: any, selectedDate?: Date) => {
-    console.log('Workshop ends change:', event.type, selectedDate);
-    
-    if (Platform.OS === 'android') {
+    console.log("Workshop ends change:", event.type, selectedDate);
+
+    if (Platform.OS === "android") {
       setShowWorkshopEndsPicker(false);
     }
-    
+
     if (selectedDate) {
       setWorkshopEndsDate(selectedDate);
       setWorkshopEnds(formatTime(selectedDate));
@@ -229,10 +241,8 @@ const OrgCreate = () => {
 
   // Day selection handlers
   const toggleDaySelection = (day: string) => {
-    setSelectedDays(prev => 
-      prev.includes(day) 
-        ? prev.filter(d => d !== day)
-        : [...prev, day]
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
   };
 
@@ -246,10 +256,13 @@ const OrgCreate = () => {
   // Date milestone functions
   const addMilestone = () => {
     if (newMilestoneName.trim() && newMilestoneDate.trim()) {
-      setDateMilestones(prev => [...prev, {
-        name: newMilestoneName.trim(),
-        date: newMilestoneDate.trim()
-      }]);
+      setDateMilestones((prev) => [
+        ...prev,
+        {
+          name: newMilestoneName.trim(),
+          date: newMilestoneDate.trim(),
+        },
+      ]);
       setNewMilestoneName("");
       setNewMilestoneDate("");
       setNewMilestoneDateObj(new Date());
@@ -257,48 +270,55 @@ const OrgCreate = () => {
   };
 
   const removeMilestone = (index: number) => {
-    setDateMilestones(prev => prev.filter((_, i) => i !== index));
+    setDateMilestones((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Date picker handlers for milestones
   const handleMilestoneDateChange = (event: any, selectedDate?: Date) => {
-    console.log('Milestone date change:', event.type, selectedDate);
-    
-    if (Platform.OS === 'android') {
+    console.log("Milestone date change:", event.type, selectedDate);
+
+    if (Platform.OS === "android") {
       setShowMilestoneDatePicker(false);
     }
-    
+
     if (selectedDate) {
       setNewMilestoneDateObj(selectedDate);
-      setNewMilestoneDate(selectedDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }));
+      setNewMilestoneDate(
+        selectedDate.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      );
     }
   };
 
   const confirmMilestoneDate = () => {
-    setNewMilestoneDate(newMilestoneDateObj.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }));
+    setNewMilestoneDate(
+      newMilestoneDateObj.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    );
     setShowMilestoneDatePicker(false);
   };
 
   const getCurrentLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Location permission is required to use this feature');
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission denied",
+          "Location permission is required to use this feature"
+        );
         return;
       }
 
       const currentLocation = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      
+
       setLocation(currentLocation);
       setMapRegion({
         latitude: currentLocation.coords.latitude,
@@ -308,8 +328,11 @@ const OrgCreate = () => {
       });
       setShowMapModal(true);
     } catch (error) {
-      console.log('Location error:', error);
-      Alert.alert('Error', 'Failed to get current location. You can still select a location manually on the map.');
+      console.log("Location error:", error);
+      Alert.alert(
+        "Error",
+        "Failed to get current location. You can still select a location manually on the map."
+      );
       setShowMapModal(true);
     }
   };
@@ -317,14 +340,14 @@ const OrgCreate = () => {
   const handleMapPress = (event: any) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
     const newLocation = {
-      coords: { 
-        latitude, 
-        longitude, 
-        altitude: null, 
-        accuracy: null, 
-        altitudeAccuracy: null, 
-        heading: null, 
-        speed: null 
+      coords: {
+        latitude,
+        longitude,
+        altitude: null,
+        accuracy: null,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null,
       },
       timestamp: Date.now(),
     };
@@ -334,7 +357,7 @@ const OrgCreate = () => {
   const confirmLocation = () => {
     if (location) {
       setShowMapModal(false);
-      Alert.alert('Success', 'Location selected successfully!');
+      Alert.alert("Success", "Location selected successfully!");
     }
   };
 
@@ -342,16 +365,16 @@ const OrgCreate = () => {
     try {
       // Step 1: Pick the file
       const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/pdf',
+        type: "application/pdf",
         copyToCacheDirectory: true,
       });
-      
+
       if (result.canceled) {
         return;
       }
 
       const pickedFile = result.assets[0];
-      
+
       // Step 2: Validate the file
       const validation = validateFile({
         name: pickedFile.name,
@@ -360,25 +383,25 @@ const OrgCreate = () => {
       });
 
       if (!validation.valid) {
-        Alert.alert('Invalid File', validation.error);
+        Alert.alert("Invalid File", validation.error);
         return;
       }
 
       // Show file info
       Alert.alert(
-        'Upload PDF?',
+        "Upload PDF?",
         `File: ${pickedFile.name}\nSize: ${formatFileSize(pickedFile.size)}\n\nReady to upload this file?`,
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: "Cancel", style: "cancel" },
           {
-            text: 'Upload',
+            text: "Upload",
             onPress: async () => {
               setIsUploading(true);
               setUploadProgress(0);
 
               try {
                 // Step 3: Upload to Cloudinary
-                console.log('Starting Cloudinary upload...');
+                console.log("Starting Cloudinary upload...");
                 const uploadId = await uploadPDF(
                   {
                     uri: pickedFile.uri,
@@ -386,10 +409,10 @@ const OrgCreate = () => {
                     mimeType: pickedFile.mimeType,
                     size: pickedFile.size,
                   },
-                  user?.uid || '',
+                  user?.uid || "",
                   {
                     displayName: title || pickedFile.name,
-                    description: description || '',
+                    description: description || "",
                     category: category,
                     tags: [category],
                   },
@@ -399,13 +422,19 @@ const OrgCreate = () => {
                 );
 
                 // Success!
-                console.log('Cloudinary upload successful! Upload ID:', uploadId);
+                console.log(
+                  "Cloudinary upload successful! Upload ID:",
+                  uploadId
+                );
                 setCloudinaryUploadId(uploadId);
                 setUploadedFile(pickedFile);
-                Alert.alert('Success!', 'PDF uploaded successfully!');
+                Alert.alert("Success!", "PDF uploaded successfully!");
               } catch (error: any) {
-                console.error('Cloudinary upload error:', error);
-                Alert.alert('Upload Failed', error.message || 'Failed to upload PDF');
+                console.error("Cloudinary upload error:", error);
+                Alert.alert(
+                  "Upload Failed",
+                  error.message || "Failed to upload PDF"
+                );
               } finally {
                 setIsUploading(false);
                 setUploadProgress(0);
@@ -415,8 +444,8 @@ const OrgCreate = () => {
         ]
       );
     } catch (error) {
-      console.error('File picker error:', error);
-      Alert.alert('Error', 'Failed to select PDF file');
+      console.error("File picker error:", error);
+      Alert.alert("Error", "Failed to select PDF file");
     }
   };
 
@@ -426,49 +455,65 @@ const OrgCreate = () => {
 
     // Validation
     if (!title.trim() || !description.trim()) {
-      setErrorMessage('Please fill in all required fields: Title and Description');
+      setErrorMessage(
+        "Please fill in all required fields: Title and Description"
+      );
       return;
     }
 
     if (!user?.uid) {
-      setErrorMessage('You must be logged in to create an opportunity');
+      setErrorMessage("You must be logged in to create an opportunity");
       return;
     }
 
     // Validate milestones for Scholarship/Competition categories
-    if (category === "Scholarship / Grant" || category === "Competition / Event") {
+    if (
+      category === "Scholarship / Grant" ||
+      category === "Competition / Event"
+    ) {
       if (dateMilestones.length === 0) {
-        setErrorMessage('Please add at least one date milestone (e.g., Application Deadline)');
+        setErrorMessage(
+          "Please add at least one date milestone (e.g., Application Deadline)"
+        );
         return;
       }
-      
+
       // Check if there's an incomplete milestone in the form
       if (newMilestoneName.trim() || newMilestoneDate.trim()) {
         if (!newMilestoneName.trim() || !newMilestoneDate.trim()) {
-          setErrorMessage('Please complete the milestone form or click "Add Milestone" to save it');
+          setErrorMessage(
+            'Please complete the milestone form or click "Add Milestone" to save it'
+          );
           return;
         }
       }
     }
 
     if (category === "Resources" && !cloudinaryUploadId) {
-      setErrorMessage('Please upload a PDF file for resources category');
+      setErrorMessage("Please upload a PDF file for resources category");
       return;
     }
 
     if (isUploading) {
-      setErrorMessage('Please wait for the file upload to complete');
+      setErrorMessage("Please wait for the file upload to complete");
       return;
     }
 
-    if ((category === "Study Spot" || category === "Workshop / Seminar") && !location) {
+    if (
+      (category === "Study Spot" || category === "Workshop / Seminar") &&
+      !location
+    ) {
       setErrorMessage(`Please select a location for ${category.toLowerCase()}`);
       return;
     }
 
-    // Validate day selection for repeating workshops
-    if (category === "Workshop / Seminar" && repeats && selectedDays.length === 0) {
-      setErrorMessage('Please select at least one day for repeating workshops');
+    const requiresLink = new Set([
+      "Scholarship / Grant",
+      "Competition / Event",
+      "Workshop / Seminar",
+    ]).has(category);
+    if (requiresLink && !link.trim()) {
+      setErrorMessage("Please provide a link for this opportunity");
       return;
     }
 
@@ -481,8 +526,15 @@ const OrgCreate = () => {
         description: description.trim(),
       };
 
+      if (requiresLink) {
+        opportunityData.link = link.trim();
+      }
+
       // Add category-specific fields
-      if (category === "Scholarship / Grant" || category === "Competition / Event") {
+      if (
+        category === "Scholarship / Grant" ||
+        category === "Competition / Event"
+      ) {
         // Scholarship/Competition specific fields
         opportunityData = {
           ...opportunityData,
@@ -502,8 +554,8 @@ const OrgCreate = () => {
             location: {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
-              timestamp: location.timestamp
-            }
+              timestamp: location.timestamp,
+            },
           };
         }
       } else if (category === "Study Spot") {
@@ -516,8 +568,8 @@ const OrgCreate = () => {
             location: {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
-              timestamp: location.timestamp
-            }
+              timestamp: location.timestamp,
+            },
           };
         }
       } else if (category === "Resources") {
@@ -525,11 +577,13 @@ const OrgCreate = () => {
         opportunityData = {
           ...opportunityData,
           cloudinaryUploadId: cloudinaryUploadId,
-          uploadedFile: uploadedFile ? {
-            name: uploadedFile.name,
-            size: uploadedFile.size,
-            mimeType: uploadedFile.mimeType
-          } : null
+          uploadedFile: uploadedFile
+            ? {
+                name: uploadedFile.name,
+                size: uploadedFile.size,
+                mimeType: uploadedFile.mimeType,
+              }
+            : null,
         };
       }
 
@@ -540,8 +594,8 @@ const OrgCreate = () => {
         user.uid
       );
 
-      console.log('Opportunity created with ID:', opportunityId);
-      
+      console.log("Opportunity created with ID:", opportunityId);
+
       // Reset form
       setTitle("");
       setDescription("");
@@ -562,13 +616,14 @@ const OrgCreate = () => {
       setUploadProgress(0);
       setIsUploading(false);
       setErrorMessage("");
+      setLink("");
 
-      Alert.alert('Success', 'Opportunity posted successfully!', [
-        { text: 'OK', onPress: () => console.log('Opportunity created') }
+      Alert.alert("Success", "Opportunity posted successfully!", [
+        { text: "OK", onPress: () => console.log("Opportunity created") },
       ]);
     } catch (error) {
-      console.error('Error creating opportunity:', error);
-      setErrorMessage('Failed to create opportunity. Please try again.');
+      console.error("Error creating opportunity:", error);
+      setErrorMessage("Failed to create opportunity. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -687,773 +742,884 @@ const OrgCreate = () => {
                 ))}
               </View>
             )}
-        
 
-        {/* Title */}
-        <Text className="text-sm text-black font-semibold mb-1">
-          {category === "Study Spot" ? "Name of Location *" : 
-           category === "Workshop / Seminar" ? "Workshop/Seminar Title *" : "Title *"}
-        </Text>
-        <TextInput
-          className="bg-white rounded-xl px-3 h-11 text-base text-black mb-3"
-          value={title}
-          onChangeText={setTitle}
-          placeholder={category === "Study Spot" ? "Enter location name" : 
-                     category === "Workshop / Seminar" ? "Enter workshop/seminar title" : "Enter title"}
-          placeholderTextColor="#aaa"
-        />
-
-        {/* Description */}
-        <Text className="text-sm text-black font-semibold mb-1">
-          {category === "Resources" ? "Resource Description *" : 
-           category === "Study Spot" ? "Location Details *" : 
-           category === "Workshop / Seminar" ? "Workshop/Seminar Description *" : "Description *"}
-        </Text>
-        <TextInput
-          className="bg-white rounded-xl px-3 pt-3 text-base text-black mb-3 min-h-[80px] text-top"
-          value={description}
-          onChangeText={setDescription}
-          placeholder={
-            category === "Resources" ? "Enter resource description" : 
-            category === "Study Spot" ? "Enter location details" : 
-            category === "Workshop / Seminar" ? "Enter workshop/seminar description" :
-            "Enter opportunity description"
-          }
-          placeholderTextColor="#aaa"
-          multiline
-          numberOfLines={4}
-        />
-
-        {/* Date Milestones - Only show for scholarship and competition categories */}
-        {category !== "Resources" && category !== "Study Spot" && category !== "Workshop / Seminar" && (
-          <>
+            {/* Title */}
             <Text className="text-sm text-black font-semibold mb-1">
-              Date Milestones *
+              {category === "Study Spot"
+                ? "Name of Location *"
+                : category === "Workshop / Seminar"
+                  ? "Workshop/Seminar Title *"
+                  : "Title *"}
             </Text>
-            <Text className="text-xs text-gray-600 mb-2">
-              Add at least one important date (e.g., Application Deadline, Winner Announcement)
-            </Text>
-            
-            {/* Display existing milestones */}
-            {dateMilestones.map((milestone, index) => (
-              <View key={index} className="bg-white rounded-xl mb-2 px-3 py-2 flex-row items-center justify-between">
-                <View className="flex-1">
-                  <Text className="text-sm font-karla-bold text-[#4B1EB4]">{milestone.name}</Text>
-                  <Text className="text-xs text-gray-600">{milestone.date}</Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => removeMilestone(index)}
-                  className="ml-2 p-1"
-                >
-                  <Text className="text-red-500 text-lg">×</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-            
-            {/* Add new milestone form */}
-            <View className="bg-white rounded-xl mb-3 p-3">
-              <View className="flex-row space-x-2 mb-2">
-                <TextInput
-                  className="flex-1 bg-gray-50 rounded-lg px-3 h-10 text-base text-black"
-                  value={newMilestoneName}
-                  onChangeText={setNewMilestoneName}
-                  placeholder="Milestone name (e.g., Application Deadline)"
-                  placeholderTextColor="#aaa"
-                />
-                <TouchableOpacity
-                  className="flex-1 bg-gray-50 rounded-lg px-3 h-10 justify-center border border-gray-200"
-                  onPress={() => {
-                    console.log('Opening milestone date picker');
-                    setShowMilestoneDatePicker(true);
-                  }}
-                >
-                  <Text className={`text-base ${newMilestoneDate ? 'text-black' : 'text-gray-500'}`}>
-                    {newMilestoneDate || "Select date"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity
-                onPress={addMilestone}
-                className="bg-[#a084e8] rounded-lg py-2 items-center"
-                disabled={!newMilestoneName.trim() || !newMilestoneDate.trim()}
-              >
-                <Text className="text-white text-sm font-karla-bold">
-                  Add Milestone
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
+            <TextInput
+              className="bg-white rounded-xl px-3 h-11 text-base text-black mb-3"
+              value={title}
+              onChangeText={setTitle}
+              placeholder={
+                category === "Study Spot"
+                  ? "Enter location name"
+                  : category === "Workshop / Seminar"
+                    ? "Enter workshop/seminar title"
+                    : "Enter title"
+              }
+              placeholderTextColor="#aaa"
+            />
 
-        {/* Available Times - Show for Study Spot category */}
-        {category === "Study Spot" && (
-          <>
+            {/* Description */}
             <Text className="text-sm text-black font-semibold mb-1">
-              Available Times
+              {category === "Resources"
+                ? "Resource Description *"
+                : category === "Study Spot"
+                  ? "Location Details *"
+                  : category === "Workshop / Seminar"
+                    ? "Workshop/Seminar Description *"
+                    : "Description *"}
             </Text>
-            <View className="flex-row space-x-3 mb-3">
-              <View className="flex-1">
-                <Text className="text-xs text-gray-600 mb-1">Opens at</Text>
-                <TouchableOpacity
-                  className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
-                  onPress={() => {
-                    console.log('Opening time picker');
-                    setShowOpenTimePicker(true);
-                  }}
-                >
-                  <Text className={`text-base ${openTime ? 'text-black' : 'text-gray-500'}`}>
-                    {openTime || "Select time"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View className="flex-1">
-                <Text className="text-xs text-gray-600 mb-1">Closes at</Text>
-                <TouchableOpacity
-                  className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
-                  onPress={() => {
-                    console.log('Opening close time picker');
-                    setShowCloseTimePicker(true);
-                  }}
-                >
-                  <Text className={`text-base ${closeTime ? 'text-black' : 'text-gray-500'}`}>
-                    {closeTime || "Select time"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </>
-        )}
+            <TextInput
+              className="bg-white rounded-xl px-3 pt-3 text-base text-black mb-3 min-h-[80px] text-top"
+              value={description}
+              onChangeText={setDescription}
+              placeholder={
+                category === "Resources"
+                  ? "Enter resource description"
+                  : category === "Study Spot"
+                    ? "Enter location details"
+                    : category === "Workshop / Seminar"
+                      ? "Enter workshop/seminar description"
+                      : "Enter opportunity description"
+              }
+              placeholderTextColor="#aaa"
+              multiline
+              numberOfLines={4}
+            />
 
-        {/* Workshop/Seminar Schedule - Show for Workshop / Seminar category */}
-        {category === "Workshop / Seminar" && (
-          <>
-            <Text className="text-sm text-black font-semibold mb-1">
-              Workshop Schedule
-            </Text>
-            <View className="flex-row space-x-3 mb-3">
-              <View className="flex-1">
-                <Text className="text-xs text-gray-600 mb-1">Starts at</Text>
-                <TouchableOpacity
-                  className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
-                  onPress={() => {
-                    console.log('Opening workshop starts picker');
-                    setShowWorkshopStartsPicker(true);
-                  }}
-                >
-                  <Text className={`text-base ${workshopStarts ? 'text-black' : 'text-gray-500'}`}>
-                    {workshopStarts || "Select start time"}
+            {/* Date Milestones - Only show for scholarship and competition categories */}
+            {category !== "Resources" &&
+              category !== "Study Spot" &&
+              category !== "Workshop / Seminar" && (
+                <>
+                  <Text className="text-sm text-black font-semibold mb-1">
+                    Date Milestones *
                   </Text>
-                </TouchableOpacity>
-              </View>
-              <View className="flex-1">
-                <Text className="text-xs text-gray-600 mb-1">Ends at</Text>
-                <TouchableOpacity
-                  className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
-                  onPress={() => {
-                    console.log('Opening workshop ends picker');
-                    setShowWorkshopEndsPicker(true);
-                  }}
-                >
-                  <Text className={`text-base ${workshopEnds ? 'text-black' : 'text-gray-500'}`}>
-                    {workshopEnds || "Select end time"}
+                  <Text className="text-xs text-gray-600 mb-2">
+                    Add at least one important date (e.g., Application Deadline,
+                    Winner Announcement)
                   </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
 
-            {/* Repeat Option */}
-            <View className="mb-3 bg-gray-50 p-3 rounded-xl">
-              <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-sm text-black font-semibold">Repeats</Text>
-                <TouchableOpacity
-                  className={`w-12 h-6 rounded-full border-2 ${
-                    repeats ? 'bg-[#a084e8] border-[#a084e8]' : 'bg-gray-200 border-gray-300'
-                  }`}
-                  onPress={() => setRepeats(!repeats)}
-                >
-                  <View
-                    className="w-5 h-5 rounded-full bg-white"
-                    style={{
-                      transform: [{ translateX: repeats ? 24 : 0 }],
-                    }}
-                  />
-                </TouchableOpacity>
-              </View>
-              
-              {repeats && (
-                <View className="bg-white rounded-xl px-3 py-3 border border-gray-200">
-                  <Text className="text-sm text-gray-600 mb-2">Repeat on days:</Text>
-                  <TouchableOpacity
-                    className="flex-row items-center justify-between py-2"
-                    onPress={() => setShowDaySelector(!showDaySelector)}
-                  >
-                    <Text className="text-base text-black">{getSelectedDaysText()}</Text>
-                    <Text className="text-lg text-gray-400">{showDaySelector ? "▲" : "▼"}</Text>
-                  </TouchableOpacity>
-                  
-                  {showDaySelector && (
-                    <View className="mt-2">
-                      <View className="flex-row flex-wrap gap-2">
-                        {daysOfWeek.map((day) => (
-                          <TouchableOpacity
-                            key={day.key}
-                            className={`px-3 py-2 rounded-full border ${
-                              selectedDays.includes(day.key)
-                                ? 'bg-[#a084e8] border-[#a084e8]'
-                                : 'bg-gray-100 border-gray-300'
-                            }`}
-                            onPress={() => toggleDaySelection(day.key)}
-                          >
-                            <Text
-                              className={`text-sm font-karla ${
-                                selectedDays.includes(day.key)
-                                  ? 'text-white'
-                                  : 'text-gray-700'
-                              }`}
-                            >
-                              {day.label}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
+                  {/* Display existing milestones */}
+                  {dateMilestones.map((milestone, index) => (
+                    <View
+                      key={index}
+                      className="bg-white rounded-xl mb-2 px-3 py-2 flex-row items-center justify-between"
+                    >
+                      <View className="flex-1">
+                        <Text className="text-sm font-karla-bold text-[#4B1EB4]">
+                          {milestone.name}
+                        </Text>
+                        <Text className="text-xs text-gray-600">
+                          {milestone.date}
+                        </Text>
                       </View>
+                      <TouchableOpacity
+                        onPress={() => removeMilestone(index)}
+                        className="ml-2 p-1"
+                      >
+                        <Text className="text-red-500 text-lg">×</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+
+                  {/* Add new milestone form */}
+                  <View className="bg-white rounded-xl mb-3 p-3">
+                    <View className="flex-row space-x-2 mb-2">
+                      <TextInput
+                        className="flex-1 bg-gray-50 rounded-lg px-3 h-10 text-base text-black"
+                        value={newMilestoneName}
+                        onChangeText={setNewMilestoneName}
+                        placeholder="Milestone name (e.g., Application Deadline)"
+                        placeholderTextColor="#aaa"
+                      />
+                      <TouchableOpacity
+                        className="flex-1 bg-gray-50 rounded-lg px-3 h-10 justify-center border border-gray-200"
+                        onPress={() => {
+                          console.log("Opening milestone date picker");
+                          setShowMilestoneDatePicker(true);
+                        }}
+                      >
+                        <Text
+                          className={`text-base ${newMilestoneDate ? "text-black" : "text-gray-500"}`}
+                        >
+                          {newMilestoneDate || "Select date"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      onPress={addMilestone}
+                      className="bg-[#a084e8] rounded-lg py-2 items-center"
+                      disabled={
+                        !newMilestoneName.trim() || !newMilestoneDate.trim()
+                      }
+                    >
+                      <Text className="text-white text-sm font-karla-bold">
+                        Add Milestone
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+
+            {/* Available Times - Show for Study Spot category */}
+            {category === "Study Spot" && (
+              <>
+                <Text className="text-sm text-black font-semibold mb-1">
+                  Available Times
+                </Text>
+                <View className="flex-row space-x-3 mb-3">
+                  <View className="flex-1">
+                    <Text className="text-xs text-gray-600 mb-1">Opens at</Text>
+                    <TouchableOpacity
+                      className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
+                      onPress={() => {
+                        console.log("Opening time picker");
+                        setShowOpenTimePicker(true);
+                      }}
+                    >
+                      <Text
+                        className={`text-base ${openTime ? "text-black" : "text-gray-500"}`}
+                      >
+                        {openTime || "Select time"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-xs text-gray-600 mb-1">
+                      Closes at
+                    </Text>
+                    <TouchableOpacity
+                      className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
+                      onPress={() => {
+                        console.log("Opening close time picker");
+                        setShowCloseTimePicker(true);
+                      }}
+                    >
+                      <Text
+                        className={`text-base ${closeTime ? "text-black" : "text-gray-500"}`}
+                      >
+                        {closeTime || "Select time"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </>
+            )}
+
+            {/* Workshop/Seminar Schedule - Show for Workshop / Seminar category */}
+            {category === "Workshop / Seminar" && (
+              <>
+                <Text className="text-sm text-black font-semibold mb-1">
+                  Workshop Schedule
+                </Text>
+                <View className="flex-row space-x-3 mb-3">
+                  <View className="flex-1">
+                    <Text className="text-xs text-gray-600 mb-1">
+                      Starts at
+                    </Text>
+                    <TouchableOpacity
+                      className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
+                      onPress={() => {
+                        console.log("Opening workshop starts picker");
+                        setShowWorkshopStartsPicker(true);
+                      }}
+                    >
+                      <Text
+                        className={`text-base ${workshopStarts ? "text-black" : "text-gray-500"}`}
+                      >
+                        {workshopStarts || "Select start time"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-xs text-gray-600 mb-1">Ends at</Text>
+                    <TouchableOpacity
+                      className="bg-white rounded-xl px-3 h-11 justify-center border border-gray-200"
+                      onPress={() => {
+                        console.log("Opening workshop ends picker");
+                        setShowWorkshopEndsPicker(true);
+                      }}
+                    >
+                      <Text
+                        className={`text-base ${workshopEnds ? "text-black" : "text-gray-500"}`}
+                      >
+                        {workshopEnds || "Select end time"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Repeat Option */}
+                <View className="mb-3 bg-gray-50 p-3 rounded-xl">
+                  <View className="flex-row items-center justify-between mb-2">
+                    <Text className="text-sm text-black font-semibold">
+                      Repeats
+                    </Text>
+                    <TouchableOpacity
+                      className={`w-12 h-6 rounded-full border-2 ${
+                        repeats
+                          ? "bg-[#a084e8] border-[#a084e8]"
+                          : "bg-gray-200 border-gray-300"
+                      }`}
+                      onPress={() => setRepeats(!repeats)}
+                    >
+                      <View
+                        className="w-5 h-5 rounded-full bg-white"
+                        style={{
+                          transform: [{ translateX: repeats ? 24 : 0 }],
+                        }}
+                      />
+                    </TouchableOpacity>
+                  </View>
+
+                  {repeats && (
+                    <View className="bg-white rounded-xl px-3 py-3 border border-gray-200">
+                      <Text className="text-sm text-gray-600 mb-2">
+                        Repeat on days:
+                      </Text>
+                      <TouchableOpacity
+                        className="flex-row items-center justify-between py-2"
+                        onPress={() => setShowDaySelector(!showDaySelector)}
+                      >
+                        <Text className="text-base text-black">
+                          {getSelectedDaysText()}
+                        </Text>
+                        <Text className="text-lg text-gray-400">
+                          {showDaySelector ? "▲" : "▼"}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {showDaySelector && (
+                        <View className="mt-2">
+                          <View className="flex-row flex-wrap gap-2">
+                            {daysOfWeek.map((day) => (
+                              <TouchableOpacity
+                                key={day.key}
+                                className={`px-3 py-2 rounded-full border ${
+                                  selectedDays.includes(day.key)
+                                    ? "bg-[#a084e8] border-[#a084e8]"
+                                    : "bg-gray-100 border-gray-300"
+                                }`}
+                                onPress={() => toggleDaySelection(day.key)}
+                              >
+                                <Text
+                                  className={`text-sm font-karla ${
+                                    selectedDays.includes(day.key)
+                                      ? "text-white"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  {day.label}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        </View>
+                      )}
                     </View>
                   )}
                 </View>
-              )}
-              
-            </View>
-          </>
-        )}
+              </>
+            )}
 
-        {/* Amount - Only show for scholarship and competition categories */}
-        {category !== "Resources" && category !== "Study Spot" && category !== "Workshop / Seminar" && (
-          <>
-            <Text className="text-sm text-black font-semibold mb-1">Amount</Text>
-            <TextInput
-              className="bg-white rounded-xl px-3 h-11 text-base text-black mb-3"
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="Enter amount"
-              placeholderTextColor="#aaa"
-              keyboardType="numeric"
-            />
-          </>
-        )}
-
-        {/* Location Picker - Show for Study Spot and Workshop / Seminar categories */}
-        {(category === "Study Spot" || category === "Workshop / Seminar") && (
-          <>
-            <Text className="text-sm text-black font-semibold mb-1">Location *</Text>
-            <TouchableOpacity
-              className={`rounded-xl px-3 h-11 justify-center border mb-3 ${
-                location ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200'
-              }`}
-              onPress={getCurrentLocation}
-            >
-              <View className="flex-row items-center">
-                <Text className="text-2xl mr-3">{location ? '✅' : '📍'}</Text>
-                <Text className={`text-base flex-1 ${location ? 'text-green-800' : 'text-black'}`}>
-                  {location ? 
-                    `Location selected: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}` : 
-                    "Tap to select location"
-                  }
-                </Text>
-                <Text className="text-lg text-gray-400">→</Text>
-              </View>
-            </TouchableOpacity>
-          </>
-        )}
-        
-
-
-        {/* File Upload Section - Only show for Resources category */}
-        {category === "Resources" && (
-          <>
-            <Text className="text-sm text-black font-semibold mb-1">
-              Upload PDF Resource *
-            </Text>
-            <TouchableOpacity 
-              className={`rounded-xl px-3 py-3 mb-3 border-2 ${
-                uploadedFile 
-                  ? 'bg-green-50 border-green-400' 
-                  : 'bg-white border-dashed border-gray-300'
-              }`}
-              onPress={handleFileUpload}
-              disabled={isUploading}
-            >
-              <View className="items-center">
-                {isUploading ? (
-                  <>
-                    <Text className="text-2xl mb-2">⏳</Text>
-                    <Text className="text-base text-gray-600 font-karla-bold">
-                      Uploading... {uploadProgress}%
-                    </Text>
-                    {/* Progress Bar */}
-                    <View className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                      <View 
-                        className="bg-[#a084e8] h-2 rounded-full" 
-                        style={{ width: `${uploadProgress}%` }}
-                      />
-                    </View>
-                  </>
-                ) : uploadedFile ? (
-                  <>
-                    <Text className="text-2xl mb-2">✅</Text>
-                    <Text className="text-base text-green-700 font-karla-bold">
-                      {uploadedFile.name}
-                    </Text>
-                    <Text className="text-sm text-green-600 mt-1">
-                      {formatFileSize(uploadedFile.size)} • Ready
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-2">
-                      Tap to upload a different file
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Text className="text-2xl mb-2">📄</Text>
-                    <Text className="text-base text-gray-600">
-                      Tap to upload PDF
-                    </Text>
-                    <Text className="text-sm text-gray-400 mt-1">
-                      PDF files only • Max 50MB
-                    </Text>
-                  </>
-                )}
-              </View>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {/* Submit Button */}
-        <TouchableOpacity 
-          className="bg-[#a084e8] rounded-full py-3 items-center mt-2 mb-8 shadow"
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-        >
-          <Text className="text-white text-base font-bold">
-            {isSubmitting ? 'Submitting...' : 'Submit'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Category Selection Modal */}
-      <Modal
-        visible={showCategoryModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowCategoryModal(false)}
-      >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl p-6">
-            <Text className="text-lg font-bold text-black mb-4 text-center">
-              Select Category
-            </Text>
-            {categoriesWithIcons.map((cat) => (
-              <TouchableOpacity
-                key={cat.id}
-                className="flex-row items-center py-4 border-b border-gray-200"
-                onPress={() => handleCategorySelect(cat.name)}
-              >
-                <Text className="text-2xl mr-4">{cat.icon}</Text>
-                <Text className="text-base text-black flex-1">{cat.name}</Text>
-                {category === cat.name && (
-                  <Text className="text-lg text-[#a084e8]">✓</Text>
-                )}
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              className="bg-gray-200 rounded-xl py-3 mt-4"
-              onPress={() => setShowCategoryModal(false)}
-            >
-              <Text className="text-center text-base text-gray-600">Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Time Pickers */}
-      {showOpenTimePicker && (
-        <>
-          {Platform.OS === 'ios' ? (
-            <Modal
-              visible={showOpenTimePicker}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowOpenTimePicker(false)}
-            >
-              <View className="flex-1 bg-black/50 justify-end">
-                <View className="bg-white rounded-t-3xl p-6">
-                  <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
-                    Select Opening Time
+            {/* Amount - Only show for scholarship and competition categories */}
+            {category !== "Resources" &&
+              category !== "Study Spot" &&
+              category !== "Workshop / Seminar" && (
+                <>
+                  <Text className="text-sm text-black font-semibold mb-1">
+                    Amount
                   </Text>
-                  <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
-                    <DateTimePicker
-                      value={openTimeDate}
-                      mode="time"
-                      is24Hour={false}
-                      display="spinner"
-                      onChange={handleOpenTimeChange}
-                      style={{ 
-                        backgroundColor: 'transparent'
-                      }}
-                      textColor="#333333"
-                      accentColor="#a084e8"
-                    />
-                  </View>
-                  <View className="flex-row space-x-3 mt-4">
-                    <TouchableOpacity
-                      className="flex-1 bg-gray-200 rounded-xl py-3"
-                      onPress={() => setShowOpenTimePicker(false)}
-                    >
-                      <Text className="text-center text-base text-gray-600">Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      className="flex-1 bg-[#a084e8] rounded-xl py-3"
-                      onPress={confirmOpenTime}
-                    >
-                      <Text className="text-center text-base text-white font-bold">Confirm</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
-          ) : (
-            <DateTimePicker
-              value={openTimeDate}
-              mode="time"
-              is24Hour={false}
-              display="default"
-              onChange={handleOpenTimeChange}
-              textColor="#333333"
-              accentColor="#a084e8"
-            />
-          )}
-        </>
-      )}
-
-      {showCloseTimePicker && (
-        <>
-          {Platform.OS === 'ios' ? (
-            <Modal
-              visible={showCloseTimePicker}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowCloseTimePicker(false)}
-            >
-              <View className="flex-1 bg-black/50 justify-end">
-                <View className="bg-white rounded-t-3xl p-6">
-                  <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
-                    Select Closing Time
-                  </Text>
-                  <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
-                    <DateTimePicker
-                      value={closeTimeDate}
-                      mode="time"
-                      is24Hour={false}
-                      display="spinner"
-                      onChange={handleCloseTimeChange}
-                      style={{ 
-                        backgroundColor: 'transparent'
-                      }}
-                      textColor="#333333"
-                      accentColor="#a084e8"
-                    />
-                  </View>
-                  <View className="flex-row space-x-3 mt-4">
-                    <TouchableOpacity
-                      className="flex-1 bg-gray-200 rounded-xl py-3"
-                      onPress={() => setShowCloseTimePicker(false)}
-                    >
-                      <Text className="text-center text-base text-gray-600">Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      className="flex-1 bg-[#a084e8] rounded-xl py-3"
-                      onPress={confirmCloseTime}
-                    >
-                      <Text className="text-center text-base text-white font-bold">Confirm</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
-          ) : (
-            <DateTimePicker
-              value={closeTimeDate}
-              mode="time"
-              is24Hour={false}
-              display="default"
-              onChange={handleCloseTimeChange}
-              textColor="#333333"
-              accentColor="#a084e8"
-            />
-          )}
-        </>
-      )}
-
-      {/* Workshop Starts Time Picker */}
-      {showWorkshopStartsPicker && (
-        <>
-          {Platform.OS === 'ios' ? (
-            <Modal
-              visible={showWorkshopStartsPicker}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowWorkshopStartsPicker(false)}
-            >
-              <View className="flex-1 bg-black/50 justify-end">
-                <View className="bg-white rounded-t-3xl p-6">
-                  <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
-                    Select Workshop Start Time
-                  </Text>
-                  <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
-                    <DateTimePicker
-                      value={workshopStartsDate}
-                      mode="time"
-                      is24Hour={false}
-                      display="spinner"
-                      onChange={handleWorkshopStartsChange}
-                      style={{ 
-                        backgroundColor: 'transparent'
-                      }}
-                      textColor="#333333"
-                      accentColor="#a084e8"
-                    />
-                  </View>
-                  <View className="flex-row space-x-3 mt-4">
-                    <TouchableOpacity
-                      className="flex-1 bg-gray-200 rounded-xl py-3"
-                      onPress={() => setShowWorkshopStartsPicker(false)}
-                    >
-                      <Text className="text-center text-base text-gray-600">Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      className="flex-1 bg-[#a084e8] rounded-xl py-3"
-                      onPress={confirmWorkshopStarts}
-                    >
-                      <Text className="text-center text-base text-white font-bold">Confirm</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
-          ) : (
-            <DateTimePicker
-              value={workshopStartsDate}
-              mode="time"
-              is24Hour={false}
-              display="default"
-              onChange={handleWorkshopStartsChange}
-              textColor="#333333"
-              accentColor="#a084e8"
-            />
-          )}
-        </>
-      )}
-
-      {/* Workshop Ends Time Picker */}
-      {showWorkshopEndsPicker && (
-        <>
-          {Platform.OS === 'ios' ? (
-            <Modal
-              visible={showWorkshopEndsPicker}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowWorkshopEndsPicker(false)}
-            >
-              <View className="flex-1 bg-black/50 justify-end">
-                <View className="bg-white rounded-t-3xl p-6">
-                  <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
-                    Select Workshop End Time
-                  </Text>
-                  <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
-                    <DateTimePicker
-                      value={workshopEndsDate}
-                      mode="time"
-                      is24Hour={false}
-                      display="spinner"
-                      onChange={handleWorkshopEndsChange}
-                      style={{ 
-                        backgroundColor: 'transparent'
-                      }}
-                      textColor="#333333"
-                      accentColor="#a084e8"
-                    />
-                  </View>
-                  <View className="flex-row space-x-3 mt-4">
-                    <TouchableOpacity
-                      className="flex-1 bg-gray-200 rounded-xl py-3"
-                      onPress={() => setShowWorkshopEndsPicker(false)}
-                    >
-                      <Text className="text-center text-base text-gray-600">Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      className="flex-1 bg-[#a084e8] rounded-xl py-3"
-                      onPress={confirmWorkshopEnds}
-                    >
-                      <Text className="text-center text-base text-white font-bold">Confirm</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
-          ) : (
-            <DateTimePicker
-              value={workshopEndsDate}
-              mode="time"
-              is24Hour={false}
-              display="default"
-              onChange={handleWorkshopEndsChange}
-              textColor="#333333"
-              accentColor="#a084e8"
-            />
-          )}
-        </>
-      )}
-
-      {/* Location Selection Modal - Only for Study Spot */}
-      {category === "Study Spot" && (
-        <Modal
-          visible={showMapModal}
-          transparent={false}
-          animationType="slide"
-          onRequestClose={() => setShowMapModal(false)}
-        >
-          <View className="flex-1 bg-white">
-            {/* Header */}
-            <View className="flex-row items-center justify-between p-4 bg-[#a084e8]">
-              <TouchableOpacity
-                onPress={() => setShowMapModal(false)}
-                className="bg-white rounded-full p-2"
-              >
-                <Text className="text-lg text-[#a084e8] font-bold">←</Text>
-              </TouchableOpacity>
-              <Text className="text-lg font-bold text-white">Select Location</Text>
-              <TouchableOpacity
-                onPress={confirmLocation}
-                className="bg-white rounded-full px-4 py-2"
-                disabled={!location}
-              >
-                <Text className={`text-sm font-bold ${location ? 'text-[#a084e8]' : 'text-gray-400'}`}>
-                  Confirm
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Action Buttons */}
-            <View className="flex-row space-x-3 p-4 bg-gray-50">
-              <TouchableOpacity
-                className="flex-1 bg-[#a084e8] rounded-xl py-3"
-                onPress={getCurrentLocation}
-              >
-                <Text className="text-white text-center font-bold">
-                  📍 Use Current Location
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="flex-1 bg-gray-200 rounded-xl py-3"
-                onPress={() => setShowMapModal(false)}
-              >
-                <Text className="text-gray-600 text-center font-bold">
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Map */}
-            <View className="flex-1">
-              <MapView
-                style={{ flex: 1 }}
-                region={mapRegion}
-                onPress={handleMapPress}
-                showsUserLocation={true}
-                showsMyLocationButton={true}
-                mapType="standard"
-              >
-                {location && (
-                  <Marker
-                    coordinate={{
-                      latitude: location.coords.latitude,
-                      longitude: location.coords.longitude,
-                    }}
-                    title="Study Spot Location"
-                    description="Selected location for study spot"
-                    pinColor="#a084e8"
+                  <TextInput
+                    className="bg-white rounded-xl px-3 h-11 text-base text-black mb-3"
+                    value={amount}
+                    onChangeText={setAmount}
+                    placeholder="Enter amount"
+                    placeholderTextColor="#aaa"
+                    keyboardType="numeric"
                   />
-                )}
-              </MapView>
-            </View>
+                </>
+              )}
 
-            {/* Instructions */}
-            <View className="p-4 bg-gray-50">
-              <Text className="text-sm text-gray-600 text-center mb-2">
-                Tap anywhere on the map to place a pin for your study spot location
-              </Text>
-              <Text className="text-xs text-gray-500 text-center">
-                {location ? `Current selection: ${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}` : 'No location selected yet'}
-              </Text>
-            </View>
-          </View>
-        </Modal>
-      )}
+            {/* Location Picker - Show for Study Spot and Workshop / Seminar categories */}
+            {(category === "Study Spot" ||
+              category === "Workshop / Seminar") && (
+              <>
+                <Text className="text-sm text-black font-semibold mb-1">
+                  Location *
+                </Text>
+                <TouchableOpacity
+                  className={`rounded-xl px-3 h-11 justify-center border mb-3 ${
+                    location
+                      ? "bg-green-50 border-green-300"
+                      : "bg-white border-gray-200"
+                  }`}
+                  onPress={getCurrentLocation}
+                >
+                  <View className="flex-row items-center">
+                    <Text className="text-2xl mr-3">
+                      {location ? "✅" : "📍"}
+                    </Text>
+                    <Text
+                      className={`text-base flex-1 ${location ? "text-green-800" : "text-black"}`}
+                    >
+                      {location
+                        ? `Location selected: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`
+                        : "Tap to select location"}
+                    </Text>
+                    <Text className="text-lg text-gray-400">→</Text>
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
 
-      {/* Milestone Date Picker Modal */}
-      {showMilestoneDatePicker && (
-        <>
-          {Platform.OS === 'ios' ? (
-            <Modal
-              visible={showMilestoneDatePicker}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowMilestoneDatePicker(false)}
+            {/* File Upload Section - Only show for Resources category */}
+            {category === "Resources" && (
+              <>
+                <Text className="text-sm text-black font-semibold mb-1">
+                  Upload PDF Resource *
+                </Text>
+                <TouchableOpacity
+                  className={`rounded-xl px-3 py-3 mb-3 border-2 ${
+                    uploadedFile
+                      ? "bg-green-50 border-green-400"
+                      : "bg-white border-dashed border-gray-300"
+                  }`}
+                  onPress={handleFileUpload}
+                  disabled={isUploading}
+                >
+                  <View className="items-center">
+                    {isUploading ? (
+                      <>
+                        <Text className="text-2xl mb-2">⏳</Text>
+                        <Text className="text-base text-gray-600 font-karla-bold">
+                          Uploading... {uploadProgress}%
+                        </Text>
+                        {/* Progress Bar */}
+                        <View className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <View
+                            className="bg-[#a084e8] h-2 rounded-full"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </View>
+                      </>
+                    ) : uploadedFile ? (
+                      <>
+                        <Text className="text-2xl mb-2">✅</Text>
+                        <Text className="text-base text-green-700 font-karla-bold">
+                          {uploadedFile.name}
+                        </Text>
+                        <Text className="text-sm text-green-600 mt-1">
+                          {formatFileSize(uploadedFile.size)} • Ready
+                        </Text>
+                        <Text className="text-xs text-gray-500 mt-2">
+                          Tap to upload a different file
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Text className="text-2xl mb-2">📄</Text>
+                        <Text className="text-base text-gray-600">
+                          Tap to upload PDF
+                        </Text>
+                        <Text className="text-sm text-gray-400 mt-1">
+                          PDF files only • Max 50MB
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {[
+              "Scholarship / Grant",
+              "Competition / Event",
+              "Workshop / Seminar",
+            ].includes(category) && (
+              <>
+                <Text className="text-sm text-black font-semibold mb-1">
+                  Link *
+                </Text>
+                <TextInput
+                  className="bg-white rounded-xl px-3 h-11 text-base text-black mb-3"
+                  value={link}
+                  onChangeText={setLink}
+                  placeholder="Enter registration/application link"
+                  placeholderTextColor="#aaa"
+                  autoCapitalize="none"
+                  keyboardType="url"
+                />
+              </>
+            )}
+
+            {/* Submit Button */}
+            <TouchableOpacity
+              className="bg-[#a084e8] rounded-full py-3 items-center mt-2 mb-8 shadow"
+              onPress={handleSubmit}
+              disabled={isSubmitting}
             >
-              <View className="flex-1 bg-black/50 justify-end">
-                <View className="bg-white rounded-t-3xl p-6">
-                  <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
-                    Select Milestone Date
+              <Text className="text-white text-base font-bold">
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Category Selection Modal */}
+          <Modal
+            visible={showCategoryModal}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowCategoryModal(false)}
+          >
+            <View className="flex-1 bg-black/50 justify-end">
+              <View className="bg-white rounded-t-3xl p-6">
+                <Text className="text-lg font-bold text-black mb-4 text-center">
+                  Select Category
+                </Text>
+                {categoriesWithIcons.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    className="flex-row items-center py-4 border-b border-gray-200"
+                    onPress={() => handleCategorySelect(cat.name)}
+                  >
+                    <Text className="text-2xl mr-4">{cat.icon}</Text>
+                    <Text className="text-base text-black flex-1">
+                      {cat.name}
+                    </Text>
+                    {category === cat.name && (
+                      <Text className="text-lg text-[#a084e8]">✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  className="bg-gray-200 rounded-xl py-3 mt-4"
+                  onPress={() => setShowCategoryModal(false)}
+                >
+                  <Text className="text-center text-base text-gray-600">
+                    Cancel
                   </Text>
-                  <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
-                    <DateTimePicker
-                      value={newMilestoneDateObj}
-                      mode="date"
-                      display="spinner"
-                      onChange={handleMilestoneDateChange}
-                      style={{ 
-                        backgroundColor: 'transparent'
-                      }}
-                      textColor="#333333"
-                      accentColor="#a084e8"
-                    />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+
+          {/* Time Pickers */}
+          {showOpenTimePicker && (
+            <>
+              {Platform.OS === "ios" ? (
+                <Modal
+                  visible={showOpenTimePicker}
+                  transparent={true}
+                  animationType="slide"
+                  onRequestClose={() => setShowOpenTimePicker(false)}
+                >
+                  <View className="flex-1 bg-black/50 justify-end">
+                    <View className="bg-white rounded-t-3xl p-6">
+                      <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
+                        Select Opening Time
+                      </Text>
+                      <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
+                        <DateTimePicker
+                          value={openTimeDate}
+                          mode="time"
+                          is24Hour={false}
+                          display="spinner"
+                          onChange={handleOpenTimeChange}
+                          style={{
+                            backgroundColor: "transparent",
+                          }}
+                          textColor="#333333"
+                          accentColor="#a084e8"
+                        />
+                      </View>
+                      <View className="flex-row space-x-3 mt-4">
+                        <TouchableOpacity
+                          className="flex-1 bg-gray-200 rounded-xl py-3"
+                          onPress={() => setShowOpenTimePicker(false)}
+                        >
+                          <Text className="text-center text-base text-gray-600">
+                            Cancel
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          className="flex-1 bg-[#a084e8] rounded-xl py-3"
+                          onPress={confirmOpenTime}
+                        >
+                          <Text className="text-center text-base text-white font-bold">
+                            Confirm
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                   </View>
-                  <View className="flex-row space-x-3 mt-4">
-                    <TouchableOpacity
-                      className="flex-1 bg-gray-200 rounded-xl py-3"
-                      onPress={() => setShowMilestoneDatePicker(false)}
-                    >
-                      <Text className="text-center text-base text-gray-600">Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      className="flex-1 bg-[#a084e8] rounded-xl py-3"
-                      onPress={confirmMilestoneDate}
-                    >
-                      <Text className="text-center text-base text-white font-bold">Confirm</Text>
-                    </TouchableOpacity>
+                </Modal>
+              ) : (
+                <DateTimePicker
+                  value={openTimeDate}
+                  mode="time"
+                  is24Hour={false}
+                  display="default"
+                  onChange={handleOpenTimeChange}
+                  textColor="#333333"
+                  accentColor="#a084e8"
+                />
+              )}
+            </>
+          )}
+
+          {showCloseTimePicker && (
+            <>
+              {Platform.OS === "ios" ? (
+                <Modal
+                  visible={showCloseTimePicker}
+                  transparent={true}
+                  animationType="slide"
+                  onRequestClose={() => setShowCloseTimePicker(false)}
+                >
+                  <View className="flex-1 bg-black/50 justify-end">
+                    <View className="bg-white rounded-t-3xl p-6">
+                      <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
+                        Select Closing Time
+                      </Text>
+                      <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
+                        <DateTimePicker
+                          value={closeTimeDate}
+                          mode="time"
+                          is24Hour={false}
+                          display="spinner"
+                          onChange={handleCloseTimeChange}
+                          style={{
+                            backgroundColor: "transparent",
+                          }}
+                          textColor="#333333"
+                          accentColor="#a084e8"
+                        />
+                      </View>
+                      <View className="flex-row space-x-3 mt-4">
+                        <TouchableOpacity
+                          className="flex-1 bg-gray-200 rounded-xl py-3"
+                          onPress={() => setShowCloseTimePicker(false)}
+                        >
+                          <Text className="text-center text-base text-gray-600">
+                            Cancel
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          className="flex-1 bg-[#a084e8] rounded-xl py-3"
+                          onPress={confirmCloseTime}
+                        >
+                          <Text className="text-center text-base text-white font-bold">
+                            Confirm
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                   </View>
+                </Modal>
+              ) : (
+                <DateTimePicker
+                  value={closeTimeDate}
+                  mode="time"
+                  is24Hour={false}
+                  display="default"
+                  onChange={handleCloseTimeChange}
+                  textColor="#333333"
+                  accentColor="#a084e8"
+                />
+              )}
+            </>
+          )}
+
+          {/* Workshop Starts Time Picker */}
+          {showWorkshopStartsPicker && (
+            <>
+              {Platform.OS === "ios" ? (
+                <Modal
+                  visible={showWorkshopStartsPicker}
+                  transparent={true}
+                  animationType="slide"
+                  onRequestClose={() => setShowWorkshopStartsPicker(false)}
+                >
+                  <View className="flex-1 bg-black/50 justify-end">
+                    <View className="bg-white rounded-t-3xl p-6">
+                      <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
+                        Select Workshop Start Time
+                      </Text>
+                      <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
+                        <DateTimePicker
+                          value={workshopStartsDate}
+                          mode="time"
+                          is24Hour={false}
+                          display="spinner"
+                          onChange={handleWorkshopStartsChange}
+                          style={{
+                            backgroundColor: "transparent",
+                          }}
+                          textColor="#333333"
+                          accentColor="#a084e8"
+                        />
+                      </View>
+                      <View className="flex-row space-x-3 mt-4">
+                        <TouchableOpacity
+                          className="flex-1 bg-gray-200 rounded-xl py-3"
+                          onPress={() => setShowWorkshopStartsPicker(false)}
+                        >
+                          <Text className="text-center text-base text-gray-600">
+                            Cancel
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          className="flex-1 bg-[#a084e8] rounded-xl py-3"
+                          onPress={confirmWorkshopStarts}
+                        >
+                          <Text className="text-center text-base text-white font-bold">
+                            Confirm
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
+              ) : (
+                <DateTimePicker
+                  value={workshopStartsDate}
+                  mode="time"
+                  is24Hour={false}
+                  display="default"
+                  onChange={handleWorkshopStartsChange}
+                  textColor="#333333"
+                  accentColor="#a084e8"
+                />
+              )}
+            </>
+          )}
+
+          {/* Workshop Ends Time Picker */}
+          {showWorkshopEndsPicker && (
+            <>
+              {Platform.OS === "ios" ? (
+                <Modal
+                  visible={showWorkshopEndsPicker}
+                  transparent={true}
+                  animationType="slide"
+                  onRequestClose={() => setShowWorkshopEndsPicker(false)}
+                >
+                  <View className="flex-1 bg-black/50 justify-end">
+                    <View className="bg-white rounded-t-3xl p-6">
+                      <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
+                        Select Workshop End Time
+                      </Text>
+                      <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
+                        <DateTimePicker
+                          value={workshopEndsDate}
+                          mode="time"
+                          is24Hour={false}
+                          display="spinner"
+                          onChange={handleWorkshopEndsChange}
+                          style={{
+                            backgroundColor: "transparent",
+                          }}
+                          textColor="#333333"
+                          accentColor="#a084e8"
+                        />
+                      </View>
+                      <View className="flex-row space-x-3 mt-4">
+                        <TouchableOpacity
+                          className="flex-1 bg-gray-200 rounded-xl py-3"
+                          onPress={() => setShowWorkshopEndsPicker(false)}
+                        >
+                          <Text className="text-center text-base text-gray-600">
+                            Cancel
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          className="flex-1 bg-[#a084e8] rounded-xl py-3"
+                          onPress={confirmWorkshopEnds}
+                        >
+                          <Text className="text-center text-base text-white font-bold">
+                            Confirm
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
+              ) : (
+                <DateTimePicker
+                  value={workshopEndsDate}
+                  mode="time"
+                  is24Hour={false}
+                  display="default"
+                  onChange={handleWorkshopEndsChange}
+                  textColor="#333333"
+                  accentColor="#a084e8"
+                />
+              )}
+            </>
+          )}
+
+          {/* Location Selection Modal - Only for Study Spot */}
+          {category === "Study Spot" && (
+            <Modal
+              visible={showMapModal}
+              transparent={false}
+              animationType="slide"
+              onRequestClose={() => setShowMapModal(false)}
+            >
+              <View className="flex-1 bg-white">
+                {/* Header */}
+                <View className="flex-row items-center justify-between p-4 bg-[#a084e8]">
+                  <TouchableOpacity
+                    onPress={() => setShowMapModal(false)}
+                    className="bg-white rounded-full p-2"
+                  >
+                    <Text className="text-lg text-[#a084e8] font-bold">←</Text>
+                  </TouchableOpacity>
+                  <Text className="text-lg font-bold text-white">
+                    Select Location
+                  </Text>
+                  <TouchableOpacity
+                    onPress={confirmLocation}
+                    className="bg-white rounded-full px-4 py-2"
+                    disabled={!location}
+                  >
+                    <Text
+                      className={`text-sm font-bold ${location ? "text-[#a084e8]" : "text-gray-400"}`}
+                    >
+                      Confirm
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Action Buttons */}
+                <View className="flex-row space-x-3 p-4 bg-gray-50">
+                  <TouchableOpacity
+                    className="flex-1 bg-[#a084e8] rounded-xl py-3"
+                    onPress={getCurrentLocation}
+                  >
+                    <Text className="text-white text-center font-bold">
+                      📍 Use Current Location
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="flex-1 bg-gray-200 rounded-xl py-3"
+                    onPress={() => setShowMapModal(false)}
+                  >
+                    <Text className="text-gray-600 text-center font-bold">
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Map */}
+                <View className="flex-1">
+                  <MapView
+                    style={{ flex: 1 }}
+                    region={mapRegion}
+                    onPress={handleMapPress}
+                    showsUserLocation={true}
+                    showsMyLocationButton={true}
+                    mapType="standard"
+                  >
+                    {location && (
+                      <Marker
+                        coordinate={{
+                          latitude: location.coords.latitude,
+                          longitude: location.coords.longitude,
+                        }}
+                        title="Study Spot Location"
+                        description="Selected location for study spot"
+                        pinColor="#a084e8"
+                      />
+                    )}
+                  </MapView>
+                </View>
+
+                {/* Instructions */}
+                <View className="p-4 bg-gray-50">
+                  <Text className="text-sm text-gray-600 text-center mb-2">
+                    Tap anywhere on the map to place a pin for your study spot
+                    location
+                  </Text>
+                  <Text className="text-xs text-gray-500 text-center">
+                    {location
+                      ? `Current selection: ${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`
+                      : "No location selected yet"}
+                  </Text>
                 </View>
               </View>
             </Modal>
-          ) : (
-            <DateTimePicker
-              value={newMilestoneDateObj}
-              mode="date"
-              display="default"
-              onChange={handleMilestoneDateChange}
-              textColor="#333333"
-              accentColor="#a084e8"
-            />
           )}
-        </>
-      )}
+
+          {/* Milestone Date Picker Modal */}
+          {showMilestoneDatePicker && (
+            <>
+              {Platform.OS === "ios" ? (
+                <Modal
+                  visible={showMilestoneDatePicker}
+                  transparent={true}
+                  animationType="slide"
+                  onRequestClose={() => setShowMilestoneDatePicker(false)}
+                >
+                  <View className="flex-1 bg-black/50 justify-end">
+                    <View className="bg-white rounded-t-3xl p-6">
+                      <Text className="text-lg font-bold text-[#a084e8] mb-4 text-center">
+                        Select Milestone Date
+                      </Text>
+                      <View className="bg-gray-50 rounded-xl p-2 border border-gray-200">
+                        <DateTimePicker
+                          value={newMilestoneDateObj}
+                          mode="date"
+                          display="spinner"
+                          onChange={handleMilestoneDateChange}
+                          style={{
+                            backgroundColor: "transparent",
+                          }}
+                          textColor="#333333"
+                          accentColor="#a084e8"
+                        />
+                      </View>
+                      <View className="flex-row space-x-3 mt-4">
+                        <TouchableOpacity
+                          className="flex-1 bg-gray-200 rounded-xl py-3"
+                          onPress={() => setShowMilestoneDatePicker(false)}
+                        >
+                          <Text className="text-center text-base text-gray-600">
+                            Cancel
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          className="flex-1 bg-[#a084e8] rounded-xl py-3"
+                          onPress={confirmMilestoneDate}
+                        >
+                          <Text className="text-center text-base text-white font-bold">
+                            Confirm
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
+              ) : (
+                <DateTimePicker
+                  value={newMilestoneDateObj}
+                  mode="date"
+                  display="default"
+                  onChange={handleMilestoneDateChange}
+                  textColor="#333333"
+                  accentColor="#a084e8"
+                />
+              )}
+            </>
+          )}
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
