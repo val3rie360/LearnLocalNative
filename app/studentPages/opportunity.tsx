@@ -2,15 +2,16 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Linking,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Linking,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getDownloadUrl } from "../../services/cloudinaryUploadService";
 import { getOpportunityDetails } from "../../services/firestoreService";
 
 const Opportunity = () => {
@@ -71,6 +72,28 @@ const Opportunity = () => {
       return;
     }
     await Linking.openURL(normalizedLink);
+  };
+
+  const handleMemorandumDownload = async () => {
+    if (!opportunity?.memorandumCloudinaryId) {
+      Alert.alert("Error", "Memorandum not available.");
+      return;
+    }
+
+    try {
+      const downloadUrl = await getDownloadUrl(opportunity.memorandumCloudinaryId);
+      const canOpen = await Linking.canOpenURL(downloadUrl);
+      
+      if (!canOpen) {
+        Alert.alert("Error", "Cannot open the memorandum.");
+        return;
+      }
+      
+      await Linking.openURL(downloadUrl);
+    } catch (error) {
+      console.error("Error downloading memorandum:", error);
+      Alert.alert("Error", "Failed to download memorandum.");
+    }
   };
 
   if (loading) {
@@ -201,6 +224,38 @@ const Opportunity = () => {
                 </>
               )}
           </View>
+
+          {/* Official Memorandum Section */}
+          {opportunity.memorandumCloudinaryId && (
+            <View
+              className="bg-white rounded-xl p-4 mb-6 shadow-sm"
+              style={{ elevation: 2 }}
+            >
+              <Text className="font-karla-bold text-[16px] text-[#18181B] mb-3">
+                Official Memorandum
+              </Text>
+              <TouchableOpacity
+                className="bg-[#F0EDFF] rounded-xl p-4 flex-row items-center justify-between"
+                onPress={handleMemorandumDownload}
+                activeOpacity={0.7}
+              >
+                <View className="flex-row items-center flex-1">
+                  <View className="bg-[#4B1EB4] rounded-lg p-2 mr-3">
+                    <Ionicons name="document-text" size={24} color="#fff" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="font-karla-bold text-[14px] text-[#18181B] mb-1">
+                      {opportunity.memorandumFile?.name || "Official Memorandum"}
+                    </Text>
+                    <Text className="text-[#6B7280] text-[12px] font-karla">
+                      Tap to view or download
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="download-outline" size={20} color="#4B1EB4" />
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Register Button */}
           <View className="items-center mb-4">

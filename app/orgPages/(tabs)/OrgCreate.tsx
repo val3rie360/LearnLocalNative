@@ -81,6 +81,12 @@ const OrgCreate = () => {
   const [cloudinaryUploadId, setCloudinaryUploadId] = useState<string | null>(
     null
   );
+  const [memorandumFile, setMemorandumFile] = useState<any>(null);
+  const [memorandumUploadProgress, setMemorandumUploadProgress] = useState(0);
+  const [isMemorandumUploading, setIsMemorandumUploading] = useState(false);
+  const [memorandumCloudinaryId, setMemorandumCloudinaryId] = useState<string | null>(
+    null
+  );
   const [location, setLocation] = useState<Location.LocationObject | null>(
     null
   );
@@ -449,6 +455,94 @@ const OrgCreate = () => {
     }
   };
 
+  const handleMemorandumUpload = async () => {
+    try {
+      // Step 1: Pick the file
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/pdf",
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const pickedFile = result.assets[0];
+
+      // Step 2: Validate the file
+      const validation = validateFile({
+        name: pickedFile.name,
+        mimeType: pickedFile.mimeType,
+        size: pickedFile.size,
+      });
+
+      if (!validation.valid) {
+        Alert.alert("Invalid File", validation.error);
+        return;
+      }
+
+      // Show file info
+      Alert.alert(
+        "Upload Memorandum?",
+        `File: ${pickedFile.name}\nSize: ${formatFileSize(pickedFile.size)}\n\nReady to upload this memorandum?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Upload",
+            onPress: async () => {
+              setIsMemorandumUploading(true);
+              setMemorandumUploadProgress(0);
+
+              try {
+                // Step 3: Upload to Cloudinary
+                console.log("Starting Memorandum Cloudinary upload...");
+                const uploadId = await uploadPDF(
+                  {
+                    uri: pickedFile.uri,
+                    name: pickedFile.name,
+                    mimeType: pickedFile.mimeType,
+                    size: pickedFile.size,
+                  },
+                  user?.uid || "",
+                  {
+                    displayName: `Memorandum - ${title || pickedFile.name}`,
+                    description: "Official Memorandum",
+                    category: "Memorandum",
+                    tags: [category, "memorandum", "official"],
+                  },
+                  (progress: number) => {
+                    setMemorandumUploadProgress(progress);
+                  }
+                );
+
+                // Success!
+                console.log(
+                  "Memorandum Cloudinary upload successful! Upload ID:",
+                  uploadId
+                );
+                setMemorandumCloudinaryId(uploadId);
+                setMemorandumFile(pickedFile);
+                Alert.alert("Success!", "Memorandum uploaded successfully!");
+              } catch (error: any) {
+                console.error("Memorandum Cloudinary upload error:", error);
+                Alert.alert(
+                  "Upload Failed",
+                  error.message || "Failed to upload memorandum"
+                );
+              } finally {
+                setIsMemorandumUploading(false);
+                setMemorandumUploadProgress(0);
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error("Memorandum file picker error:", error);
+      Alert.alert("Error", "Failed to select memorandum PDF file");
+    }
+  };
+
   const handleSubmit = async () => {
     // Clear previous error
     setErrorMessage("");
@@ -494,7 +588,7 @@ const OrgCreate = () => {
       return;
     }
 
-    if (isUploading) {
+    if (isUploading || isMemorandumUploading) {
       setErrorMessage("Please wait for the file upload to complete");
       return;
     }
@@ -541,6 +635,16 @@ const OrgCreate = () => {
           ...(amount && { amount: amount.trim() }),
           ...(eligibility && { eligibility: eligibility.trim() }),
           ...(dateMilestones.length > 0 && { dateMilestones }),
+          ...(memorandumCloudinaryId && {
+            memorandumCloudinaryId: memorandumCloudinaryId,
+            memorandumFile: memorandumFile
+              ? {
+                  name: memorandumFile.name,
+                  size: memorandumFile.size,
+                  mimeType: memorandumFile.mimeType,
+                }
+              : null,
+          }),
         };
       } else if (category === "Workshop / Seminar") {
         // Workshop specific fields
@@ -615,6 +719,10 @@ const OrgCreate = () => {
       setCloudinaryUploadId(null);
       setUploadProgress(0);
       setIsUploading(false);
+      setMemorandumFile(null);
+      setMemorandumCloudinaryId(null);
+      setMemorandumUploadProgress(0);
+      setIsMemorandumUploading(false);
       setErrorMessage("");
       setLink("");
 
@@ -1047,6 +1155,69 @@ const OrgCreate = () => {
                   />
                 </>
               )}
+
+            {/* Official Memorandum Upload - Only show for scholarship and competition categories */}
+            {(category === "Scholarship / Grant" ||
+              category === "Competition / Event") && (
+              <>
+                <Text className="text-sm text-black font-semibold mb-1">
+                  Official Memorandum (Optional)
+                </Text>
+                <Text className="text-xs text-gray-600 mb-2">
+                  Upload an official memorandum or announcement document
+                </Text>
+                <TouchableOpacity
+                  className={`rounded-xl px-3 py-3 mb-3 border-2 ${
+                    memorandumFile
+                      ? "bg-green-50 border-green-400"
+                      : "bg-white border-dashed border-gray-300"
+                  }`}
+                  onPress={handleMemorandumUpload}
+                  disabled={isMemorandumUploading}
+                >
+                  <View className="items-center">
+                    {isMemorandumUploading ? (
+                      <>
+                        <Text className="text-2xl mb-2">⏳</Text>
+                        <Text className="text-base text-gray-600 font-karla-bold">
+                          Uploading... {memorandumUploadProgress}%
+                        </Text>
+                        {/* Progress Bar */}
+                        <View className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                          <View
+                            className="bg-[#a084e8] h-2 rounded-full"
+                            style={{ width: `${memorandumUploadProgress}%` }}
+                          />
+                        </View>
+                      </>
+                    ) : memorandumFile ? (
+                      <>
+                        <Text className="text-2xl mb-2">📋</Text>
+                        <Text className="text-base text-green-700 font-karla-bold">
+                          {memorandumFile.name}
+                        </Text>
+                        <Text className="text-sm text-green-600 mt-1">
+                          {formatFileSize(memorandumFile.size)} • Ready
+                        </Text>
+                        <Text className="text-xs text-gray-500 mt-2">
+                          Tap to upload a different file
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Text className="text-2xl mb-2">📋</Text>
+                        <Text className="text-base text-gray-600">
+                          Tap to upload memorandum (PDF)
+                        </Text>
+                        <Text className="text-sm text-gray-400 mt-1">
+                          PDF files only • Max 50MB
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
 
             {/* Location Picker - Show for Study Spot and Workshop / Seminar categories */}
             {(category === "Study Spot" ||

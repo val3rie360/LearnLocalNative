@@ -226,6 +226,21 @@ export const getFileUrl = (upload) => {
 };
 
 /**
+ * Get download URL by upload ID
+ * @param {string} uploadId - Upload ID
+ * @returns {Promise<string>} - Cloudinary secure URL
+ */
+export const getDownloadUrl = async (uploadId) => {
+  try {
+    const upload = await getUploadById(uploadId);
+    return getFileUrl(upload);
+  } catch (error) {
+    console.error('Error getting download URL:', error);
+    throw error;
+  }
+};
+
+/**
  * Update upload metadata
  * @param {string} uploadId - Upload ID
  * @param {Object} metadata - Updated metadata
