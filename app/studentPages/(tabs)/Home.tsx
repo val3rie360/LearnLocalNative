@@ -204,11 +204,21 @@ export default function Home() {
   const filterOpportunities = (opps: any[]) => {
     // Always exclude resources from the feed and filter by verified organizations
     return opps.filter((op) => {
-      const isNotResource = op.specificCollection !== "resources";
+      // Check multiple possible field names and handle case-insensitivity
+      const specificCollection = (op.specificCollection || op.category || '').toLowerCase();
+      const isNotResource = 
+        specificCollection !== "resources" && 
+        specificCollection !== "resource" &&
+        op.type !== "resources" &&
+        op.type !== "resource";
+      
       const matchesCategory =
         selectedCategory === "all" ||
-        op.specificCollection === selectedCategory;
+        op.specificCollection === selectedCategory ||
+        specificCollection === selectedCategory.toLowerCase();
+      
       const isVerified = isOpportunityOrganizationVerified(op);
+      
       return isNotResource && matchesCategory && isVerified;
     });
   };
@@ -262,6 +272,20 @@ export default function Home() {
     try {
       setLoading(true);
       const data = await getAllActiveOpportunities();
+      
+      // Log resource filtering for debugging
+      const resourceOpps = data.filter((op: any) => {
+        const specificCollection = (op.specificCollection || op.category || '').toLowerCase();
+        return specificCollection === "resources" || 
+               specificCollection === "resource" ||
+               op.type === "resources" ||
+               op.type === "resource";
+      });
+      
+      if (resourceOpps.length > 0) {
+        console.log(`🔍 Filtered out ${resourceOpps.length} resource opportunities from feed`);
+      }
+      
       setOpportunities(data);
     } catch (error) {
       console.error("Error fetching opportunities:", error);
