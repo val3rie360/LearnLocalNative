@@ -414,12 +414,32 @@ export const getUploadStats = async (organizationId) => {
 /**
  * Download file (returns Cloudinary URL and tracks download)
  * @param {string} uploadId - Upload ID
+ * @param {string} userId - User ID (optional, for tracking user downloads)
  * @returns {Promise<string>} - File URL
  */
-export const downloadFile = async (uploadId) => {
+export const downloadFile = async (uploadId, userId = null) => {
   try {
     const upload = await getUploadById(uploadId);
     await incrementDownloadCount(uploadId);
+    
+    // Track user download if userId provided (for cross-device sync)
+    if (userId) {
+      const { doc, updateDoc, arrayUnion } = await import('firebase/firestore');
+      const { db } = await import('../firebaseconfig');
+      
+      try {
+        console.log('💾 Tracking download for user:', userId, 'uploadId:', uploadId);
+        await updateDoc(doc(db, 'profiles', userId), {
+          downloadedResources: arrayUnion(uploadId)
+        });
+        console.log('✅ Download tracked successfully in Firestore');
+      } catch (error) {
+        console.error('❌ Error tracking user download:', error);
+        // Don't fail the download if tracking fails
+        // User can still access the file, just won't be tracked
+      }
+    }
+    
     return getFileUrl(upload);
   } catch (error) {
     console.error('Error downloading file:', error);

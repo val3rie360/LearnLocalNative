@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 import React, { useEffect, useState } from "react";
@@ -16,8 +15,7 @@ const CategoryTag = ({ label }: { label: string }) => (
 );
 
 const Library = () => {
-  const router = useRouter();
-  const { user, profileData } = useAuth();
+  const { user, profileData, refreshProfile } = useAuth();
   const [resources, setResources] = useState<any[]>([]);
   const [filteredResources, setFilteredResources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,8 +23,8 @@ const Library = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<"all" | "bookmarked" | "new" | "popular">("all");
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
-  const [newResources, setNewResources] = useState<any[]>([]);
-  const [popularResources, setPopularResources] = useState<any[]>([]);
+  const [downloadedIds, setDownloadedIds] = useState<string[]>([]);
+  const [downloadedResources, setDownloadedResources] = useState<any[]>([]);
 
   // Fetch resources
   const fetchResources = async () => {
@@ -37,29 +35,12 @@ const Library = () => {
       setResources(data);
       setFilteredResources(data);
       
-      // Filter new resources (uploaded in last 7 days)
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      
-      const recentUploads = data.filter((resource) => {
-        const createdAt = resource.createdAt?.toDate?.() || new Date(resource.createdAt);
-        return createdAt >= oneWeekAgo;
-      });
-      setNewResources(recentUploads);
-      console.log('New resources (last 7 days):', recentUploads.length);
-      
-      // Filter popular resources (with at least 1 download, sorted by download count)
-      const popularUploads = data
-        .filter((resource) => resource.downloadCount > 0)
-        .sort((a, b) => (b.downloadCount || 0) - (a.downloadCount || 0))
-        .slice(0, 10); // Top 10 most downloaded
-      setPopularResources(popularUploads);
-      console.log('Popular resources:', popularUploads.length);
-      
-      // Load user's bookmarked IDs from profile
+      // Load user's bookmarked and downloaded IDs from profile
       if (user?.uid && profileData) {
-        const bookmarks = (profileData as any).bookmarkedResources || [];
-        setBookmarkedIds(bookmarks);
+        const bookmarksRaw = (profileData as any).bookmarkedResources;
+        const downloadsRaw = (profileData as any).downloadedResources;
+        setBookmarkedIds(Array.isArray(bookmarksRaw) ? bookmarksRaw : []);
+        setDownloadedIds(Array.isArray(downloadsRaw) ? downloadsRaw : []);
       }
     } catch (error) {
       console.error("Error fetching resources:", error);
@@ -74,11 +55,21 @@ const Library = () => {
     fetchResources();
   }, [user?.uid, profileData]);
 
+  // Update downloaded resources list
+  useEffect(() => {
+    if (downloadedIds.length > 0) {
+      const downloaded = resources.filter(item => downloadedIds.includes(item.id));
+      setDownloadedResources(downloaded);
+    } else {
+      setDownloadedResources([]);
+    }
+  }, [downloadedIds, resources]);
+
   // Filter and search resources
   useEffect(() => {
     let result = [...resources];
 
-    // Apply bookmarked filter first
+    // Apply bookmarked filter
     if (selectedFilter === "bookmarked") {
       result = result.filter((resource) => bookmarkedIds.includes(resource.id));
     }
@@ -87,12 +78,12 @@ const Library = () => {
     if (searchQuery.trim()) {
       const searchLower = searchQuery.toLowerCase();
       result = result.filter((resource) => {
-        const titleMatch = resource.displayName?.toLowerCase().includes(searchLower) || 
-                          resource.fileName?.toLowerCase().includes(searchLower);
-        const descMatch = resource.description?.toLowerCase().includes(searchLower);
-        const categoryMatch = resource.category?.toLowerCase().includes(searchLower);
-        const tagMatch = resource.tags?.some((tag: string) => tag.toLowerCase().includes(searchLower));
-        const orgMatch = resource.organizationName?.toLowerCase().includes(searchLower);
+        const titleMatch = resource.displayName?.toLowerCase()?.includes(searchLower) || 
+                          resource.fileName?.toLowerCase()?.includes(searchLower);
+        const descMatch = resource.description?.toLowerCase()?.includes(searchLower);
+        const categoryMatch = resource.category?.toLowerCase()?.includes(searchLower);
+        const tagMatch = Array.isArray(resource.tags) && resource.tags.some((tag: any) => typeof tag === 'string' && tag.toLowerCase().includes(searchLower));
+        const orgMatch = resource.organizationName?.toLowerCase()?.includes(searchLower);
         
         return titleMatch || descMatch || categoryMatch || tagMatch || orgMatch;
       });
@@ -115,7 +106,7 @@ const Library = () => {
     }
 
     setFilteredResources(result);
-  }, [searchQuery, selectedFilter, resources, bookmarkedIds]);
+  }, [searchQuery, selectedFilter, resources, bookmarkedIds, downloadedIds]);
 
   // Format date
   const formatDate = (timestamp: any) => {
@@ -127,9 +118,13 @@ const Library = () => {
   // Handle file download
   const handleDownload = async (resource: any) => {
     try {
-      const url = await downloadFile(resource.id);
+      const url = await downloadFile(resource.id, user?.uid);
       await Linking.openURL(url);
       Alert.alert("Success", "File opened! You can download it from your browser.");
+      // Refresh profile to update downloadedIds
+      if (refreshProfile) {
+        await refreshProfile();
+      }
     } catch (error) {
       console.error("Error downloading file:", error);
       Alert.alert("Error", "Failed to download file. Please try again.");
@@ -180,9 +175,10 @@ const Library = () => {
       "Technology": "#34D399",
       "default": "#6366F1"
     };
-    
+
+    const categoryLower = typeof category === "string" ? category.toLowerCase() : "";
     for (const key in colors) {
-      if (category?.toLowerCase().includes(key.toLowerCase())) {
+      if (key !== "default" && categoryLower.includes(key.toLowerCase())) {
         return colors[key];
       }
     }
@@ -225,6 +221,112 @@ const Library = () => {
         </View>
         <View className="h-[1px] bg-[#E5E0FF] mt-1 mb-4" />
 
+        {/* Downloaded Resources - Horizontal Scroll (only on All tab) */}
+        {!loading && downloadedResources.length > 0 && selectedFilter === "all" && (
+          <View className="mb-5">
+            <View className="flex-row justify-between items-center mb-2.5">
+              <Text className="text-[16px] font-karla-bold text-[#111827]">
+                Downloaded Resources
+              </Text>
+              <Text className="text-[13px] text-[#6B7280] font-karla">
+                {downloadedResources.length} {downloadedResources.length === 1 ? 'file' : 'files'}
+              </Text>
+            </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              className="mb-2"
+            >
+              {downloadedResources.slice(0, 10).map((item) => {
+                const isBookmarked = bookmarkedIds.includes(item.id);
+                
+                return (
+                  <View
+                    key={`downloaded-horiz-${item.id}`}
+                    className="bg-white rounded-xl p-3 mr-3 shadow-sm w-[280px]"
+                    style={{ elevation: 2 }}
+                  >
+                    <View
+                      style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }}
+                      className="flex-row items-center"
+                    >
+                      <TouchableOpacity
+                        onPress={() => handleBookmarkToggle(item.id)}
+                        className="mr-2 p-1 bg-white rounded-full"
+                        activeOpacity={0.7}
+                        style={{ elevation: 2 }}
+                      >
+                        <Ionicons
+                          name={isBookmarked ? "bookmark" : "bookmark-outline"}
+                          size={18}
+                          color={isBookmarked ? "#6C3EF8" : "#4B1EB4"}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDownload(item)}
+                        className="p-1 bg-white rounded-full"
+                        activeOpacity={0.7}
+                        style={{ elevation: 2 }}
+                      >
+                        <Ionicons
+                          name="download-outline"
+                          size={18}
+                          color="#4B1EB4"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleDownload(item)}
+                      activeOpacity={0.7}
+                    >
+                      <View className="flex-row items-center mb-2">
+                        <View
+                          className="w-[45px] h-[45px] rounded-lg mr-3 items-center justify-center"
+                          style={{ backgroundColor: getCategoryColor(item.category) }}
+                        >
+                          <Ionicons name="document-text" size={22} color="#fff" />
+                        </View>
+                        <View className="flex-1 pr-8">
+                          <Text className="text-[15px] font-karla-bold text-[#111827] mb-0.5" numberOfLines={2}>
+                            {item.displayName || item.fileName}
+                          </Text>
+                          {item.organizationName && (
+                            <Text className="text-[10px] font-karla text-[#9333EA]" numberOfLines={1}>
+                              by {item.organizationName}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                      <View className="flex-row flex-wrap mb-2">
+                        <CategoryTag label={item.category || "General"} />
+                        {Array.isArray(item.tags)
+                          ? item.tags
+                              .filter((tag: any) => typeof tag === 'string' && tag !== item.category)
+                              .filter((tag: string, index: number, self: string[]) => self.indexOf(tag) === index)
+                              .slice(0, 2)
+                              .map((tag: string, idx: number) => (
+                                <CategoryTag key={idx} label={tag} />
+                              ))
+                          : null}
+                      </View>
+                      <View className="flex-row items-center justify-between">
+                        <Text className="text-[11px] font-karla text-[#6B7280]">
+                          {formatDate(item.createdAt)} • {formatFileSize(item.fileSize)}
+                        </Text>
+                        {item.downloadCount > 0 && (
+                          <Text className="text-[10px] font-karla-bold text-[#6C3EF8]">
+                            {item.downloadCount} downloads
+                          </Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Tabs */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
           <TouchableOpacity 
@@ -261,213 +363,7 @@ const Library = () => {
           </TouchableOpacity>
         </ScrollView>
 
-        {/* New This Week - Horizontal Scroll */}
-        {!loading && newResources.length > 0 && selectedFilter === "all" && (
-          <View className="mb-5">
-            <View className="flex-row justify-between items-center mb-2.5">
-              <Text className="text-[16px] font-karla-bold text-[#111827]">
-                📚 New This Week
-              </Text>
-              <Text className="text-[13px] text-[#6B7280] font-karla">
-                {newResources.length} {newResources.length === 1 ? 'file' : 'files'}
-              </Text>
-            </View>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              className="mb-2"
-            >
-              {newResources.slice(0, 10).map((item) => {
-                const isBookmarked = bookmarkedIds.includes(item.id);
-                
-                return (
-                  <View
-                    key={item.id}
-                    className="bg-white rounded-xl p-3 mr-3 shadow-sm w-[280px]"
-                    style={{ elevation: 2 }}
-                  >
-                    {/* Action buttons in upper right */}
-                    <View
-                      style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }}
-                      className="flex-row items-center"
-                    >
-                      {/* Bookmark button */}
-                      <TouchableOpacity
-                        onPress={() => handleBookmarkToggle(item.id)}
-                        className="mr-2 p-1 bg-white rounded-full"
-                        activeOpacity={0.7}
-                        style={{ elevation: 2 }}
-                      >
-                        <Ionicons
-                          name={isBookmarked ? "bookmark" : "bookmark-outline"}
-                          size={18}
-                          color={isBookmarked ? "#6C3EF8" : "#4B1EB4"}
-                        />
-                      </TouchableOpacity>
-                      
-                      {/* Download button */}
-                      <TouchableOpacity
-                        onPress={() => handleDownload(item)}
-                        className="p-1 bg-white rounded-full"
-                        activeOpacity={0.7}
-                        style={{ elevation: 2 }}
-                      >
-                        <Ionicons
-                          name="download-outline"
-                          size={18}
-                          color="#4B1EB4"
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    
-                    <TouchableOpacity
-                      onPress={() => handleDownload(item)}
-                      activeOpacity={0.7}
-                    >
-                      <View className="flex-row items-start">
-                        <View
-                          className="w-[45px] h-[45px] rounded-lg mr-3 items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: getCategoryColor(item.category) }}
-                        >
-                          <Ionicons name="document-text" size={22} color="#fff" />
-                        </View>
-                        <View className="flex-1 pr-8">
-                          <Text className="text-[14px] font-karla-bold text-[#111827] mb-1" numberOfLines={2}>
-                            {item.displayName || item.fileName}
-                          </Text>
-                          
-                          {/* Organization name */}
-                          {item.organizationName && (
-                            <Text className="text-[10px] font-karla text-[#9333EA] mb-1">
-                              by {item.organizationName}
-                            </Text>
-                          )}
-                          
-                          <View className="flex-row flex-wrap mb-1">
-                            <CategoryTag label={item.category || "General"} />
-                          </View>
-                          
-                          <Text className="text-[11px] font-karla text-[#6B7280]">
-                            {formatDate(item.createdAt)} • {formatFileSize(item.fileSize)}
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </ScrollView>
-            <View className="h-[1px] bg-[#E5E0FF] my-3" />
-          </View>
-        )}
-
-        {/* Popular Resources - Horizontal Scroll */}
-        {!loading && popularResources.length > 0 && selectedFilter === "all" && (
-          <View className="mb-5">
-            <View className="flex-row justify-between items-center mb-2.5">
-              <Text className="text-[16px] font-karla-bold text-[#111827]">
-                🔥 Popular Resources
-              </Text>
-              <Text className="text-[13px] text-[#6B7280] font-karla">
-                Top {popularResources.length}
-              </Text>
-            </View>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              className="mb-2"
-            >
-              {popularResources.map((item) => {
-                const isBookmarked = bookmarkedIds.includes(item.id);
-                
-                return (
-                  <View
-                    key={item.id}
-                    className="bg-white rounded-xl p-3 mr-3 shadow-sm w-[280px]"
-                    style={{ elevation: 2 }}
-                  >
-                    {/* Action buttons in upper right */}
-                    <View
-                      style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }}
-                      className="flex-row items-center"
-                    >
-                      {/* Bookmark button */}
-                      <TouchableOpacity
-                        onPress={() => handleBookmarkToggle(item.id)}
-                        className="mr-2 p-1 bg-white rounded-full"
-                        activeOpacity={0.7}
-                        style={{ elevation: 2 }}
-                      >
-                        <Ionicons
-                          name={isBookmarked ? "bookmark" : "bookmark-outline"}
-                          size={18}
-                          color={isBookmarked ? "#6C3EF8" : "#4B1EB4"}
-                        />
-                      </TouchableOpacity>
-                      
-                      {/* Download button */}
-                      <TouchableOpacity
-                        onPress={() => handleDownload(item)}
-                        className="p-1 bg-white rounded-full"
-                        activeOpacity={0.7}
-                        style={{ elevation: 2 }}
-                      >
-                        <Ionicons
-                          name="download-outline"
-                          size={18}
-                          color="#4B1EB4"
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    
-                    <TouchableOpacity
-                      onPress={() => handleDownload(item)}
-                      activeOpacity={0.7}
-                    >
-                      <View className="flex-row items-start">
-                        <View
-                          className="w-[45px] h-[45px] rounded-lg mr-3 items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: getCategoryColor(item.category) }}
-                        >
-                          <Ionicons name="document-text" size={22} color="#fff" />
-                        </View>
-                        <View className="flex-1 pr-8">
-                          <Text className="text-[14px] font-karla-bold text-[#111827] mb-1" numberOfLines={2}>
-                            {item.displayName || item.fileName}
-                          </Text>
-                          
-                          {/* Organization name */}
-                          {item.organizationName && (
-                            <Text className="text-[10px] font-karla text-[#9333EA] mb-1">
-                              by {item.organizationName}
-                            </Text>
-                          )}
-                          
-                          <View className="flex-row flex-wrap mb-1">
-                            <CategoryTag label={item.category || "General"} />
-                          </View>
-                          
-                          <View className="flex-row items-center justify-between">
-                            <Text className="text-[11px] font-karla text-[#6B7280]">
-                              {formatFileSize(item.fileSize)}
-                            </Text>
-                            <View className="flex-row items-center">
-                              <Ionicons name="download" size={12} color="#6C3EF8" />
-                              <Text className="text-[11px] font-karla-bold text-[#6C3EF8] ml-1">
-                                {item.downloadCount}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </ScrollView>
-            <View className="h-[1px] bg-[#E5E0FF] my-3" />
-          </View>
-        )}
+        {/* Downloaded sub-tab removed */}
 
         {/* Resources List */}
         {loading ? (
@@ -477,18 +373,129 @@ const Library = () => {
           </View>
         ) : filteredResources.length > 0 ? (
           <>
-            <View className="flex-row justify-between items-center mb-2.5">
-              <Text className="text-[16px] font-karla-bold text-[#111827]">
-                {selectedFilter === "all" ? "All Resources" :
-                 selectedFilter === "bookmarked" ? "My Library" :
-                 selectedFilter === "new" ? "New This Week" :
-                 "Popular Resources"}
-              </Text>
-              <Text className="text-[13px] text-[#6B7280] font-karla">
-                {filteredResources.length} {filteredResources.length === 1 ? 'file' : 'files'}
-              </Text>
-            </View>
-            {filteredResources.map((item) => {
+            {/* My Library - Show Selected Sub-Tab Section in Columns */}
+            {selectedFilter === "bookmarked" ? (
+              <>
+                {/* Saved Resources Section */}
+                {(() => {
+                  const savedItems = filteredResources.filter((item) => 
+                    item && 
+                    item.id && 
+                    bookmarkedIds.includes(item.id) &&
+                    (item.displayName || item.fileName) // Ensure item has a name
+                  );
+                  
+                  return savedItems.length > 0 ? (
+                    <View className="mb-5">
+                      <View className="flex-row justify-between items-center mb-2.5">
+                        <Text className="text-[16px] font-karla-bold text-[#111827]">
+                          Saved Resources
+                        </Text>
+                        <Text className="text-[13px] text-[#6B7280] font-karla">
+                          {savedItems.length} {savedItems.length === 1 ? 'file' : 'files'}
+                        </Text>
+                      </View>
+                      <View className="flex-row flex-wrap justify-between">
+                        {savedItems.map((item) => {
+                          const isBookmarked = true; // Always true in this section
+                          
+                          return (
+                            <View
+                              key={`saved-${item.id}`}
+                              className="bg-white rounded-xl p-3 mb-3 shadow-sm"
+                              style={{ elevation: 2, position: "relative", width: "48%" }}
+                            >
+                              <View
+                                style={{ position: "absolute", top: 8, right: 8, zIndex: 1 }}
+                                className="flex-row items-center"
+                              >
+                                <TouchableOpacity
+                                  onPress={() => handleBookmarkToggle(item.id)}
+                                  className="mr-1 p-0.5"
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons
+                                    name="bookmark"
+                                    size={16}
+                                    color="#6C3EF8"
+                                  />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  onPress={() => handleDownload(item)}
+                                  className="p-0.5"
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons
+                                    name="download-outline"
+                                    size={16}
+                                    color="#4B1EB4"
+                                  />
+                                </TouchableOpacity>
+                              </View>
+                              <TouchableOpacity
+                                onPress={() => handleDownload(item)}
+                                activeOpacity={0.7}
+                                className="items-center pt-4"
+                              >
+                                <View
+                                  className="w-[55px] h-[55px] rounded-lg mb-2 items-center justify-center"
+                                  style={{ backgroundColor: getCategoryColor(item.category) }}
+                                >
+                                  <Ionicons name="document-text" size={26} color="#fff" />
+                                </View>
+                                <Text className="text-[13px] font-karla-bold text-[#111827] mb-1 text-center px-1" numberOfLines={2}>
+                                  {item.displayName || item.fileName}
+                                </Text>
+                                {item.organizationName && (
+                                  <Text className="text-[9px] font-karla text-[#9333EA] mb-1 text-center" numberOfLines={1}>
+                                    by {item.organizationName}
+                                  </Text>
+                                )}
+                                <View className="flex-row flex-wrap justify-center mb-1">
+                                  <View className="bg-[#E5E7EB] rounded-[8px] px-1.5 py-0.5">
+                                    <Text className="text-[9px] font-karla-bold text-[#374151]">{item.category || "General"}</Text>
+                                  </View>
+                                </View>
+                                <Text className="text-[10px] font-karla text-[#6B7280] text-center">
+                                  {formatFileSize(item.fileSize)}
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                            );
+                          })}
+                      </View>
+                    </View>
+                  ) : (
+                    <View className="py-12 items-center px-8">
+                      <Ionicons 
+                        name="bookmark-outline" 
+                        size={64} 
+                        color="#CCC" 
+                      />
+                      <Text className="text-[#666] font-karla-bold text-[16px] mt-3 text-center">
+                        No saved resources yet
+                      </Text>
+                      <Text className="text-[#999] font-karla text-[13px] mt-1 text-center">
+                        Bookmark resources to save them for later
+                      </Text>
+                    </View>
+                  );
+                })()}
+              </>
+            ) : (
+              /* Other Filters - Regular List */
+              <>
+                <View className="flex-row justify-between items-center mb-2.5">
+                  <Text className="text-[16px] font-karla-bold text-[#111827]">
+                    {selectedFilter === "all" ? "All Resources" :
+                     selectedFilter === "new" ? "New This Week" :
+                     "Popular Resources"}
+                  </Text>
+                  <Text className="text-[13px] text-[#6B7280] font-karla">
+                    {filteredResources.length} {filteredResources.length === 1 ? 'file' : 'files'}
+                  </Text>
+                </View>
+                {filteredResources.map((item) => {
               const isBookmarked = bookmarkedIds.includes(item.id);
               
               return (
@@ -554,13 +561,15 @@ const Library = () => {
                         
                         <View className="flex-row flex-wrap mb-1">
                           <CategoryTag label={item.category || "General"} />
-                          {item.tags
-                            ?.filter((tag: string) => tag !== item.category) // Remove category from tags
-                            .filter((tag: string, index: number, self: string[]) => self.indexOf(tag) === index) // Remove duplicates
-                            .slice(0, 2)
-                            .map((tag: string, idx: number) => (
-                              <CategoryTag key={idx} label={tag} />
-                            ))}
+                          {Array.isArray(item.tags)
+                            ? item.tags
+                                .filter((tag: any) => typeof tag === 'string' && tag !== item.category) // Remove category from tags
+                                .filter((tag: string, index: number, self: string[]) => self.indexOf(tag) === index) // Remove duplicates
+                                .slice(0, 2)
+                                .map((tag: string, idx: number) => (
+                                  <CategoryTag key={idx} label={tag} />
+                                ))
+                            : null}
                         </View>
                         
                         <View className="flex-row items-center justify-between">
@@ -577,8 +586,10 @@ const Library = () => {
                     </View>
                   </TouchableOpacity>
                 </View>
-              );
-            })}
+                  );
+                })}
+              </>
+            )}
           </>
         ) : (
           <View className="py-12 items-center px-8">

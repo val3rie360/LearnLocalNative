@@ -14,6 +14,7 @@ interface ProfileData {
   verificationStatus?: "pending" | "verified" | "rejected";
   updatedAt?: Date;
   bookmarkedResources?: string[];
+  downloadedResources?: string[];
 }
 
 interface AuthContextType {
