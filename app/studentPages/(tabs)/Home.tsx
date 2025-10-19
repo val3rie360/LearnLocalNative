@@ -15,7 +15,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { SearchBar } from "../../../components/Common";
 import OpportunityCard from "../../../components/OpportunityCard";
 import { useAuth } from "../../../contexts/AuthContext";
-import { getAllActiveOpportunities } from "../../../services/firestoreService";
+import {
+  addOpportunityBookmark,
+  getAllActiveOpportunities,
+  getBookmarkedOpportunities,
+  getUpcomingDeadlines,
+  removeOpportunityBookmark
+} from "../../../services/firestoreService";
 
 interface ProfileData {
   name?: string;
@@ -28,15 +34,23 @@ interface ProfileData {
   verificationStatus?: "pending" | "verified" | "rejected";
 }
 
-// Static data outside component for efficiency
-const DEADLINES = [
-  { date: "AUG 28", title: "STEM Future Leaders Scholarship 2025" },
-  { date: "AUG 29", title: "National Robotics Challenge 2025" },
-  { date: "AUG 30", title: "Dumaguete Scholarships Program" },
-];
+interface UpcomingDeadline {
+  date: Date;
+  title: string;
+  milestoneDescription: string;
+  opportunityId: string;
+  specificCollection: string;
+  category: string;
+}
 
 const CATEGORIES = [
   { icon: "apps", label: "All", bg: "#6B7280", value: "all" },
+  {
+    icon: "bookmark",
+    label: "Saved",
+    bg: "#F59E0B",
+    value: "saved",
+  },
   {
     icon: "school-outline",
     label: "Scholarships",
@@ -142,6 +156,8 @@ export default function Home() {
   const [sortBy, setSortBy] = useState("newest");
   const [showSortModal, setShowSortModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState<UpcomingDeadline[]>([]);
+  const [bookmarkedOpportunities, setBookmarkedOpportunities] = useState<any[]>([]);
 
   // Get display name with fallbacks
   const getDisplayName = () => {
@@ -163,6 +179,14 @@ export default function Home() {
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  // Format deadline date for upcoming deadlines section (e.g., "OCT 25")
+  const formatDeadlineDate = (date: Date) => {
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    }).toUpperCase();
   };
 
   // Helper function to extract earliest deadline from opportunity
@@ -263,8 +287,55 @@ export default function Home() {
 
   // Get filtered and sorted opportunities
   const getDisplayedOpportunities = () => {
+    // If "Saved" category is selected, show bookmarked opportunities
+    if (selectedCategory === "saved") {
+      console.log(`📋 Displaying ${bookmarkedOpportunities.length} saved opportunities`);
+      return sortOpportunities(bookmarkedOpportunities);
+    }
+    
     const filtered = filterOpportunities(opportunities);
     return sortOpportunities(filtered);
+  };
+
+  // Fetch upcoming deadlines for registered opportunities
+  const fetchUpcomingDeadlines = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      const deadlines = await getUpcomingDeadlines(user.uid, 50); // Get more, we'll filter to top 3
+      
+      // Sort by most urgent (earliest date first) and take top 3
+      const sortedDeadlines = deadlines
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .slice(0, 3);
+      
+      setUpcomingDeadlines(sortedDeadlines);
+      console.log(`📅 Fetched ${sortedDeadlines.length} upcoming deadlines`);
+    } catch (error) {
+      console.error("Error fetching upcoming deadlines:", error);
+      setUpcomingDeadlines([]);
+    }
+  };
+
+  // Fetch bookmarked opportunities
+  const fetchBookmarkedOpportunities = async () => {
+    if (!user?.uid) {
+      console.log("⚠️ No user ID, skipping bookmark fetch");
+      return;
+    }
+    
+    try {
+      console.log("🔄 Fetching bookmarked opportunities...");
+      const bookmarked = await getBookmarkedOpportunities(user.uid);
+      setBookmarkedOpportunities(bookmarked);
+      console.log(`🔖 Set ${bookmarked.length} bookmarked opportunities in state`);
+      if (bookmarked.length > 0) {
+        console.log("  Bookmarked opportunity IDs:", bookmarked.map(b => b.id));
+      }
+    } catch (error) {
+      console.error("Error fetching bookmarked opportunities:", error);
+      setBookmarkedOpportunities([]);
+    }
   };
 
   // Fetch opportunities
@@ -298,11 +369,15 @@ export default function Home() {
 
   useEffect(() => {
     fetchOpportunities();
-  }, []);
+    fetchUpcomingDeadlines();
+    fetchBookmarkedOpportunities();
+  }, [user?.uid]);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchOpportunities();
+    fetchUpcomingDeadlines();
+    fetchBookmarkedOpportunities();
   };
 
   // Get organization name from opportunity
@@ -316,6 +391,40 @@ export default function Home() {
     (op?.organizationProfile?.verificationStatus ??
       op?.organizationVerificationStatus ??
       op?.organization?.verificationStatus) === "verified";
+
+  // Check if an opportunity is bookmarked
+  const isOpportunityBookmarked = (opportunityId: string, specificCollection: string): boolean => {
+    return bookmarkedOpportunities.some(
+      (bookmark) => bookmark.id === opportunityId && bookmark.specificCollection === specificCollection
+    );
+  };
+
+  // Handle bookmark toggle
+  const handleBookmarkToggle = async (opportunityId: string, specificCollection: string) => {
+    if (!user?.uid) {
+      console.log("⚠️ No user ID, cannot toggle bookmark");
+      return;
+    }
+
+    try {
+      const isCurrentlyBookmarked = isOpportunityBookmarked(opportunityId, specificCollection);
+      console.log(`🔄 Toggling bookmark for ${opportunityId} (currently bookmarked: ${isCurrentlyBookmarked})`);
+      
+      if (isCurrentlyBookmarked) {
+        console.log(`  Removing bookmark...`);
+        await removeOpportunityBookmark(user.uid, opportunityId, specificCollection);
+      } else {
+        console.log(`  Adding bookmark...`);
+        await addOpportunityBookmark(user.uid, opportunityId, specificCollection);
+      }
+      
+      // Refresh bookmarked opportunities
+      console.log(`  Refreshing bookmarked opportunities list...`);
+      await fetchBookmarkedOpportunities();
+    } catch (error) {
+      console.error("❌ Error toggling bookmark:", error);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#4B1EB4]" edges={["top"]}>
@@ -355,34 +464,64 @@ export default function Home() {
             <Text className="text-[20px] font-karla-bold mb-3">
               Upcoming Deadlines
             </Text>
-            {DEADLINES.map((item, idx) => (
-              <View key={item.date}>
-                <Text className="text-[#4B1EB4] font-karla text-[15px] mb-0.5">
-                  <Text className="font-karla-bold">{item.date}</Text>:{" "}
-                  {item.title}
+            {upcomingDeadlines.length > 0 ? (
+              <>
+                {upcomingDeadlines.map((item, idx) => (
+                  <View key={`${item.opportunityId}-${idx}`}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        router.push({
+                          pathname: "../opportunity",
+                          params: {
+                            id: item.opportunityId,
+                            specificCollection: item.specificCollection,
+                          },
+                        })
+                      }
+                    >
+                      <Text className="text-[#4B1EB4] font-karla text-[15px] mb-0.5">
+                        <Text className="font-karla-bold">
+                          {formatDeadlineDate(item.date)}
+                        </Text>
+                        : {item.milestoneDescription} - {item.title}
+                      </Text>
+                    </TouchableOpacity>
+                    {idx < upcomingDeadlines.length - 1 && (
+                      <View className="h-0.5 bg-[#E5E5E5] my-1" />
+                    )}
+                  </View>
+                ))}
+                <TouchableOpacity onPress={() => router.push("/studentPages/(tabs)/Calendar")}>
+                  <Text className="text-[#605E8F] mt-2 text-right font-karla-bold">
+                    See all
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View className="py-4 items-center">
+                <Ionicons name="calendar-outline" size={40} color="#CCC" />
+                <Text className="text-[#999] font-karla text-center mt-2 text-[14px]">
+                  No upcoming deadlines
                 </Text>
-                {idx < DEADLINES.length - 1 && (
-                  <View className="h-0.5 bg-[#E5E5E5] my-1" />
-                )}
+                <Text className="text-[#BBB] font-karla text-center text-[13px]">
+                  Register for opportunities to track their deadlines
+                </Text>
               </View>
-            ))}
-            <TouchableOpacity>
-              <Text className="text-[#605E8F] mt-2 text-right font-karla-bold">
-                See all
-              </Text>
-            </TouchableOpacity>
+            )}
             {/* Fade effect */}
-            <LinearGradient
-              colors={["transparent", "#fff"]}
-              style={{
-                position: "absolute",
-                bottom: 40,
-                left: 0,
-                right: 0,
-                height: 60,
-              }}
-              pointerEvents="none"
-            />
+            {upcomingDeadlines.length > 0 && (
+              <LinearGradient
+                colors={["transparent", "#fff"]}
+                style={{
+                  position: "absolute",
+                  bottom: 40,
+                  left: 0,
+                  right: 0,
+                  height: 60,
+                }}
+                pointerEvents="none"
+              />
+            )}
           </View>
         </View>
         {/* Categories */}
@@ -470,6 +609,8 @@ export default function Home() {
                 eligibility={op.eligibility || "See details"}
                 description={op.description}
                 tag={op.category}
+                bookmarked={isOpportunityBookmarked(op.id, op.specificCollection)}
+                onBookmarkToggle={() => handleBookmarkToggle(op.id, op.specificCollection)}
                 onViewDetails={() =>
                   router.push({
                     pathname: "../opportunity",
@@ -483,16 +624,24 @@ export default function Home() {
             ))
           ) : (
             <View className="py-8 items-center px-8">
-              <Ionicons name="search-outline" size={48} color="#CCC" />
+              <Ionicons 
+                name={selectedCategory === "saved" ? "bookmark-outline" : "search-outline"} 
+                size={48} 
+                color="#CCC" 
+              />
               <Text className="text-[#666] font-karla-bold text-[16px] mt-3">
-                No opportunities found
+                {selectedCategory === "saved" 
+                  ? "No saved opportunities"
+                  : "No opportunities found"}
               </Text>
               <Text className="text-[#999] font-karla text-center mt-1">
-                {selectedCategory !== "all"
+                {selectedCategory === "saved"
+                  ? "Bookmark opportunities to save them for later"
+                  : selectedCategory !== "all"
                   ? `No ${CATEGORIES.find((c) => c.value === selectedCategory)?.label.toLowerCase()} available right now`
                   : "Check back later for new opportunities"}
               </Text>
-              {selectedCategory !== "all" && (
+              {selectedCategory !== "all" && selectedCategory !== "saved" && (
                 <TouchableOpacity
                   onPress={() => setSelectedCategory("all")}
                   className="mt-4 px-4 py-2 bg-[#4B1EB4] rounded-lg"

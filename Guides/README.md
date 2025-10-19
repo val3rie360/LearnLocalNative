@@ -47,6 +47,17 @@ This folder contains all setup and implementation guides for the LearnLocal Nati
   - CRUD operations
   - Best practices
 
+- **[DEADLINE_TRACKING_SYSTEM.md](./DEADLINE_TRACKING_SYSTEM.md)** - Student deadline tracking ⭐ NEW
+  - Opportunity registration
+  - Calendar integration
+  - Urgency-based sorting
+  - API reference
+
+- **[LIBRARY_SYSTEM.md](./LIBRARY_SYSTEM.md)** - Educational resources library
+  - Bookmark management
+  - Resource organization
+  - Student access
+
 - **[ORG_UPLOADS_PLAN.md](./ORG_UPLOADS_PLAN.md)** - Upload system plan
   - Complete implementation plan
   - Phase breakdown
@@ -76,8 +87,10 @@ This folder contains all setup and implementation guides for the LearnLocal Nati
 ### For Understanding Architecture
 
 1. [OPPORTUNITIES_SYSTEM.md](./OPPORTUNITIES_SYSTEM.md) - How data is structured
-2. [POCKETBASE_INTEGRATION.md](./POCKETBASE_INTEGRATION.md) - File storage architecture
-3. [ORG_UPLOADS_PLAN.md](./ORG_UPLOADS_PLAN.md) - Upload feature plan
+2. [DEADLINE_TRACKING_SYSTEM.md](./DEADLINE_TRACKING_SYSTEM.md) - How students track deadlines
+3. [LIBRARY_SYSTEM.md](./LIBRARY_SYSTEM.md) - Resource management system
+4. [POCKETBASE_INTEGRATION.md](./POCKETBASE_INTEGRATION.md) - File storage architecture
+5. [ORG_UPLOADS_PLAN.md](./ORG_UPLOADS_PLAN.md) - Upload feature plan
 
 ### For Production Deployment
 
@@ -159,6 +172,9 @@ This folder contains all setup and implementation guides for the LearnLocal Nati
 ## 🔄 Update Log
 
 ### Latest Updates
+- ✅ **Deadline Tracking System** - Students can register to track opportunity deadlines
+- ✅ **Calendar Integration** - Visual calendar with urgency-based sorting
+- ✅ **Library System** - Bookmark and manage educational resources
 - ✅ PocketBase integration for file storage
 - ✅ Hybrid opportunities system
 - ✅ Edit functionality for all fields
@@ -166,10 +182,12 @@ This folder contains all setup and implementation guides for the LearnLocal Nati
 - ✅ Auto-refresh on tab focus
 
 ### Upcoming Features
+- 📋 Push notifications for deadline reminders
+- 📋 Calendar export (Google Calendar, iCal)
 - 📋 Phase 2: Upload UI implementation
-- 📋 Student resource browser
+- 📋 Student resource browser enhancements
 - 📋 Analytics dashboard
-- 📋 Notification system
+- 📋 Progress tracking for milestones
 
 ## 📖 Contributing
 
@@ -187,6 +205,7 @@ When adding new features:
 **Questions?** Check the specific guide or create an issue.
 
 **Ready to build?** Start with [POCKETBASE_QUICKSTART.md](./POCKETBASE_QUICKSTART.md)! 🚀
+
 
 
 
