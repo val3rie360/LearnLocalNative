@@ -14,9 +14,9 @@ import {
   Modal,
   Platform,
   Pressable,
+  Text as RNText,
+  TextInput as RNTextInput,
   ScrollView,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -37,6 +37,21 @@ const categories = [
   "Resources",
   "Study Spot",
 ];
+
+const Text = ({
+  className = "",
+  ...props
+}: React.ComponentProps<typeof RNText>) => (
+  <RNText className={`${className} font-karla`} {...props} />
+);
+
+const TextInput = React.forwardRef<
+  RNTextInput,
+  React.ComponentProps<typeof RNTextInput>
+>(({ className = "", ...props }, ref) => (
+  <RNTextInput ref={ref} className={`${className} font-karla`} {...props} />
+));
+TextInput.displayName = "TextInput";
 
 const OrgCreate = () => {
   const { user } = useAuth();
@@ -84,9 +99,9 @@ const OrgCreate = () => {
   const [memorandumFile, setMemorandumFile] = useState<any>(null);
   const [memorandumUploadProgress, setMemorandumUploadProgress] = useState(0);
   const [isMemorandumUploading, setIsMemorandumUploading] = useState(false);
-  const [memorandumCloudinaryId, setMemorandumCloudinaryId] = useState<string | null>(
-    null
-  );
+  const [memorandumCloudinaryId, setMemorandumCloudinaryId] = useState<
+    string | null
+  >(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(
     null
   );
@@ -1337,7 +1352,7 @@ const OrgCreate = () => {
               onPress={handleSubmit}
               disabled={isSubmitting}
             >
-              <Text className="text-white text-base font-bold">
+              <Text className="text-white text-base font-karla-bold">
                 {isSubmitting ? "Submitting..." : "Submit"}
               </Text>
             </TouchableOpacity>

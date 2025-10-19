@@ -71,6 +71,10 @@ export default function OrgHome() {
   const [editSelectedDays, setEditSelectedDays] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
+  const [showAddMilestoneModal, setShowAddMilestoneModal] = useState(false);
+  const [newMilestoneName, setNewMilestoneName] = useState("");
+  const [newMilestoneDate, setNewMilestoneDate] = useState("");
+
   // Fetch opportunities function
   const fetchOpportunities = useCallback(async () => {
     if (!user?.uid) {
@@ -390,7 +394,6 @@ export default function OrgHome() {
               zIndex: 0,
             }}
           />
-
           {/* Avatar and Org Name */}
           <View className="items-center mt-24 mb-2">
             <View
@@ -430,31 +433,32 @@ export default function OrgHome() {
               </Text>
             )}
           </View>
-
           {/* Search Bar & Icon Row */}
           <View className="mx-4 mt-2">
             <View className="bg-white rounded-2xl px-4 py-2 shadow border border-[#C9BFFF] mb-4">
               {/* Icon and Search Bar Row */}
               <View className="flex-row items-center">
-                <View
-                  className="w-9 h-9 rounded-full bg-[#D6D3FF] items-center justify-center mr-3"
-                  style={{ position: "relative", overflow: "hidden" }}
-                >
-                  {profileImageUri ? (
-                    <Image
-                      source={{ uri: profileImageUri }}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderColor: "#cfcbf663",
-                        borderRadius: 48,
-                        borderWidth: 2,
-                      }}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <FontAwesome name="users" size={22} color="#7D7CFF" />
-                  )}
+                <View style={{ position: "relative" }}>
+                  <View
+                    className="w-9 h-9 rounded-full bg-[#D6D3FF] items-center justify-center mr-3"
+                    style={{ overflow: "hidden" }}
+                  >
+                    {profileImageUri ? (
+                      <Image
+                        source={{ uri: profileImageUri }}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderColor: "#cfcbf663",
+                          borderRadius: 48,
+                          borderWidth: 2,
+                        }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <FontAwesome name="users" size={22} color="#7D7CFF" />
+                    )}
+                  </View>
                   {isVerified && (
                     <Ionicons
                       name="checkmark-circle"
@@ -463,7 +467,7 @@ export default function OrgHome() {
                       style={{
                         position: "absolute",
                         bottom: 0,
-                        right: -2,
+                        right: 10,
                         backgroundColor: "#fff",
                         borderRadius: 7,
                       }}
@@ -582,7 +586,6 @@ export default function OrgHome() {
               </View>
             </View>
           </View>
-
           {/* Loading State */}
           {loading && (
             <View className="flex-1 items-center justify-center py-20">
@@ -592,7 +595,6 @@ export default function OrgHome() {
               </Text>
             </View>
           )}
-
           {/* Empty State */}
           {!loading && filteredOpportunities.length === 0 && (
             <View className="flex-1 items-center justify-center py-20 px-8">
@@ -625,7 +627,7 @@ export default function OrgHome() {
                   <View className="flex-row items-center flex-1">
                     <View
                       className="w-9 h-9 rounded-full bg-[#D6D3FF] items-center justify-center mr-3"
-                      style={{ position: "relative", overflow: "hidden" }}
+                      style={{ position: "relative", overflow: "visible" }}
                     >
                       {profileImageUri ? (
                         <Image
@@ -653,6 +655,7 @@ export default function OrgHome() {
                             right: -2,
                             backgroundColor: "#fff",
                             borderRadius: 7,
+                            zIndex: 10,
                           }}
                         />
                       )}
@@ -705,43 +708,13 @@ export default function OrgHome() {
                     {item.title}
                   </Text>
                   <Text
-                    className="text-gray-600 text-sm font-karla mb-2"
+                    className="text-gray-600 text-sm font-karla mb-3"
                     numberOfLines={2}
                   >
                     {item.description}
                   </Text>
 
-                  {/* Category-specific info */}
-                  {item.amount && (
-                    <View className="flex-row items-center mb-1">
-                      <FontAwesome name="money" size={14} color="#7D7CFF" />
-                      <Text className="font-karla-bold text-[#18181B] text-xs ml-2">
-                        Amount:
-                      </Text>
-                      <Text className="font-karla text-[#18181B] text-xs ml-1">
-                        {item.amount}
-                      </Text>
-                    </View>
-                  )}
-
-                  {item.location && (
-                    <View className="flex-row items-center mb-1">
-                      <Ionicons
-                        name="location-outline"
-                        size={14}
-                        color="#7D7CFF"
-                      />
-                      <Text className="font-karla-bold text-[#18181B] text-xs ml-2">
-                        Location:
-                      </Text>
-                      <Text className="font-karla text-[#18181B] text-xs ml-1">
-                        {item.location.latitude?.toFixed(4)},{" "}
-                        {item.location.longitude?.toFixed(4)}
-                      </Text>
-                    </View>
-                  )}
-
-                  <View className="flex-row items-center mt-2">
+                  <View className="flex-row items-center">
                     <View
                       className={`px-3 py-1 rounded-full ${
                         item.status === "active"
@@ -797,7 +770,7 @@ export default function OrgHome() {
                           {editingOpportunity.category}
                         </Text>
                       </View>
-                      <Text className="text-xs text-gray-500 mt-1">
+                      <Text className="text-xs text-gray-500 mt-1 font-karla">
                         Category cannot be changed after creation
                       </Text>
                     </View>
@@ -808,7 +781,7 @@ export default function OrgHome() {
                         Title *
                       </Text>
                       <TextInput
-                        className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-base text-black"
+                        className="bg-white border border-gray-300 rounded-xl px-4 py-3 font-karla text-base text-black"
                         value={editTitle}
                         onChangeText={setEditTitle}
                         placeholder="Enter title"
@@ -821,7 +794,7 @@ export default function OrgHome() {
                         Description *
                       </Text>
                       <TextInput
-                        className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-base text-black"
+                        className="bg-white border border-gray-300 rounded-xl px-4 py-3 font-karlatext-base text-black"
                         value={editDescription}
                         onChangeText={setEditDescription}
                         placeholder="Enter description"
@@ -886,29 +859,11 @@ export default function OrgHome() {
 
                         {/* Add milestone button */}
                         <TouchableOpacity
-                          className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl py-3 items-center"
+                          className="bg-[#a084e8] rounded-lg py-3 items-center"
                           onPress={() => {
-                            Alert.prompt(
-                              "Add Milestone",
-                              "Enter milestone name and date (e.g., 'Application Deadline, May 15, 2025')",
-                              [
-                                { text: "Cancel", style: "cancel" },
-                                {
-                                  text: "Add",
-                                  onPress: (text?: string) => {
-                                    if (text) {
-                                      const parts = text.split(",");
-                                      if (parts.length >= 2) {
-                                        addEditMilestone(
-                                          parts[0].trim(),
-                                          parts.slice(1).join(",").trim()
-                                        );
-                                      }
-                                    }
-                                  },
-                                },
-                              ]
-                            );
+                            setNewMilestoneName("");
+                            setNewMilestoneDate("");
+                            setShowAddMilestoneModal(true);
                           }}
                         >
                           <Text className="text-gray-600 font-karla-bold">
@@ -997,7 +952,7 @@ export default function OrgHome() {
                           </Text>
                           <View className="flex-row space-x-3">
                             <View className="flex-1">
-                              <Text className="text-xs text-gray-600 mb-1">
+                              <Text className="font-karla text-xs text-gray-600 mb-1">
                                 Starts at
                               </Text>
                               <TextInput
@@ -1008,7 +963,7 @@ export default function OrgHome() {
                               />
                             </View>
                             <View className="flex-1">
-                              <Text className="text-xs text-gray-600 mb-1">
+                              <Text className="text-xs font-karla text-gray-600 mb-1">
                                 Ends at
                               </Text>
                               <TextInput
@@ -1047,7 +1002,7 @@ export default function OrgHome() {
 
                           {editRepeats && (
                             <View className="bg-gray-50 border border-gray-300 rounded-xl p-3">
-                              <Text className="text-sm text-gray-600 mb-2">
+                              <Text className="text-sm text-gray-600 font-karla mb-2">
                                 Repeat on days:
                               </Text>
                               <View className="flex-row flex-wrap gap-2">
@@ -1092,7 +1047,7 @@ export default function OrgHome() {
                       <Text className="text-sm font-karla-bold text-gray-700 mb-2">
                         Status
                       </Text>
-                      <View className="flex-row space-x-3">
+                      <View className="flex-row space-x-1">
                         <TouchableOpacity
                           className={`flex-1 py-3 rounded-xl border-2 ${
                             editStatus === "active"
