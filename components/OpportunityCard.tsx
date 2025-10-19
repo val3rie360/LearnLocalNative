@@ -1,5 +1,5 @@
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 type OpportunityCardProps = {
@@ -13,6 +13,7 @@ type OpportunityCardProps = {
   onViewDetails?: () => void;
   bookmarked?: boolean;
   posterVerified?: boolean;
+  onBookmarkToggle?: () => void;
 };
 
 const InfoRow = ({
@@ -67,12 +68,21 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({
   onViewDetails,
   bookmarked = false,
   posterVerified = false,
+  onBookmarkToggle,
 }) => {
   const [isBookmarked, setIsBookmarked] = useState(bookmarked);
 
+  // Sync internal state with prop changes
+  useEffect(() => {
+    setIsBookmarked(bookmarked);
+  }, [bookmarked]);
+
   const handleBookmark = () => {
     setIsBookmarked((prev) => !prev);
-    // Optionally, call a prop callback here to persist bookmark state
+    // Call parent callback to persist bookmark state
+    if (onBookmarkToggle) {
+      onBookmarkToggle();
+    }
   };
 
   return (

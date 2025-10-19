@@ -15,6 +15,22 @@ interface ProfileData {
   updatedAt?: Date;
   bookmarkedResources?: string[];
   downloadedResources?: string[];
+  registeredOpportunities?: Array<{
+    opportunityId: string;
+    specificCollection: string;
+    registeredAt: any;
+  }>;
+  deadlineSnapshots?: Record<string, any>;
+  deadlineNotifications?: Array<{
+    id: string;
+    type: string;
+    opportunityId: string;
+    opportunityTitle: string;
+    category: string;
+    changes: Array<any>;
+    read: boolean;
+    createdAt: any;
+  }>;
 }
 
 interface AuthContextType {

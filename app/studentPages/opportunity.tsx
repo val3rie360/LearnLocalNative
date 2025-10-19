@@ -1,5 +1,5 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -11,17 +11,27 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../contexts/AuthContext";
 import { getDownloadUrl } from "../../services/cloudinaryUploadService";
-import { getOpportunityDetails } from "../../services/firestoreService";
+import {
+    getOpportunityDetails,
+    isRegisteredToOpportunity,
+    registerToOpportunity,
+    unregisterFromOpportunity,
+} from "../../services/firestoreService";
 
 const Opportunity = () => {
   const { id, specificCollection } = useLocalSearchParams<{
     id: string;
     specificCollection: string;
   }>();
+  const { user } = useAuth();
+  const router = useRouter();
   const [opportunity, setOpportunity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [isTrackingLoading, setIsTrackingLoading] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -35,6 +45,12 @@ const Opportunity = () => {
         setLoading(true);
         const data = await getOpportunityDetails(id, specificCollection);
         setOpportunity(data);
+
+        // Check if user is registered to this opportunity
+        if (user?.uid) {
+          const registered = await isRegisteredToOpportunity(user.uid, id);
+          setIsRegistered(registered);
+        }
       } catch (err: any) {
         console.error("Error fetching opportunity:", err);
         setError(err.message || "Failed to load opportunity");
@@ -44,7 +60,7 @@ const Opportunity = () => {
     };
 
     fetchDetails();
-  }, [id, specificCollection]);
+  }, [id, specificCollection, user?.uid]);
 
   // Format date helper
   const formatDate = (timestamp: any) => {
@@ -63,6 +79,19 @@ const Opportunity = () => {
       Alert.alert("Unavailable", "No registration link provided.");
       return;
     }
+
+    // Automatically enable deadline tracking when registering (if not already tracking)
+    if (user?.uid && id && specificCollection && !isRegistered) {
+      try {
+        await registerToOpportunity(user.uid, id, specificCollection);
+        setIsRegistered(true);
+        console.log("✅ Deadline tracking automatically enabled on registration");
+      } catch (error) {
+        console.error("Error auto-enabling tracking:", error);
+        // Continue with registration even if tracking fails
+      }
+    }
+
     const normalizedLink = /^https?:\/\//i.test(rawLink)
       ? rawLink
       : `https://${rawLink}`;
@@ -93,6 +122,57 @@ const Opportunity = () => {
     } catch (error) {
       console.error("Error downloading memorandum:", error);
       Alert.alert("Error", "Failed to download memorandum.");
+    }
+  };
+
+  const handleToggleTracking = async () => {
+    if (!user?.uid) {
+      Alert.alert(
+        "Sign In Required",
+        "Please sign in to track deadlines for this opportunity."
+      );
+      return;
+    }
+
+    if (!id || !specificCollection) {
+      Alert.alert("Error", "Missing opportunity information.");
+      return;
+    }
+
+    try {
+      setIsTrackingLoading(true);
+
+      if (isRegistered) {
+        // Unregister from tracking
+        await unregisterFromOpportunity(user.uid, id);
+        setIsRegistered(false);
+        Alert.alert(
+          "Tracking Removed",
+          "This opportunity has been removed from your calendar."
+        );
+      } else {
+        // Register for tracking
+        await registerToOpportunity(user.uid, id, specificCollection);
+        setIsRegistered(true);
+        
+        // Navigate to Calendar tab after successful tracking
+        Alert.alert(
+          "Tracking Enabled",
+          "Deadlines added to your calendar!",
+          [
+            {
+              text: "View Calendar",
+              onPress: () => router.push("/studentPages/(tabs)/Calendar"),
+            },
+            { text: "Stay Here", style: "cancel" },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling tracking:", error);
+      Alert.alert("Error", "Failed to update tracking status.");
+    } finally {
+      setIsTrackingLoading(false);
     }
   };
 
@@ -129,8 +209,19 @@ const Opportunity = () => {
               {opportunity.category || "Opportunity"}
             </Text>
           </View>
-          <TouchableOpacity>
-            <Ionicons name="bookmark-outline" size={22} color="#fff" />
+          <TouchableOpacity
+            onPress={handleToggleTracking}
+            disabled={isTrackingLoading}
+          >
+            {isTrackingLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons
+                name={isRegistered ? "calendar" : "calendar-outline"}
+                size={22}
+                color={isRegistered ? "#FDE68A" : "#fff"}
+              />
+            )}
           </TouchableOpacity>
         </View>
         <View className="flex-row items-center mb-1">
@@ -257,15 +348,48 @@ const Opportunity = () => {
             </View>
           )}
 
-          {/* Register Button */}
-          <View className="items-center mb-4">
+          {/* Action Buttons */}
+          <View className="items-center mb-4 gap-3">
+            {/* Track Deadlines Button */}
             <TouchableOpacity
-              className={`bg-[#4B1EB4] rounded-full py-3 px-8 items-center w-full max-w-[300px] ${!opportunity.link ? "opacity-50" : ""}`}
+              className={`rounded-full py-3 px-8 items-center w-full max-w-[300px] flex-row justify-center ${
+                isRegistered
+                  ? "bg-[#F0EDFF] border-2 border-[#4B1EB4]"
+                  : "bg-[#4B1EB4]"
+              }`}
+              activeOpacity={0.8}
+              disabled={isTrackingLoading}
+              onPress={handleToggleTracking}
+            >
+              {isTrackingLoading ? (
+                <ActivityIndicator size="small" color={isRegistered ? "#4B1EB4" : "#fff"} />
+              ) : (
+                <>
+                  <Ionicons
+                    name={isRegistered ? "checkmark-circle" : "calendar"}
+                    size={20}
+                    color={isRegistered ? "#4B1EB4" : "#fff"}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text
+                    className={`font-karla-bold text-[16px] ${
+                      isRegistered ? "text-[#4B1EB4]" : "text-white"
+                    }`}
+                  >
+                    {isRegistered ? "Tracking Deadlines" : "Track Deadlines"}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {/* Register Now Button */}
+            <TouchableOpacity
+              className={`bg-white border-2 border-[#4B1EB4] rounded-full py-3 px-8 items-center w-full max-w-[300px] ${!opportunity.link ? "opacity-50" : ""}`}
               activeOpacity={0.8}
               disabled={!opportunity.link}
               onPress={handleRegister}
             >
-              <Text className="text-white font-karla-bold text-[16px]">
+              <Text className="text-[#4B1EB4] font-karla-bold text-[16px]">
                 Register Now
               </Text>
             </TouchableOpacity>
