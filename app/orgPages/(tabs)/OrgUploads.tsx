@@ -1,4 +1,5 @@
-import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -15,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Pdf from "react-native-pdf";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
@@ -138,6 +140,10 @@ export default function OrgUploads() {
   const [actionLoading, setActionLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
+  // PDF viewer states
+  const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
   const isVerified = profileData?.verificationStatus === "verified";
 
   // Fetch uploads
@@ -215,13 +221,39 @@ export default function OrgUploads() {
   // Handle file open
   const handleFilePress = async (upload: any) => {
     try {
-      const url = upload.cloudinarySecureUrl || upload.cloudinaryUrl;
-      if (url) {
-        console.log("Opening file:", url);
+      let url = upload.cloudinarySecureUrl || upload.cloudinaryUrl;
+      if (!url) return;
+
+      // Normalize http -> https and Cloudinary raw delivery for PDFs
+      if (url.startsWith("http://")) url = url.replace("http://", "https://");
+      if (url.includes("/image/upload/"))
+        url = url.replace("/image/upload/", "/raw/upload/");
+
+      const looksLikePdf =
+        /\.pdf(\?|$)/i.test(url) || /\.pdf$/i.test(upload.fileName || "");
+
+      if (!looksLikePdf) {
+        // fallback: open in external browser if not a PDF
         await Linking.openURL(url);
+        return;
       }
+
+      const fileName = (
+        upload.fileName ||
+        url.split("/").pop() ||
+        "file.pdf"
+      ).split("?")[0];
+      const dest = FileSystem.documentDirectory + fileName;
+      console.log("Downloading PDF to:", dest);
+
+      const downloadResult = await FileSystem.downloadAsync(url, dest);
+      console.log("Download complete:", downloadResult.uri);
+
+      setSelectedPdf(downloadResult.uri);
+      setModalVisible(true);
     } catch (err) {
       console.error("Error opening file:", err);
+      Alert.alert("Error", "Failed to open file. Try again.");
     }
   };
 
@@ -856,6 +888,45 @@ export default function OrgUploads() {
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        </Modal>
+
+        {/* PDF Modal (in-app viewer) */}
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent={false}
+          onRequestClose={() => {
+            setModalVisible(false);
+            setSelectedPdf(null);
+          }}
+        >
+          <View className="flex-1 bg-black">
+            <TouchableOpacity
+              className="absolute top-12 right-6 z-50"
+              onPress={() => {
+                setModalVisible(false);
+                setSelectedPdf(null);
+              }}
+            >
+              <Ionicons name="close-circle" size={40} color="white" />
+            </TouchableOpacity>
+
+            {selectedPdf && (
+              <View className="flex-1 w-full">
+                <Pdf
+                  source={{ uri: selectedPdf, cache: true }}
+                  style={{ flex: 1, width: "100%" }}
+                  onError={(error) => {
+                    console.error("PDF Error:", error);
+                    Alert.alert(
+                      "PDF Error",
+                      (error as { message?: string })?.message || String(error)
+                    );
+                  }}
+                />
+              </View>
+            )}
           </View>
         </Modal>
       </LinearGradient>
