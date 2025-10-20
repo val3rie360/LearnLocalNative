@@ -95,7 +95,7 @@ export const uploadPDF = async (file, organizationId, metadata, onProgress) => {
     formData.append("upload_preset", "learn_local_uploads");
     formData.append("cloud_name", cloudinaryConfig.cloudName);
     formData.append("folder", `uploads/${organizationId}`);
-    formData.append("resource_type", "raw");
+
     formData.append(
       "public_id",
       `${uploadId}_${file.name.replace(".pdf", "")}`

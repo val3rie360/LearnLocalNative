@@ -30,7 +30,7 @@ export const generateSignature = (paramsToSign) => {
  * Get Cloudinary upload URL
  */
 export const getUploadUrl = () => {
-  return `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/upload`;
+  return `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/raw/upload`;
 };
 
 /**

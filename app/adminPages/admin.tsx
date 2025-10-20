@@ -1,4 +1,5 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
 import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import React, { useCallback, useEffect, useState } from "react";
@@ -151,18 +152,46 @@ export default function SuperAdminReview() {
     ]);
   };
 
-  const handleViewFile = (fileUrl: string) => {
-    const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileUrl);
-    const isPdf = /\.pdf$/i.test(fileUrl);
+  const handleViewFile = async (fileUrl: string) => {
+    try {
+      const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileUrl);
+      const isPdf = /\.pdf$/i.test(fileUrl);
 
-    if (isImage) {
-      setSelectedImage(fileUrl);
-      setModalVisible(true);
-    } else if (isPdf) {
-      setSelectedPdf(fileUrl);
-      setModalVisible(true);
-    } else {
-      Linking.openURL(fileUrl);
+      if (isImage) {
+        setSelectedImage(fileUrl);
+        setModalVisible(true);
+        return;
+      }
+
+      if (isPdf) {
+        // Ensure https and proper Cloudinary delivery
+        let url = fileUrl;
+        if (url.startsWith("http://")) {
+          url = url.replace("http://", "https://");
+        }
+        if (url.includes("/image/upload/")) {
+          url = url.replace("/image/upload/", "/raw/upload/");
+        }
+
+        const fileName = url.split("/").pop() || "verification.pdf";
+        const fileUri = FileSystem.documentDirectory + fileName;
+
+        console.log("Downloading PDF to:", fileUri);
+
+        const downloadResult = await FileSystem.downloadAsync(url, fileUri);
+
+        console.log("Download complete:", downloadResult.uri);
+
+        // Set the local file for the PDF viewer
+        setSelectedPdf(downloadResult.uri);
+        setModalVisible(true);
+      } else {
+        // Fallback for other file types
+        Linking.openURL(fileUrl);
+      }
+    } catch (error) {
+      console.error("Error opening file:", error);
+      Alert.alert("Error", "Unable to open the file.");
     }
   };
 
@@ -181,7 +210,8 @@ export default function SuperAdminReview() {
   return (
     <SafeAreaView className="flex-1 bg-[#F6F4FE]" edges={["top"]}>
       <ScrollView
-        contentContainerStyle={{ padding: 20 }}
+        className="flex-1"
+        contentContainerStyle={{ padding: 20, flexGrow: 1 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -290,16 +320,17 @@ export default function SuperAdminReview() {
       {/* Image Preview Modal */}
       <Modal
         visible={modalVisible}
-        transparent={true}
+        animationType="slide"
+        transparent={false} // make modal full screen
         onRequestClose={() => {
           setModalVisible(false);
           setSelectedImage(null);
           setSelectedPdf(null);
         }}
       >
-        <View className="flex-1 bg-black/90 justify-center items-center">
+        <View className="flex-1 bg-black">
           <TouchableOpacity
-            className="absolute top-12 right-6 z-10"
+            className="absolute top-12 right-6 z-50"
             onPress={() => {
               setModalVisible(false);
               setSelectedImage(null);
@@ -308,18 +339,22 @@ export default function SuperAdminReview() {
           >
             <Ionicons name="close-circle" size={40} color="white" />
           </TouchableOpacity>
+
+          {/* Image fills screen (contain) */}
           {selectedImage && (
             <Image
               source={{ uri: selectedImage }}
-              style={{ width: "90%", height: "80%" }}
+              className="w-full h-full"
               resizeMode="contain"
             />
           )}
+
+          {/* PDF fills the entire modal */}
           {selectedPdf && (
-            <View style={{ width: "90%", height: "80%" }}>
+            <View className="flex-1 w-full">
               <Pdf
                 source={{ uri: selectedPdf, cache: true }}
-                style={{ flex: 1 }}
+                style={{ flex: 1, width: "100%" }}
                 onError={(error) => {
                   Alert.alert(
                     "PDF Error",

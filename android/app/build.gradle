@@ -127,10 +127,10 @@ android {
     }
 
     externalNativeBuild {
-        cmake {
-            arguments "-DANDROID_STL=c++_shared"
-        }
+    cmake {
+        arguments = ["-DANDROID_STL=c++_shared"]
     }
+}
 }
 
 // Apply static values from `gradle.properties` to the `android.packagingOptions`
