@@ -1,4 +1,5 @@
 package com.anonymous.learnlocalnative
+package com.anonymous.learnlocalnative
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Pdf from "react-native-pdf";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseconfig";
 import { logOut } from "../../services/authServices";
@@ -57,6 +58,7 @@ export default function SuperAdminReview() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -151,9 +153,13 @@ export default function SuperAdminReview() {
 
   const handleViewFile = (fileUrl: string) => {
     const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileUrl);
+    const isPdf = /\.pdf$/i.test(fileUrl);
 
     if (isImage) {
       setSelectedImage(fileUrl);
+      setModalVisible(true);
+    } else if (isPdf) {
+      setSelectedPdf(fileUrl);
       setModalVisible(true);
     } else {
       Linking.openURL(fileUrl);
@@ -285,12 +291,20 @@ export default function SuperAdminReview() {
       <Modal
         visible={modalVisible}
         transparent={true}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => {
+          setModalVisible(false);
+          setSelectedImage(null);
+          setSelectedPdf(null);
+        }}
       >
         <View className="flex-1 bg-black/90 justify-center items-center">
           <TouchableOpacity
             className="absolute top-12 right-6 z-10"
-            onPress={() => setModalVisible(false)}
+            onPress={() => {
+              setModalVisible(false);
+              setSelectedImage(null);
+              setSelectedPdf(null);
+            }}
           >
             <Ionicons name="close-circle" size={40} color="white" />
           </TouchableOpacity>
@@ -300,6 +314,20 @@ export default function SuperAdminReview() {
               style={{ width: "90%", height: "80%" }}
               resizeMode="contain"
             />
+          )}
+          {selectedPdf && (
+            <View style={{ width: "90%", height: "80%" }}>
+              <Pdf
+                source={{ uri: selectedPdf, cache: true }}
+                style={{ flex: 1 }}
+                onError={(error) => {
+                  Alert.alert(
+                    "PDF Error",
+                    (error as { message?: string })?.message || String(error)
+                  );
+                }}
+              />
+            </View>
           )}
         </View>
       </Modal>
