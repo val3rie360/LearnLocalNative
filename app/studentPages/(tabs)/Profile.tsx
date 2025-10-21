@@ -29,8 +29,33 @@ const Profile: React.FC = () => {
     user?.photoURL ??
     "";
 
+  // Filter out URLs that commonly cause 401 errors (social auth profile pics)
+  const isPrivateUrl = (url: string) => {
+    if (!url) return false;
+    // Google, Facebook, and other social auth URLs require authentication cookies
+    return (
+      url.includes('googleusercontent.com') ||
+      url.includes('fbcdn.net') ||
+      url.includes('graph.facebook.com') ||
+      url.includes('twimg.com') ||
+      url.includes('githubusercontent.com')
+    );
+  };
+
+  const safeAvatarUrl = rawAvatarUrl && !isPrivateUrl(rawAvatarUrl) ? rawAvatarUrl : "";
+
   useEffect(() => {
-    setAvatarError(false);
+    if (rawAvatarUrl) {
+      console.log("[Profile] Avatar URL:", rawAvatarUrl);
+      if (isPrivateUrl(rawAvatarUrl)) {
+        console.warn("[Profile] Skipping private/social auth URL (requires auth cookies)");
+        setAvatarError(true);
+      } else {
+        setAvatarError(false);
+      }
+    } else {
+      setAvatarError(false);
+    }
   }, [rawAvatarUrl]);
 
   const handleLogout = async () => {
@@ -64,13 +89,14 @@ const Profile: React.FC = () => {
         <View className="items-center mb-8">
           <View className="bg-[#EAE8FD] rounded-full p-1.5 mb-2">
             <View className="bg-white rounded-full w-24 h-24 items-center justify-center overflow-hidden border border-[#EAE8FD]">
-              {rawAvatarUrl && !avatarError ? (
+              {safeAvatarUrl && !avatarError ? (
                 <ExpoImage
-                  source={{ uri: rawAvatarUrl }}
+                  source={{ uri: safeAvatarUrl }}
                   style={{ width: "100%", height: "100%" }}
                   contentFit="cover"
                   onError={(error) => {
-                    console.error("[Profile] avatar display error:", error);
+                    console.error("[Profile] Avatar display error:", error);
+                    console.error("[Profile] Failed URL:", safeAvatarUrl);
                     setAvatarError(true);
                   }}
                 />

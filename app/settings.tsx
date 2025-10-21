@@ -30,8 +30,33 @@ export default function Settings() {
     user?.photoURL ??
     "";
 
+  // Filter out URLs that commonly cause 401 errors (social auth profile pics)
+  const isPrivateUrl = (url: string) => {
+    if (!url) return false;
+    // Google, Facebook, and other social auth URLs require authentication cookies
+    return (
+      url.includes('googleusercontent.com') ||
+      url.includes('fbcdn.net') ||
+      url.includes('graph.facebook.com') ||
+      url.includes('twimg.com') ||
+      url.includes('githubusercontent.com')
+    );
+  };
+
+  const safeAvatarUrl = rawAvatarUrl && !isPrivateUrl(rawAvatarUrl) ? rawAvatarUrl : "";
+
   useEffect(() => {
-    setAvatarError(false);
+    if (rawAvatarUrl) {
+      console.log("[Settings] Avatar URL:", rawAvatarUrl);
+      if (isPrivateUrl(rawAvatarUrl)) {
+        console.warn("[Settings] Skipping private/social auth URL (requires auth cookies)");
+        setAvatarError(true);
+      } else {
+        setAvatarError(false);
+      }
+    } else {
+      setAvatarError(false);
+    }
   }, [rawAvatarUrl]);
 
   // Get display name with fallbacks
@@ -76,9 +101,9 @@ export default function Settings() {
         onPress={() => router.push("/editaccount")}
       >
         <View className="bg-[#F6F4FE] rounded-full w-12 h-12 items-center justify-center mr-3 overflow-hidden">
-          {rawAvatarUrl && !avatarError ? (
+          {safeAvatarUrl && !avatarError ? (
             <ExpoImage
-              source={{ uri: rawAvatarUrl }}
+              source={{ uri: safeAvatarUrl }}
               style={{
                 width: "100%",
                 borderColor: "#b8b3e863",
@@ -88,7 +113,8 @@ export default function Settings() {
               }}
               contentFit="cover"
               onError={(error) => {
-                console.error("[Settings] avatar display error:", error);
+                console.error("[Settings] Avatar display error:", error);
+                console.error("[Settings] Failed URL:", safeAvatarUrl);
                 setAvatarError(true);
               }}
             />

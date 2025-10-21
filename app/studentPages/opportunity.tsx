@@ -14,9 +14,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../contexts/AuthContext";
 import { getDownloadUrl } from "../../services/cloudinaryUploadService";
 import {
+    addOpportunityBookmark,
     getOpportunityDetails,
+    isOpportunityBookmarked,
     isRegisteredToOpportunity,
     registerToOpportunity,
+    removeOpportunityBookmark,
     unregisterFromOpportunity,
 } from "../../services/firestoreService";
 
@@ -32,6 +35,8 @@ const Opportunity = () => {
   const [error, setError] = useState("");
   const [isRegistered, setIsRegistered] = useState(false);
   const [isTrackingLoading, setIsTrackingLoading] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -50,6 +55,10 @@ const Opportunity = () => {
         if (user?.uid) {
           const registered = await isRegisteredToOpportunity(user.uid, id);
           setIsRegistered(registered);
+          
+          // Check if user has bookmarked this opportunity
+          const bookmarked = await isOpportunityBookmarked(user.uid, id, specificCollection);
+          setIsBookmarked(bookmarked);
         }
       } catch (err: any) {
         console.error("Error fetching opportunity:", err);
@@ -176,6 +185,42 @@ const Opportunity = () => {
     }
   };
 
+  const handleToggleBookmark = async () => {
+    if (!user?.uid) {
+      Alert.alert(
+        "Sign In Required",
+        "Please sign in to save opportunities."
+      );
+      return;
+    }
+
+    if (!id || !specificCollection) {
+      Alert.alert("Error", "Missing opportunity information.");
+      return;
+    }
+
+    try {
+      setIsBookmarkLoading(true);
+
+      if (isBookmarked) {
+        // Remove bookmark
+        await removeOpportunityBookmark(user.uid, id, specificCollection);
+        setIsBookmarked(false);
+        console.log("✅ Bookmark removed");
+      } else {
+        // Add bookmark
+        await addOpportunityBookmark(user.uid, id, specificCollection);
+        setIsBookmarked(true);
+        console.log("✅ Bookmark added");
+      }
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+      Alert.alert("Error", "Failed to update bookmark.");
+    } finally {
+      setIsBookmarkLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-[#F6F4FE] items-center justify-center">
@@ -212,6 +257,7 @@ const Opportunity = () => {
           <TouchableOpacity
             onPress={handleToggleTracking}
             disabled={isTrackingLoading}
+            className="mr-3"
           >
             {isTrackingLoading ? (
               <ActivityIndicator size="small" color="#fff" />
@@ -220,6 +266,20 @@ const Opportunity = () => {
                 name={isRegistered ? "calendar" : "calendar-outline"}
                 size={22}
                 color={isRegistered ? "#FDE68A" : "#fff"}
+              />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleToggleBookmark}
+            disabled={isBookmarkLoading}
+          >
+            {isBookmarkLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons
+                name={isBookmarked ? "bookmark" : "bookmark-outline"}
+                size={22}
+                color={isBookmarked ? "#FDE68A" : "#fff"}
               />
             )}
           </TouchableOpacity>

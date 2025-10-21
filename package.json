@@ -35,8 +35,9 @@
     "expo-linear-gradient": "~15.0.7",
     "expo-linking": "~8.0.8",
     "expo-location": "^19.0.7",
+    "expo-modules-core": "~3.0.21",
     "expo-navigation-bar": "~5.0.8",
-    "expo-router": "~6.0.11",
+    "expo-router": "~6.0.12",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
     "expo-symbols": "~1.0.7",
@@ -64,11 +65,11 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "^19.1.13",
+    "@types/react": "~19.1.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
-    "typescript": "~5.9.2",
-    "expo-module-scripts": "^3.2.3"
+    "expo-module-scripts": "^3.2.3",
+    "typescript": "~5.9.2"
   },
   "private": true
 }

@@ -1,8 +1,8 @@
 import {
-  Feather,
-  FontAwesome,
-  Ionicons,
-  MaterialIcons,
+    Feather,
+    FontAwesome,
+    Ionicons,
+    MaterialIcons,
 } from "@expo/vector-icons";
 import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -11,12 +11,12 @@ import { useRouter } from "expo-router";
 import { updateEmail, updatePassword, updateProfile } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { cloudinaryConfig, getImageUploadUrl } from "../cloudinaryConfig";
@@ -69,16 +69,40 @@ export default function EditAccount() {
   const isCloudinaryConfigured =
     !!cloudinaryImageUploadUrl && !!avatarUploadPreset && !isPresetPlaceholder;
 
+  // Filter out URLs that commonly cause 401 errors (social auth profile pics)
+  const isPrivateUrl = (url: string) => {
+    if (!url) return false;
+    // Google, Facebook, and other social auth URLs require authentication cookies
+    return (
+      url.includes('googleusercontent.com') ||
+      url.includes('fbcdn.net') ||
+      url.includes('graph.facebook.com') ||
+      url.includes('twimg.com') ||
+      url.includes('githubusercontent.com')
+    );
+  };
+
   useEffect(() => {
     if (profileData) {
       const profilePhoto =
         (profileData as { photoURL?: string | null })?.photoURL ??
         user?.photoURL ??
         "";
+      
+      console.log("[EditAccount] Avatar URL from profile:", profilePhoto);
+      
+      // Only set avatar URL if it's not a private social auth URL
+      if (profilePhoto && isPrivateUrl(profilePhoto)) {
+        console.warn("[EditAccount] Skipping private/social auth URL (requires auth cookies)");
+        setAvatarUrl("");
+        setAvatarError(true);
+      } else {
+        setAvatarUrl(profilePhoto);
+        setAvatarError(false);
+      }
+      
       setName(profileData?.name || user?.displayName || "");
       setEmail(profileData?.email || user?.email || "");
-      setAvatarUrl(profilePhoto);
-      setAvatarError(false);
     }
   }, [profileData, user]);
 
@@ -260,7 +284,8 @@ export default function EditAccount() {
               contentFit="cover"
               transition={200}
               onError={(err) => {
-                console.error("[Avatar] display error:", err);
+                console.error("[EditAccount] Avatar display error:", err);
+                console.error("[EditAccount] Failed URL:", avatarUrl);
                 setAvatarError(true);
               }}
             />

@@ -314,6 +314,54 @@ export const getOrganizationOpportunities = async (organizationId) => {
 };
 
 /**
+ * Remove all bookmarks for a specific opportunity across all users
+ * @param {string} opportunityId - ID of the opportunity
+ * @param {string} specificCollection - Name of the specific collection
+ * @returns {Promise<number>} - Number of users whose bookmarks were updated
+ */
+export const removeAllBookmarksForOpportunity = async (opportunityId, specificCollection) => {
+  try {
+    console.log(`🧹 Removing all bookmarks for opportunity: ${opportunityId}`);
+    
+    // Query all user profiles that have bookmarked this opportunity
+    const profilesRef = collection(db, "profiles");
+    const profilesSnapshot = await getDocs(profilesRef);
+    
+    let updatedCount = 0;
+    
+    for (const profileDoc of profilesSnapshot.docs) {
+      const profileData = profileDoc.data();
+      const bookmarkedOpportunities = profileData.bookmarkedOpportunities || [];
+      
+      // Check if this user has bookmarked the opportunity
+      const hasBookmark = bookmarkedOpportunities.some(
+        (bookmark) => bookmark.opportunityId === opportunityId && bookmark.specificCollection === specificCollection
+      );
+      
+      if (hasBookmark) {
+        // Remove the bookmark
+        const updatedBookmarks = bookmarkedOpportunities.filter(
+          (bookmark) => !(bookmark.opportunityId === opportunityId && bookmark.specificCollection === specificCollection)
+        );
+        
+        await updateDoc(doc(db, "profiles", profileDoc.id), {
+          bookmarkedOpportunities: updatedBookmarks,
+        });
+        
+        updatedCount++;
+        console.log(`  ✅ Removed bookmark from user: ${profileDoc.id}`);
+      }
+    }
+    
+    console.log(`✅ Updated ${updatedCount} user profile(s)`);
+    return updatedCount;
+  } catch (error) {
+    console.error("Error removing bookmarks for opportunity:", error);
+    return 0;
+  }
+};
+
+/**
  * Delete an opportunity from both collections
  * @param {string} opportunityId - ID of the opportunity
  * @param {string} specificCollection - Name of the specific collection
@@ -321,6 +369,9 @@ export const getOrganizationOpportunities = async (organizationId) => {
 export const deleteOpportunity = async (opportunityId, specificCollection) => {
   try {
     const { deleteDoc } = await import("firebase/firestore");
+
+    // Remove all bookmarks for this opportunity first
+    await removeAllBookmarksForOpportunity(opportunityId, specificCollection);
 
     // Delete from specific collection
     await deleteDoc(doc(db, specificCollection, opportunityId));
@@ -700,6 +751,69 @@ export const isOpportunityBookmarked = async (userId, opportunityId, specificCol
   } catch (error) {
     console.error("Error checking opportunity bookmark status:", error);
     return false;
+  }
+};
+
+/**
+ * Clean up dead bookmark references for a user
+ * Removes bookmarks for opportunities that no longer exist or are inactive
+ * @param {string} userId - Student user ID
+ * @returns {Promise<number>} - Number of bookmarks removed
+ */
+export const cleanupDeadBookmarks = async (userId) => {
+  try {
+    console.log("🧹 Cleaning up dead bookmarks for user:", userId);
+    const userRef = doc(db, "profiles", userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+      return 0;
+    }
+
+    const bookmarkedOpportunities = userSnap.data().bookmarkedOpportunities || [];
+    
+    if (bookmarkedOpportunities.length === 0) {
+      return 0;
+    }
+
+    // Check each bookmark to see if the opportunity still exists and is active
+    const validBookmarks = [];
+    let removedCount = 0;
+    
+    for (const bookmark of bookmarkedOpportunities) {
+      try {
+        const oppRef = doc(db, bookmark.specificCollection, bookmark.opportunityId);
+        const oppSnap = await getDoc(oppRef);
+        
+        if (oppSnap.exists() && oppSnap.data().status === "active") {
+          // Opportunity still exists and is active, keep the bookmark
+          validBookmarks.push(bookmark);
+        } else {
+          // Opportunity doesn't exist or is inactive, remove the bookmark
+          console.log(`  🗑️ Removing bookmark for: ${bookmark.opportunityId}`);
+          removedCount++;
+        }
+      } catch (error) {
+        console.error(`Error checking bookmark ${bookmark.opportunityId}:`, error);
+        // Remove bookmarks that cause errors
+        removedCount++;
+      }
+    }
+    
+    // Update user profile with cleaned bookmarks
+    if (removedCount > 0) {
+      await updateDoc(userRef, {
+        bookmarkedOpportunities: validBookmarks,
+      });
+      console.log(`✅ Cleaned up ${removedCount} dead bookmark(s)`);
+    } else {
+      console.log("✅ No dead bookmarks found");
+    }
+    
+    return removedCount;
+  } catch (error) {
+    console.error("Error cleaning up dead bookmarks:", error);
+    return 0;
   }
 };
 

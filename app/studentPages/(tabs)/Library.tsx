@@ -118,9 +118,31 @@ const Library = () => {
   // Handle file download
   const handleDownload = async (resource: any) => {
     try {
+      console.log("[Library] Attempting download for:", resource.displayName);
+      console.log("[Library] Resource ID:", resource.id);
+      
       const url = await downloadFile(resource.id, user?.uid);
+      console.log("[Library] Got download URL:", url);
+      
+      // Test URL accessibility
+      try {
+        const testResponse = await fetch(url, { method: 'HEAD' });
+        console.log("[Library] URL status check:", testResponse.status);
+        if (testResponse.status === 401 || testResponse.status === 403) {
+          console.error("[Library] ❌ PDF Access Blocked - Cloudinary preset might not be Public");
+          Alert.alert(
+            "Access Denied", 
+            "The PDF is blocked by Cloudinary. Please contact the organization or check that the upload preset has Access Mode set to Public."
+          );
+          return;
+        }
+      } catch (testError) {
+        console.warn("[Library] URL test failed:", testError);
+      }
+      
       await Linking.openURL(url);
       Alert.alert("Success", "File opened! You can download it from your browser.");
+      
       // Refresh profile to update downloadedIds
       if (refreshProfile) {
         await refreshProfile();

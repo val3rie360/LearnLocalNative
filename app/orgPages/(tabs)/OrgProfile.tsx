@@ -5,12 +5,12 @@ import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -39,10 +39,35 @@ const OrgProfile: React.FC = () => {
   );
   const [avatarError, setAvatarError] = useState(false);
 
+  // Filter out URLs that commonly cause 401 errors (social auth profile pics)
+  const isPrivateUrl = (url: string) => {
+    if (!url) return false;
+    // Google, Facebook, and other social auth URLs require authentication cookies
+    return (
+      url.includes('googleusercontent.com') ||
+      url.includes('fbcdn.net') ||
+      url.includes('graph.facebook.com') ||
+      url.includes('twimg.com') ||
+      url.includes('githubusercontent.com')
+    );
+  };
+
   useEffect(() => {
     setProfileInfo((profileData ?? null) as ProfileData | null);
-    setAvatarError(false);
-  }, [profileData]);
+    
+    const photoUrl = (profileData as ProfileData)?.photoURL || user?.photoURL || "";
+    if (photoUrl) {
+      console.log("[OrgProfile] Avatar URL:", photoUrl);
+      if (isPrivateUrl(photoUrl)) {
+        console.warn("[OrgProfile] Skipping private/social auth URL (requires auth cookies)");
+        setAvatarError(true);
+      } else {
+        setAvatarError(false);
+      }
+    } else {
+      setAvatarError(false);
+    }
+  }, [profileData, user?.photoURL]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -104,7 +129,7 @@ const OrgProfile: React.FC = () => {
               <View className="bg-white rounded-full w-28 h-28 items-center justify-center border-[#ECEAFF] shadow">
                 {profileLoading ? (
                   <FontAwesome name="users" size={72} color="#7D7CFF" />
-                ) : profileInfo?.photoURL && !avatarError ? (
+                ) : profileInfo?.photoURL && !avatarError && !isPrivateUrl(profileInfo.photoURL) ? (
                   <ExpoImage
                     source={{ uri: profileInfo.photoURL }}
                     style={{
@@ -115,14 +140,22 @@ const OrgProfile: React.FC = () => {
                       borderWidth: 3,
                     }}
                     contentFit="cover"
-                    onError={() => setAvatarError(true)}
+                    onError={(err) => {
+                      console.error("[OrgProfile] Avatar display error:", err);
+                      console.error("[OrgProfile] Failed URL:", profileInfo.photoURL);
+                      setAvatarError(true);
+                    }}
                   />
-                ) : user?.photoURL && !avatarError ? (
+                ) : user?.photoURL && !avatarError && !isPrivateUrl(user.photoURL) ? (
                   <ExpoImage
                     source={{ uri: user.photoURL }}
                     style={{ width: 96, height: 96, borderRadius: 48 }}
                     contentFit="cover"
-                    onError={() => setAvatarError(true)}
+                    onError={(err) => {
+                      console.error("[OrgProfile] Avatar display error (user):", err);
+                      console.error("[OrgProfile] Failed URL:", user.photoURL);
+                      setAvatarError(true);
+                    }}
                   />
                 ) : (
                   <FontAwesome name="users" size={72} color="#7D7CFF" />

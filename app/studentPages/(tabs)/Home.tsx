@@ -3,24 +3,25 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { memo, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Modal,
+    RefreshControl,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SearchBar } from "../../../components/Common";
 import OpportunityCard from "../../../components/OpportunityCard";
 import { useAuth } from "../../../contexts/AuthContext";
 import {
-  addOpportunityBookmark,
-  getAllActiveOpportunities,
-  getBookmarkedOpportunities,
-  getUpcomingDeadlines,
-  removeOpportunityBookmark
+    addOpportunityBookmark,
+    cleanupDeadBookmarks,
+    getAllActiveOpportunities,
+    getBookmarkedOpportunities,
+    getUpcomingDeadlines,
+    removeOpportunityBookmark
 } from "../../../services/firestoreService";
 
 interface ProfileData {
@@ -326,6 +327,13 @@ export default function Home() {
     
     try {
       console.log("🔄 Fetching bookmarked opportunities...");
+      
+      // Clean up dead bookmarks first
+      const cleanedCount = await cleanupDeadBookmarks(user.uid);
+      if (cleanedCount > 0) {
+        console.log(`🧹 Cleaned up ${cleanedCount} dead bookmark(s)`);
+      }
+      
       const bookmarked = await getBookmarkedOpportunities(user.uid);
       setBookmarkedOpportunities(bookmarked);
       console.log(`🔖 Set ${bookmarked.length} bookmarked opportunities in state`);
