@@ -37,13 +37,13 @@ const getCategoryStyle = (category: string) => {
     { tagColor: string; tagText: string; dotColor: string }
   > = {
     "Scholarship / Grant": {
-    tagColor: "bg-[#D1FAFF]",
-    tagText: "text-[#0CA5E9]",
+      tagColor: "bg-[#D1FAFF]",
+      tagText: "text-[#0CA5E9]",
       dotColor: "#0CA5E9",
     },
     "Competition / Event": {
-    tagColor: "bg-[#FECACA]",
-    tagText: "text-[#B91C1C]",
+      tagColor: "bg-[#FECACA]",
+      tagText: "text-[#B91C1C]",
       dotColor: "#B91C1C",
     },
     "Workshop / Seminar": {
@@ -57,7 +57,7 @@ const getCategoryStyle = (category: string) => {
       dotColor: "#4F46E5",
     },
   };
-  
+
   return (
     styles[category] || {
       tagColor: "bg-[#E5E7EB]",
@@ -78,12 +78,12 @@ const Calendar = () => {
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Notification management
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  
+
   // Cache management: Track last fetch timestamp
   const lastFetchTimestamp = useRef<number>(0);
   const lastSyncTimestamp = useRef<number>(0);
@@ -92,10 +92,12 @@ const Calendar = () => {
 
   // Format date for display
   const formatDate = (date: Date): string => {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }).toUpperCase();
+    return date
+      .toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
+      .toUpperCase();
   };
 
   // Format date for calendar marking (YYYY-MM-DD)
@@ -132,9 +134,17 @@ const Calendar = () => {
     // Check if we should use cached data (unless force refresh)
     const now = Date.now();
     const timeSinceLastFetch = now - lastFetchTimestamp.current;
-    
-    if (!forceRefresh && timeSinceLastFetch < CACHE_DURATION && deadlines.length > 0) {
-      console.log("📦 Using cached deadlines (fetched", Math.round(timeSinceLastFetch / 1000), "seconds ago)");
+
+    if (
+      !forceRefresh &&
+      timeSinceLastFetch < CACHE_DURATION &&
+      deadlines.length > 0
+    ) {
+      console.log(
+        "📦 Using cached deadlines (fetched",
+        Math.round(timeSinceLastFetch / 1000),
+        "seconds ago)"
+      );
       setLoading(false);
       setRefreshing(false);
       return;
@@ -144,23 +154,30 @@ const Calendar = () => {
       setLoading(true);
       console.log("🔄 Fetching fresh deadlines from Firestore");
       console.log("📍 User ID:", user.uid);
-      
+
       // Fetch ALL upcoming deadlines (no limit)
       const upcomingDeadlines = await getUpcomingDeadlines(user.uid, 1000);
-      
+
       console.log("📊 Fetched deadlines count:", upcomingDeadlines.length);
       if (upcomingDeadlines.length > 0) {
         console.log("📋 First deadline:", upcomingDeadlines[0]);
-        console.log("📋 All deadlines:", JSON.stringify(upcomingDeadlines, null, 2));
+        console.log(
+          "📋 All deadlines:",
+          JSON.stringify(upcomingDeadlines, null, 2)
+        );
       } else {
         console.log("⚠️ No upcoming deadlines found - Check:");
         console.log("  1. Are any opportunities tracked?");
         console.log("  2. Do opportunities have dateMilestones?");
         console.log("  3. Are the dates in the future?");
       }
-      
+
       setDeadlines(upcomingDeadlines);
-      console.log("✅ State updated with", upcomingDeadlines.length, "deadlines");
+      console.log(
+        "✅ State updated with",
+        upcomingDeadlines.length,
+        "deadlines"
+      );
       lastFetchTimestamp.current = Date.now();
     } catch (error) {
       console.error("❌ Error fetching deadlines:", error);
@@ -184,11 +201,15 @@ const Calendar = () => {
     }
 
     try {
-      const unreadNotifications = await getUnreadDeadlineNotifications(user.uid);
+      const unreadNotifications = await getUnreadDeadlineNotifications(
+        user.uid
+      );
       setNotifications(unreadNotifications);
-      
+
       if (unreadNotifications.length > 0) {
-        console.log(`📬 Found ${unreadNotifications.length} unread notification(s)`);
+        console.log(
+          `📬 Found ${unreadNotifications.length} unread notification(s)`
+        );
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -205,19 +226,21 @@ const Calendar = () => {
     // Check if we should sync (avoid too frequent syncs)
     const now = Date.now();
     const timeSinceLastSync = now - lastSyncTimestamp.current;
-    
+
     if (!forceSync && timeSinceLastSync < SYNC_INTERVAL) {
-      console.log(`⏭️ Skipping sync (last synced ${Math.round(timeSinceLastSync / 1000)}s ago)`);
+      console.log(
+        `⏭️ Skipping sync (last synced ${Math.round(timeSinceLastSync / 1000)}s ago)`
+      );
       return;
     }
 
     try {
       setIsSyncing(true);
       console.log("🔄 Starting background sync for deadline changes...");
-      
+
       // Sync tracked opportunities for changes
       const changesCount = await syncTrackedOpportunityDeadlines(user.uid);
-      
+
       if (changesCount > 0) {
         console.log(`✓ Sync complete: ${changesCount} change(s) detected`);
         // Refresh notifications to show new changes
@@ -227,7 +250,7 @@ const Calendar = () => {
       } else {
         console.log("✓ Sync complete: No changes detected");
       }
-      
+
       lastSyncTimestamp.current = Date.now();
     } catch (error) {
       console.error("Error during background sync:", error);
@@ -240,13 +263,13 @@ const Calendar = () => {
   useFocusEffect(
     useCallback(() => {
       console.log("📅 Calendar tab focused - checking for updates");
-      
+
       // Don't force refresh, use cache if available
       fetchDeadlines(false);
-      
+
       // Fetch notifications
       fetchNotifications();
-      
+
       // Perform background sync to check for deadline changes
       // This runs in background and doesn't block the UI
       performBackgroundSync(false);
@@ -256,14 +279,14 @@ const Calendar = () => {
   // Pull-to-refresh handler (forces refresh)
   const onRefresh = async () => {
     setRefreshing(true);
-    
+
     // Force sync when user manually refreshes
     await performBackgroundSync(true);
-    
+
     // Then fetch fresh data
     await fetchDeadlines(true);
     await fetchNotifications();
-    
+
     setRefreshing(false);
   };
 
@@ -276,11 +299,11 @@ const Calendar = () => {
       for (const notification of notifications) {
         await markNotificationAsRead(user.uid, notification.id);
       }
-      
+
       // Clear local state
       setNotifications([]);
       setShowNotificationModal(false);
-      
+
       console.log("✓ All notifications marked as read");
     } catch (error) {
       console.error("Error dismissing notifications:", error);
@@ -302,7 +325,10 @@ const Calendar = () => {
     const categoryLower = category.toLowerCase();
     if (categoryLower.includes("competition")) {
       return "#FBBF24"; // Yellow
-    } else if (categoryLower.includes("scholarship") || categoryLower.includes("grant")) {
+    } else if (
+      categoryLower.includes("scholarship") ||
+      categoryLower.includes("grant")
+    ) {
       return "#3B82F6"; // Bright Blue
     } else if (categoryLower.includes("workshop")) {
       return "#10B981"; // Green
@@ -314,17 +340,17 @@ const Calendar = () => {
 
   // Build markedDates from fetched deadlines
   const markedDates: Record<string, any> = {};
-  
+
   deadlines.forEach((deadline) => {
     const dateString = formatDateForCalendar(deadline.date);
     const daysUntil = getDaysUntil(deadline.date);
-    
+
     // Determine color: Red for urgent (≤3 days), otherwise category color
     let markColor = getCategoryColor(deadline.category);
     if (daysUntil <= 3) {
       markColor = "#EF4444"; // Red for urgent
     }
-    
+
     if (!markedDates[dateString]) {
       markedDates[dateString] = {
         marked: true,
@@ -347,7 +373,8 @@ const Calendar = () => {
       if (daysUntil <= 3) {
         markedDates[dateString].dotColor = "#EF4444";
         markedDates[dateString].customStyles.container.borderColor = "#EF4444";
-        markedDates[dateString].customStyles.container.backgroundColor = "#EF444420";
+        markedDates[dateString].customStyles.container.backgroundColor =
+          "#EF444420";
       }
     }
   });
@@ -371,10 +398,10 @@ const Calendar = () => {
     };
   } else {
     // If selected date has no deadline, just show selection
-  markedDates[selectedDate] = {
-    selected: true,
-    selectedColor: SELECTED_COLOR,
-  };
+    markedDates[selectedDate] = {
+      selected: true,
+      selectedColor: SELECTED_COLOR,
+    };
   }
 
   return (
@@ -397,7 +424,7 @@ const Calendar = () => {
                 </View>
               )}
             </View>
-            
+
             {/* Right side: Notifications + Deadlines count */}
             <View className="flex-row items-center">
               {/* Notification Icon - Always visible */}
@@ -421,12 +448,13 @@ const Calendar = () => {
                   </View>
                 )}
               </TouchableOpacity>
-              
+
               {/* Deadlines count */}
               {!loading && deadlines.length > 0 && (
                 <View className="bg-white/20 px-3 py-1.5 rounded-full">
                   <Text className="text-white font-karla-bold text-[13px]">
-                    {deadlines.length} deadline{deadlines.length !== 1 ? "s" : ""}
+                    {deadlines.length} deadline
+                    {deadlines.length !== 1 ? "s" : ""}
                   </Text>
                 </View>
               )}
@@ -451,25 +479,33 @@ const Calendar = () => {
                 calendarBackground: "#fff",
               }}
             />
-            
+
             {/* Color Legend */}
             {deadlines.length > 0 && (
               <View className="flex-row justify-center items-center mt-3 mb-1 flex-wrap px-2">
                 <View className="flex-row items-center mr-3 mb-1">
                   <View className="w-3 h-3 rounded-full border-2 border-[#EF4444] bg-[#EF444420] mr-1.5" />
-                  <Text className="text-[11px] font-karla text-[#6B7280]">Urgent</Text>
+                  <Text className="text-[11px] font-karla text-[#6B7280]">
+                    Urgent
+                  </Text>
                 </View>
                 <View className="flex-row items-center mr-3 mb-1">
                   <View className="w-3 h-3 rounded-full border-2 border-[#3B82F6] bg-[#3B82F620] mr-1.5" />
-                  <Text className="text-[11px] font-karla text-[#6B7280]">Scholarship</Text>
+                  <Text className="text-[11px] font-karla text-[#6B7280]">
+                    Scholarship
+                  </Text>
                 </View>
                 <View className="flex-row items-center mr-3 mb-1">
                   <View className="w-3 h-3 rounded-full border-2 border-[#FBBF24] bg-[#FBBF2420] mr-1.5" />
-                  <Text className="text-[11px] font-karla text-[#6B7280]">Competition</Text>
+                  <Text className="text-[11px] font-karla text-[#6B7280]">
+                    Competition
+                  </Text>
                 </View>
                 <View className="flex-row items-center mb-1">
                   <View className="w-3 h-3 rounded-full border-2 border-[#10B981] bg-[#10B98120] mr-1.5" />
-                  <Text className="text-[11px] font-karla text-[#6B7280]">Workshop</Text>
+                  <Text className="text-[11px] font-karla text-[#6B7280]">
+                    Workshop
+                  </Text>
                 </View>
               </View>
             )}
@@ -479,7 +515,7 @@ const Calendar = () => {
         {/* Scrollable Upcoming Deadlines Section Only */}
         <LinearGradient
           colors={["#fff", "#DADEFF"]}
-          className="flex-1 rounded-t-[45px] mt-[-20px]"
+          className="flex-1 rounded-t-[45px]"
           style={{ flex: 1 }}
         >
           <ScrollView
@@ -509,88 +545,92 @@ const Calendar = () => {
                 </View>
               ) : deadlines.length > 0 ? (
                 <View>
-              {deadlines.map((item, idx) => {
-                const daysUntil = getDaysUntil(item.date);
-                const categoryStyle = getCategoryStyle(item.category);
-                const urgencyColor = getUrgencyColor(daysUntil);
+                  {deadlines.map((item, idx) => {
+                    const daysUntil = getDaysUntil(item.date);
+                    const categoryStyle = getCategoryStyle(item.category);
+                    const urgencyColor = getUrgencyColor(daysUntil);
 
-                return (
-                  <View key={`${item.opportunityId}-${idx}`} className="mb-4">
-              <View className="flex-row items-start">
-                      {/* Date Badge */}
-                      <View className="w-[70px] mt-2">
-                        <Text className="font-karla-bold text-[#655b7d] text-[15px]">
-                          {formatDate(item.date)}
-                        </Text>
-                        <Text className="font-karla text-[11px] text-[#9CA3AF]">
-                          {daysUntil === 0
-                            ? "Today"
-                            : daysUntil === 1
-                              ? "Tomorrow"
-                              : `${daysUntil} days`}
-                </Text>
-                      </View>
-
-                      {/* Deadline Card */}
+                    return (
                       <View
-                        className="flex-1 bg-[#F9FAFB] rounded-xl px-4 py-3 shadow-sm"
-                        style={{
-                          borderLeftWidth: 4,
-                          borderLeftColor: urgencyColor,
-                        }}
+                        key={`${item.opportunityId}-${idx}`}
+                        className="mb-4"
                       >
-                        <View className="flex-row items-start justify-between">
-                  <View className="flex-1">
-                            {/* Milestone Description as Main Title */}
-                            <Text className="text-[16px] font-karla-bold text-[#4B1EB4] mb-1">
-                              {item.milestoneDescription}
+                        <View className="flex-row items-start">
+                          {/* Date Badge */}
+                          <View className="w-[70px] mt-2">
+                            <Text className="font-karla-bold text-[#655b7d] text-[15px]">
+                              {formatDate(item.date)}
                             </Text>
-                            {/* Opportunity Name as Subtext */}
-                            <Text className="text-[13px] font-karla text-[#6B7280] mb-2">
-                      {item.title}
-                    </Text>
-                            <View className="flex-row items-center flex-wrap">
-                    <Text
-                                className={`text-[12px] font-karla-bold px-2 py-1 rounded-md ${categoryStyle.tagColor} ${categoryStyle.tagText} mr-2 mb-1`}
-                              >
-                                {item.category}
-                              </Text>
-                              {daysUntil <= 3 && (
-                                <View className="flex-row items-center bg-red-100 px-2 py-1 rounded-md mb-1">
-                                  <Ionicons
-                                    name="alert-circle"
-                                    size={12}
-                                    color="#B91C1C"
-                                  />
-                                  <Text className="text-[11px] font-karla-bold text-red-700 ml-1">
-                                    URGENT
-                    </Text>
-                                </View>
-                              )}
-                            </View>
-                  </View>
-                  <TouchableOpacity
-                            className="ml-3 mt-1"
-                            onPress={() =>
-                              router.push({
-                                pathname: "../opportunity",
-                                params: {
-                                  id: item.opportunityId,
-                                  specificCollection: item.specificCollection,
-                                },
-                              })
-                            }
+                            <Text className="font-karla text-[11px] text-[#9CA3AF]">
+                              {daysUntil === 0
+                                ? "Today"
+                                : daysUntil === 1
+                                  ? "Tomorrow"
+                                  : `${daysUntil} days`}
+                            </Text>
+                          </View>
+
+                          {/* Deadline Card */}
+                          <View
+                            className="flex-1 bg-[#F9FAFB] rounded-xl px-4 py-3 shadow-sm"
+                            style={{
+                              borderLeftWidth: 4,
+                              borderLeftColor: urgencyColor,
+                            }}
                           >
-                            <Text className="font-karla-bold text-[14px] text-[#6C63FF]">
-                      View →
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-                  </View>
-                );
-              })}
+                            <View className="flex-row items-start justify-between">
+                              <View className="flex-1">
+                                {/* Milestone Description as Main Title */}
+                                <Text className="text-[16px] font-karla-bold text-[#4B1EB4] mb-1">
+                                  {item.milestoneDescription}
+                                </Text>
+                                {/* Opportunity Name as Subtext */}
+                                <Text className="text-[13px] font-karla text-[#6B7280] mb-2">
+                                  {item.title}
+                                </Text>
+                                <View className="flex-row items-center flex-wrap">
+                                  <Text
+                                    className={`text-[12px] font-karla-bold px-2 py-1 rounded-md ${categoryStyle.tagColor} ${categoryStyle.tagText} mr-2 mb-1`}
+                                  >
+                                    {item.category}
+                                  </Text>
+                                  {daysUntil <= 3 && (
+                                    <View className="flex-row items-center bg-red-100 px-2 py-1 rounded-md mb-1">
+                                      <Ionicons
+                                        name="alert-circle"
+                                        size={12}
+                                        color="#B91C1C"
+                                      />
+                                      <Text className="text-[11px] font-karla-bold text-red-700 ml-1">
+                                        URGENT
+                                      </Text>
+                                    </View>
+                                  )}
+                                </View>
+                              </View>
+                              <TouchableOpacity
+                                className="ml-3 mt-1"
+                                onPress={() =>
+                                  router.push({
+                                    pathname: "../opportunity",
+                                    params: {
+                                      id: item.opportunityId,
+                                      specificCollection:
+                                        item.specificCollection,
+                                    },
+                                  })
+                                }
+                              >
+                                <Text className="font-karla-bold text-[14px] text-[#6C63FF]">
+                                  View →
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
                 </View>
               ) : (
                 <View className="py-12 items-center px-8">
@@ -633,7 +673,8 @@ const Calendar = () => {
                   Deadline Changes
                 </Text>
                 <Text className="text-[13px] font-karla text-[#6B7280] mt-0.5">
-                  {notifications.length} opportunit{notifications.length !== 1 ? "ies" : "y"} updated
+                  {notifications.length} opportunit
+                  {notifications.length !== 1 ? "ies" : "y"} updated
                 </Text>
               </View>
               <TouchableOpacity
@@ -667,55 +708,67 @@ const Calendar = () => {
                   </View>
 
                   {/* Changes List */}
-                  {notification.changes && notification.changes.map((change: any, changeIdx: number) => (
-                    <View
-                      key={changeIdx}
-                      className="ml-11 mb-2 bg-gray-50 rounded-lg p-3"
-                    >
-                      <Text className="text-[13px] font-karla-bold text-[#374151] mb-1">
-                        {change.description}
-                      </Text>
-                      
-                      {change.type === 'changed' && (
-                        <View>
-                          <View className="flex-row items-center">
-                            <Text className="text-[12px] font-karla text-[#6B7280]">
-                              From:{" "}
-                            </Text>
-                            <Text className="text-[12px] font-karla-bold text-red-600 line-through">
-                              {formatNotificationDate(change.oldDate)}
-                            </Text>
-                          </View>
-                          <View className="flex-row items-center mt-0.5">
-                            <Text className="text-[12px] font-karla text-[#6B7280]">
-                              To:{" "}
-                            </Text>
-                            <Text className="text-[12px] font-karla-bold text-green-600">
-                              {formatNotificationDate(change.newDate)}
-                            </Text>
-                          </View>
-                        </View>
-                      )}
-
-                      {change.type === 'added' && (
-                        <View className="flex-row items-center">
-                          <Ionicons name="add-circle" size={14} color="#10b981" />
-                          <Text className="text-[12px] font-karla text-green-600 ml-1">
-                            New deadline: {formatNotificationDate(change.newDate)}
+                  {notification.changes &&
+                    notification.changes.map(
+                      (change: any, changeIdx: number) => (
+                        <View
+                          key={changeIdx}
+                          className="ml-11 mb-2 bg-gray-50 rounded-lg p-3"
+                        >
+                          <Text className="text-[13px] font-karla-bold text-[#374151] mb-1">
+                            {change.description}
                           </Text>
-                        </View>
-                      )}
 
-                      {change.type === 'removed' && (
-                        <View className="flex-row items-center">
-                          <Ionicons name="remove-circle" size={14} color="#ef4444" />
-                          <Text className="text-[12px] font-karla text-red-600 ml-1">
-                            Deadline removed
-                          </Text>
+                          {change.type === "changed" && (
+                            <View>
+                              <View className="flex-row items-center">
+                                <Text className="text-[12px] font-karla text-[#6B7280]">
+                                  From:{" "}
+                                </Text>
+                                <Text className="text-[12px] font-karla-bold text-red-600 line-through">
+                                  {formatNotificationDate(change.oldDate)}
+                                </Text>
+                              </View>
+                              <View className="flex-row items-center mt-0.5">
+                                <Text className="text-[12px] font-karla text-[#6B7280]">
+                                  To:{" "}
+                                </Text>
+                                <Text className="text-[12px] font-karla-bold text-green-600">
+                                  {formatNotificationDate(change.newDate)}
+                                </Text>
+                              </View>
+                            </View>
+                          )}
+
+                          {change.type === "added" && (
+                            <View className="flex-row items-center">
+                              <Ionicons
+                                name="add-circle"
+                                size={14}
+                                color="#10b981"
+                              />
+                              <Text className="text-[12px] font-karla text-green-600 ml-1">
+                                New deadline:{" "}
+                                {formatNotificationDate(change.newDate)}
+                              </Text>
+                            </View>
+                          )}
+
+                          {change.type === "removed" && (
+                            <View className="flex-row items-center">
+                              <Ionicons
+                                name="remove-circle"
+                                size={14}
+                                color="#ef4444"
+                              />
+                              <Text className="text-[12px] font-karla text-red-600 ml-1">
+                                Deadline removed
+                              </Text>
+                            </View>
+                          )}
                         </View>
-                      )}
-                    </View>
-                  ))}
+                      )
+                    )}
 
                   {/* View Opportunity Button */}
                   <TouchableOpacity
@@ -734,7 +787,11 @@ const Calendar = () => {
                     <Text className="text-[13px] font-karla-bold text-[#4B1EB4]">
                       View Opportunity
                     </Text>
-                    <Ionicons name="chevron-forward" size={14} color="#4B1EB4" />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={14}
+                      color="#4B1EB4"
+                    />
                   </TouchableOpacity>
                 </View>
               ))}

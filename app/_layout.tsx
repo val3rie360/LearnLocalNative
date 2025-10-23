@@ -1,4 +1,5 @@
 import { useFonts } from "expo-font";
+import * as NavigationBar from "expo-navigation-bar";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef, useState } from "react";
@@ -86,6 +87,9 @@ function RootLayoutNav() {
       console.log("Still loading auth or role data...");
       return;
     }
+
+    NavigationBar.setBackgroundColorAsync("#ffffff");
+    NavigationBar.setButtonStyleAsync("dark");
 
     const currentRoute = segments[0];
     const isOnProtectedStudentPages =
