@@ -7,7 +7,7 @@ type OpportunityCardProps = {
   postedBy: string;
   deadline: string;
   amount: string;
-  eligibility: string;
+
   description: string;
   tag: string;
   onViewDetails?: () => void;
@@ -38,10 +38,9 @@ const InfoRow = ({
       {label}
     </Text>
     <Text
-      className="text-[14px] text-[#222] flex-shrink"
+      className="text-[14px] text-[#222] font-karla flex-shrink"
       numberOfLines={1}
       ellipsizeMode="tail"
-      style={{ fontFamily: "Karla" }}
     >
       {value}
     </Text>
@@ -49,20 +48,11 @@ const InfoRow = ({
   </View>
 );
 
-function truncateEligibility(eligibility: string) {
-  const words = eligibility.trim().split(/\s+/);
-  if (words.length > 4) {
-    return words.slice(0, 4).join(" ") + " ...";
-  }
-  return eligibility;
-}
-
 const OpportunityCard: React.FC<OpportunityCardProps> = ({
   title,
   postedBy,
   deadline,
   amount,
-  eligibility,
   description,
   tag,
   onViewDetails,
@@ -110,11 +100,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({
       <InfoRow icon="person-outline" label="Posted by:" value={postedBy} />
       <InfoRow icon="calendar-outline" label="Deadline:" value={deadline} />
       <InfoRow icon="cash-outline" label="Amount:" value={amount} />
-      <InfoRow
-        icon="location-outline"
-        label="Eligibility:"
-        value={truncateEligibility(eligibility)}
-      />
+
       {/* Description */}
       <Text
         className="text-[#666] text-[13px] my-2 font-karla"
@@ -135,7 +121,7 @@ const OpportunityCard: React.FC<OpportunityCardProps> = ({
           onPress={onViewDetails}
         >
           <Text className="text-white font-karla-bold text-[14px] mr-1.5">
-            View Details
+            View
           </Text>
           <Ionicons name="arrow-forward" size={16} color="#fff" />
         </TouchableOpacity>

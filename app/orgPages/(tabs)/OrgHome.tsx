@@ -5,6 +5,7 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useState } from "react";
@@ -74,6 +75,8 @@ export default function OrgHome() {
   const [showAddMilestoneModal, setShowAddMilestoneModal] = useState(false);
   const [newMilestoneName, setNewMilestoneName] = useState("");
   const [newMilestoneDate, setNewMilestoneDate] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [milestoneDateObj, setMilestoneDateObj] = useState<Date | null>(null);
 
   // Fetch opportunities function
   const fetchOpportunities = useCallback(async () => {
@@ -147,7 +150,7 @@ export default function OrgHome() {
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
     });
   };
@@ -1292,6 +1295,98 @@ export default function OrgHome() {
                   </View>
                 )}
               </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Add milestone modal */}
+        <Modal
+          visible={showAddMilestoneModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowAddMilestoneModal(false)}
+        >
+          <View className="flex-1 bg-black/50 justify-center items-center">
+            <View className="bg-white rounded-2xl p-6 w-[85%]">
+              <Text className="text-lg font-karla-bold text-[#4B1EB4] mb-4">
+                Add Milestone
+              </Text>
+              <TextInput
+                className="bg-gray-100 rounded-lg px-4 py-3 mb-3 font-karla text-base text-black"
+                placeholder="Milestone Name"
+                placeholderTextColor="#B0B0B0"
+                value={newMilestoneName}
+                onChangeText={setNewMilestoneName}
+              />
+              <TouchableOpacity
+                className="bg-gray-100 rounded-lg px-4 py-3 mb-3"
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text className="font-karla text-base text-black">
+                  {milestoneDateObj
+                    ? milestoneDateObj.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : "Select Milestone Date"}
+                </Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={milestoneDateObj || new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(false);
+                    if (selectedDate) {
+                      setMilestoneDateObj(selectedDate);
+                      setNewMilestoneDate(
+                        selectedDate.toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      );
+                    }
+                  }}
+                />
+              )}
+              <View className="flex-row justify-between mt-2">
+                <TouchableOpacity
+                  className="bg-gray-200 rounded-lg py-2 px-4 flex-1 mr-2"
+                  onPress={() => setShowAddMilestoneModal(false)}
+                >
+                  <Text className="text-center font-karla-bold text-gray-700">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="bg-[#4B1EB4] rounded-lg py-2 px-4 flex-1 ml-2"
+                  onPress={() => {
+                    if (newMilestoneName.trim() && milestoneDateObj) {
+                      setEditDateMilestones([
+                        ...editDateMilestones,
+                        {
+                          name: newMilestoneName.trim(),
+                          date: milestoneDateObj.toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }),
+                        },
+                      ]);
+                      setShowAddMilestoneModal(false);
+                      setMilestoneDateObj(null);
+                      setNewMilestoneDate("");
+                    }
+                  }}
+                >
+                  <Text className="text-center font-karla-bold text-white">
+                    Add
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
